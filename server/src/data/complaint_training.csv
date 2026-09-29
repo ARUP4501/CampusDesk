@@ -1,0 +1,83 @@
+text,category
+"tap leaking in washroom continuous water flow",PLUMBING
+"washbasin drain pipe is choked and overflowing",PLUMBING
+"shower head broken no water coming out",PLUMBING
+"flush tank not working in toilet",PLUMBING
+"water leakage under kitchen sink",PLUMBING
+"no water supply in bathroom 2nd floor",PLUMBING
+"geyser leaking hot water in hostel b",PLUMBING
+"pipe burst near corridor washroom",PLUMBING
+"drainage blocked bathroom flooded with water",PLUMBING
+"tap handle missing water constantly dripping",PLUMBING
+"toilet flush valve jammed open",PLUMBING
+"water filter faucet broken water wasted",PLUMBING
+"foul smell from bathroom drain pipe",PLUMBING
+"overhead tank overflow pipe leaking on balcony",PLUMBING
+"ceiling fan not working making clicking noise",ELECTRICAL
+"tube light flickering and buzzing constantly",ELECTRICAL
+"switchboard socket sparking when plugging charger",ELECTRICAL
+"power cut in room only other rooms have power",ELECTRICAL
+"mcb tripped in wing a corridor",ELECTRICAL
+"ac not cooling blowing hot air in lab",ELECTRICAL
+"study lamp plug point burnt out",ELECTRICAL
+"exhaust fan jammed in washroom",ELECTRICAL
+"wire hanging loose from ceiling switch",ELECTRICAL
+"voltage fluctuation burning appliance",ELECTRICAL
+"light bulb fused in hallway corridor",ELECTRICAL
+"extension board sparking and short circuit",ELECTRICAL
+"door lock broken latch not catching",CARPENTRY
+"window wooden frame jammed cannot close",CARPENTRY
+"cupboard shelf collapsed under books",CARPENTRY
+"bed wooden frame cracked and squeaking",CARPENTRY
+"study table drawer handle broken stuck",CARPENTRY
+"room door hinges loose and falling off",CARPENTRY
+"wooden chair leg fractured unstable",CARPENTRY
+"wardrobe lock key jammed in keyhole",CARPENTRY
+"window glass shutter wooden slider detached",CARPENTRY
+"curtain rod bracket fallen off wall",CARPENTRY
+"wooden desk drawer won't open",CARPENTRY
+"balcony door latch missing cannot secure",CARPENTRY
+"plaster falling from ceiling above bed",MASONRY
+"crack on wall near balcony door expanding",MASONRY
+"floor tile broken and sharp edge exposed",MASONRY
+"dampness seepage on wall paint peeling off",MASONRY
+"cement loose on corridor stairs step broken",MASONRY
+"water leakage through ceiling roof during rain",MASONRY
+"brickwork loose on parapet wall",MASONRY
+"grouting missing between bathroom floor tiles",MASONRY
+"hole in drywall partition between rooms",MASONRY
+"concrete chipped off pillar in hostel lobby",MASONRY
+"wifi not connecting in room 304",NETWORK_WIFI
+"internet speed extremely slow packet loss",NETWORK_WIFI
+"lan port in wall damaged rj45 not locking",NETWORK_WIFI
+"cannot access college portal intranet offline",NETWORK_WIFI
+"access point red light blinking no connection",NETWORK_WIFI
+"wifi router in corridor keeps restarting",NETWORK_WIFI
+"dns resolution error on campus network",NETWORK_WIFI
+"high latency ping spikes during online exam",NETWORK_WIFI
+"ip address conflict error on hostel wifi",NETWORK_WIFI
+"wifi signal unreachable inside hostel room",NETWORK_WIFI
+"dustbin not cleared overflowing in corridor",HOUSEKEEPING
+"corridor not swept garbage lying outside room",HOUSEKEEPING
+"washroom floor dirty needs deep cleaning",HOUSEKEEPING
+"stray dog entered hostel wing littering",HOUSEKEEPING
+"cobwebs and dirt accumulated in common room",HOUSEKEEPING
+"water cooler area dirty and unhygienic",HOUSEKEEPING
+"mosquito breeding in stagnant water near mess",HOUSEKEEPING
+"trash dumped behind hostel building bad odor",HOUSEKEEPING
+"spilled food in staircase not cleaned",HOUSEKEEPING
+"dead pest in hallway needs urgent disposal",HOUSEKEEPING
+"main gate lock loose unauthorized entry seen",SECURITY
+"strangers wandering in hostel after midnight",SECURITY
+"cctv camera pointed away from corridor entrance",SECURITY
+"boundary wall fence broken near back gate",SECURITY
+"hostel emergency exit door padlocked shut",SECURITY
+"suspicious vehicle parked near girls hostel",SECURITY
+"id card scanner not working at main turnstile",SECURITY
+"theft of bicycle from hostel cycle stand",SECURITY
+"noise disturbance loudly played past curfew",SECURITY
+"lost room keys need lock replacement immediately",OTHER
+"found lost wallet in library 2nd floor",OTHER
+"request new mattress replacement torn",OTHER
+"pest control required termites in room furniture",OTHER
+"stray cat trapped in ventilation shaft",OTHER

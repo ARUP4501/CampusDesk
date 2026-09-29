@@ -1,0 +1,6 @@
+rollNumber,fullName,email,phone,hostelBlock,roomNumber,branch,year,batch
+2024CS101,Aarav Sharma,aarav.sharma@campusdesk.edu,9876543210,Hostel-A,A-204,CSE,2,2024
+2024CS102,Priya Patel,priya.patel@campusdesk.edu,9876543211,Hostel-B,B-108,CSE,2,2024
+2024EE201,Rohan Das,rohan.das@campusdesk.edu,9876543212,Hostel-A,A-312,EE,2,2024
+2023ME301,Ananya Mishra,ananya.mishra@campusdesk.edu,9876543213,Hostel-B,B-215,ME,3,2023
+2025CE401,Vikram Jena,vikram.jena@campusdesk.edu,9876543214,Hostel-C,C-102,CE,1,2025

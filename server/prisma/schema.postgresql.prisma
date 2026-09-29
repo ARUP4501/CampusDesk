@@ -1,0 +1,535 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum UserRole {
+  STUDENT
+  WARDEN
+  STAFF
+  ADMIN
+}
+
+enum TicketCategory {
+  PLUMBING
+  ELECTRICAL
+  CARPENTRY
+  MASONRY
+  NETWORK_WIFI
+  HOUSEKEEPING
+  SECURITY
+  OTHER
+}
+
+enum TicketStatus {
+  SUBMITTED
+  ASSIGNED
+  IN_PROGRESS
+  RESOLVED
+  CLOSED
+}
+
+enum TicketPriority {
+  LOW
+  MEDIUM
+  HIGH
+  EMERGENCY
+}
+
+enum GatePassType {
+  OUTING
+  HOME_LEAVE
+  EMERGENCY
+}
+
+enum GatePassStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  EXITED
+  RETURNED
+  OVERDUE
+  CANCELLED
+}
+
+enum NoticePriority {
+  NORMAL
+  URGENT
+  CRITICAL
+}
+
+enum NoticeTargetType {
+  ALL
+  BATCH
+  BRANCH
+  HOSTEL
+  YEAR
+}
+
+enum NoticeActionType {
+  NONE
+  FORM
+  PAYMENT
+  ACKNOWLEDGEMENT
+}
+
+enum DocumentType {
+  BONAFIDE_CERTIFICATE
+  FEE_ESTIMATE
+  CHARACTER_CERTIFICATE
+  HOSTEL_STAY_CERTIFICATE
+  TRANSCRIPT
+}
+
+enum DocumentStatus {
+  SUBMITTED
+  PROCESSING
+  APPROVED
+  REJECTED
+}
+
+enum MealType {
+  BREAKFAST
+  LUNCH
+  SNACKS
+  DINNER
+}
+
+enum FeeStatus {
+  PAID
+  PARTIAL
+  DUE
+  OVERDUE
+}
+
+model User {
+  id                      String            @id @default(uuid())
+  email                   String            @unique
+  passwordHash            String
+  fullName                String
+  role                    UserRole          @default(STUDENT)
+  employeeId              String?           @unique
+  rollNumber              String?           @unique
+  phone                   String
+  dob                     DateTime?
+  gender                  String?
+  bloodGroup              String?
+  course                  String?
+  department              String?
+  branch                  String?
+  year                    Int?
+  semester                Int?
+  batch                   String?
+
+  permanentAddress        String?
+  currentAddress          String?
+
+  fatherName              String?
+  fatherPhone             String?
+  motherName              String?
+  motherPhone             String?
+
+  guardianName            String?
+  guardianRelation        String?
+  guardianPhone           String?
+  guardianAddress         String?
+
+  hostelBlock             String?
+  roomNumber              String?
+  bedNumber               String?
+  requestedHostel         String?
+  roomPreference          String?
+
+  verificationStatus      String            @default("ACTIVE")
+  wardenVerificationDate  DateTime?
+  wardenVerificationById  String?
+  adminApprovalDate       DateTime?
+  adminApprovalById       String?
+  rejectionReason         String?
+
+  isActive                Boolean           @default(true)
+  createdAt               DateTime          @default(now())
+  updatedAt               DateTime          @updatedAt
+
+  ticketsCreated          Ticket[]          @relation("StudentTickets")
+  ticketsAssigned         Ticket[]          @relation("StaffAssignedTickets")
+  auditLogs               TicketAuditLog[]  @relation("AuditUser")
+  gatePasses              GatePass[]        @relation("StudentGatePasses")
+  gatePassReviews         GatePass[]        @relation("WardenGatePassReviews")
+  noticesPublished        Notice[]          @relation("AuthorNotices")
+  noticeRecipients        NoticeRecipient[] @relation("RecipientUser")
+  docRequests             DocumentRequest[] @relation("StudentDocRequests")
+  docReviews              DocumentRequest[] @relation("AdminDocReviews")
+  messFeedbacks           MessFeedback[]    @relation("StudentMessFeedback")
+  attendance              AttendanceRecord[] @relation("StudentAttendance")
+  classCancels            ClassCancellation[] @relation("FacultyClassCancels")
+  notifications           InAppNotification[] @relation("UserNotifications")
+  pushSubs                PushSubscription[]  @relation("UserPushSubs")
+  allocatedBed            Bed?              @relation("StudentBedAllocation")
+  transferRequests        HostelTransferRequest[] @relation("StudentTransferRequests")
+  documents               StudentDocument[] @relation("StudentDocuments")
+  systemAuditLogs         AuditLog[]        @relation("AuditLogActor")
+
+  @@index([role, hostelBlock, verificationStatus])
+}
+
+model PushSubscription {
+  id        String   @id @default(uuid())
+  userId    String
+  user      User     @relation("UserPushSubs", fields: [userId], references: [id], onDelete: Cascade)
+  endpoint  String   @unique
+  p256dh    String
+  auth      String
+  createdAt DateTime @default(now())
+}
+
+model Hostel {
+  id          String   @id @default(uuid())
+  name        String   @unique
+  type        String   @default("BOYS")
+  wardenId    String?
+  description String?
+  totalRooms  Int      @default(0)
+  totalBeds   Int      @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  rooms       Room[]
+}
+
+model Room {
+  id          String   @id @default(uuid())
+  roomNumber  String
+  hostelId    String
+  hostel      Hostel   @relation(fields: [hostelId], references: [id], onDelete: Cascade)
+  hostelBlock String
+  floor       Int      @default(1)
+  capacity    Int      @default(2)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  beds        Bed[]
+
+  @@unique([hostelBlock, roomNumber])
+  @@index([hostelBlock])
+}
+
+model Bed {
+  id          String   @id @default(uuid())
+  bedNumber   String
+  roomId      String
+  room        Room     @relation(fields: [roomId], references: [id], onDelete: Cascade)
+  roomNumber  String
+  hostelBlock String
+  status      String   @default("AVAILABLE")
+  studentId   String?  @unique
+  student     User?    @relation("StudentBedAllocation", fields: [studentId], references: [id], onDelete: SetNull)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@unique([hostelBlock, roomNumber, bedNumber])
+  @@index([hostelBlock, status])
+}
+
+model HostelTransferRequest {
+  id            String   @id @default(uuid())
+  requestNumber String   @unique
+  studentId     String
+  student       User     @relation("StudentTransferRequests", fields: [studentId], references: [id], onDelete: Cascade)
+  fromHostel    String
+  fromRoom      String?
+  fromBed       String?
+  toHostel      String
+  toRoom        String?
+  reason        String
+  status        String   @default("PENDING_WARDEN")
+  wardenRemark  String?
+  adminRemark   String?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@index([studentId, status])
+  @@index([toHostel, status])
+}
+
+model StudentDocument {
+  id              String    @id @default(uuid())
+  studentId       String
+  student         User      @relation("StudentDocuments", fields: [studentId], references: [id], onDelete: Cascade)
+  docType         String
+  docName         String
+  fileUrl         String?
+  status          String    @default("PENDING")
+  rejectionReason String?
+  uploadedAt      DateTime  @default(now())
+  verifiedAt      DateTime?
+
+  @@index([studentId, status])
+}
+
+model AuditLog {
+  id          String   @id @default(uuid())
+  action      String
+  actorId     String
+  actor       User     @relation("AuditLogActor", fields: [actorId], references: [id], onDelete: Cascade)
+  actorRole   String
+  targetType  String
+  targetId    String?
+  details     String
+  hostelBlock String?
+  createdAt   DateTime @default(now())
+
+  @@index([action, createdAt])
+  @@index([actorId])
+  @@index([hostelBlock])
+}
+
+model Ticket {
+  id                  String          @id @default(uuid())
+  ticketNumber        String          @unique
+  studentId           String
+  student             User            @relation("StudentTickets", fields: [studentId], references: [id])
+  title               String
+  description         String
+  category            TicketCategory
+  predictedCategory   TicketCategory?
+  isCategoryCorrected Boolean         @default(false)
+  hostelBlock         String
+  roomNumber          String
+  priority            TicketPriority  @default(MEDIUM)
+  status              TicketStatus    @default(SUBMITTED)
+  assignedStaffId     String?
+  assignedStaff       User?           @relation("StaffAssignedTickets", fields: [assignedStaffId], references: [id])
+  photoData           Bytes?
+  photoMimeType       String?
+  escalationLevel     Int             @default(0)
+  escalatedAt         DateTime?
+  resolvedAt          DateTime?
+  resolutionNote      String?
+  createdAt           DateTime        @default(now())
+  updatedAt           DateTime        @updatedAt
+
+  auditLogs           TicketAuditLog[]
+
+  @@index([category, hostelBlock, roomNumber])
+  @@index([status, createdAt])
+}
+
+model TicketAuditLog {
+  id          String       @id @default(uuid())
+  ticketId    String
+  ticket      Ticket       @relation(fields: [ticketId], references: [id], onDelete: Cascade)
+  changedById String
+  changedBy   User         @relation("AuditUser", fields: [changedById], references: [id])
+  fromStatus  TicketStatus?
+  toStatus    TicketStatus
+  action      String
+  note        String
+  createdAt   DateTime     @default(now())
+
+  @@index([ticketId, createdAt])
+}
+
+model GatePass {
+  id                 String         @id @default(uuid())
+  passNumber         String         @unique
+  studentId          String
+  student            User           @relation("StudentGatePasses", fields: [studentId], references: [id])
+  type               GatePassType
+  departureDate      DateTime
+  expectedReturnDate DateTime
+  actualExitTime     DateTime?
+  actualEntryTime    DateTime?
+  destination        String
+  reason             String
+  parentContact      String
+  status             GatePassStatus @default(PENDING)
+  approvedById       String?
+  approvedBy         User?          @relation("WardenGatePassReviews", fields: [approvedById], references: [id])
+  wardenComment      String?
+  qrCodeData         String?
+  securityGuardName  String?
+  securityNotes      String?
+  createdAt          DateTime       @default(now())
+  updatedAt          DateTime       @updatedAt
+
+  @@index([studentId, status])
+}
+
+model Notice {
+  id             String           @id @default(uuid())
+  title          String
+  content        String
+  category       String           @default("GENERAL")
+  priority       NoticePriority   @default(NORMAL)
+  targetType     NoticeTargetType @default(ALL)
+  targetValue    String?
+  publishedById  String
+  publishedBy    User             @relation("AuthorNotices", fields: [publishedById], references: [id])
+  requiresAction Boolean          @default(false)
+  actionType     NoticeActionType @default(NONE)
+  actionDeadline DateTime?
+  actionLink     String?
+  expiresAt      DateTime?
+  createdAt      DateTime         @default(now())
+  updatedAt      DateTime         @updatedAt
+
+  recipients     NoticeRecipient[]
+
+  @@index([targetType, targetValue])
+  @@index([category])
+}
+
+model NoticeRecipient {
+  id                 String    @id @default(uuid())
+  noticeId           String
+  notice             Notice    @relation(fields: [noticeId], references: [id], onDelete: Cascade)
+  studentId          String
+  student            User      @relation("RecipientUser", fields: [studentId], references: [id], onDelete: Cascade)
+  isDelivered        Boolean   @default(true)
+  deliveredAt        DateTime  @default(now())
+  isRead             Boolean   @default(false)
+  readAt             DateTime?
+  isActionDone       Boolean   @default(false)
+  actionCompletedAt  DateTime?
+  actionNotes        String?
+  reminderSentCount  Int       @default(0)
+  lastReminderSentAt DateTime?
+
+  @@unique([noticeId, studentId])
+  @@index([studentId, isRead])
+}
+
+model CourseSchedule {
+  id          String   @id @default(uuid())
+  branch      String
+  year        Int
+  batch       String?
+  subjectCode String
+  subjectName String
+  facultyName String
+  dayOfWeek   Int
+  startTime   String
+  endTime     String
+  room        String
+  createdAt   DateTime @default(now())
+
+  @@index([branch, year, dayOfWeek])
+}
+
+model ClassCancellation {
+  id          String   @id @default(uuid())
+  subjectName String
+  facultyName String
+  date        DateTime
+  branch      String
+  year        Int
+  reason      String
+  postedById  String
+  postedBy    User     @relation("FacultyClassCancels", fields: [postedById], references: [id])
+  createdAt   DateTime @default(now())
+
+  @@index([branch, year, date])
+}
+
+model AttendanceRecord {
+  id              String   @id @default(uuid())
+  studentId       String
+  student         User     @relation("StudentAttendance", fields: [studentId], references: [id], onDelete: Cascade)
+  subjectCode     String
+  subjectName     String
+  totalClasses    Int
+  attendedClasses Int
+  semester        Int
+  updatedAt       DateTime @default(now())
+
+  @@unique([studentId, subjectCode, semester])
+}
+
+model MessMenu {
+  id          String   @id @default(uuid())
+  hostelBlock String
+  dayOfWeek   Int
+  breakfast   String
+  lunch       String
+  snacks      String
+  dinner      String
+  updatedAt   DateTime @default(now())
+
+  @@unique([hostelBlock, dayOfWeek])
+}
+
+model MessFeedback {
+  id          String   @id @default(uuid())
+  studentId   String
+  student     User     @relation("StudentMessFeedback", fields: [studentId], references: [id])
+  hostelBlock String
+  mealType    MealType
+  date        DateTime @default(now())
+  rating      Int
+  comments    String?
+  createdAt   DateTime @default(now())
+
+  @@index([hostelBlock, mealType, date])
+}
+
+model DocumentRequest {
+  id             String         @id @default(uuid())
+  requestNumber  String         @unique
+  studentId      String
+  student        User           @relation("StudentDocRequests", fields: [studentId], references: [id])
+  docType        DocumentType
+  purpose        String
+  status         DocumentStatus @default(SUBMITTED)
+  approvedById   String?
+  approvedBy     User?          @relation("AdminDocReviews", fields: [approvedById], references: [id])
+  remarks        String?
+  generatedPdfUrl String?
+  createdAt      DateTime       @default(now())
+  updatedAt      DateTime       @updatedAt
+
+  @@index([studentId, status])
+}
+
+model FeeRecord {
+  id           String    @id @default(uuid())
+  rollNumber   String
+  studentName  String
+  totalFee     Float
+  paidFee      Float
+  dueFee       Float
+  dueDate      DateTime
+  semester     Int
+  academicYear String
+  status       FeeStatus @default(DUE)
+  importedAt   DateTime  @default(now())
+
+  @@unique([rollNumber, semester, academicYear])
+  @@index([rollNumber])
+}
+
+model InAppNotification {
+  id        String   @id @default(uuid())
+  userId    String
+  user      User     @relation("UserNotifications", fields: [userId], references: [id], onDelete: Cascade)
+  title     String
+  message   String
+  type      String
+  linkUrl   String?
+  isRead    Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  @@index([userId, isRead])
+}
+
+model ClassifierTrainingData {
+  id        String   @id @default(uuid())
+  text      String
+  category  String
+  source    String   @default("INITIAL")
+  createdAt DateTime @default(now())
+}

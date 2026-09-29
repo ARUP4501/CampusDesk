@@ -1,0 +1,63 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --bg-main: #fbfaf7;
+  --bg-card: #ffffff;
+  --bg-muted: #f4f2ec;
+  --text-main: #1c1917;
+  --text-muted: #57534e;
+  --border-color: #e7e5e4;
+  --primary-color: #0f4c3a;
+  --primary-hover: #0b392b;
+  --danger-color: #b91c1c;
+  --warning-color: #b45309;
+  --success-color: #15803d;
+  --accent-color: #0f4c3a;
+}
+
+body {
+  background-color: var(--bg-main);
+  color: var(--text-main);
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  font-size: 16px;
+  line-height: 1.5;
+}
+
+/* Reduced motion preference support */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  ::before,
+  ::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* Standard focus ring */
+*:focus-visible {
+  outline: 2px solid var(--primary-color);
+  outline-offset: 2px;
+}
+
+/* Form inputs & buttons adhere to 4px to 6px radius */
+button, input, select, textarea {
+  border-radius: 4px;
+}
+
+/* Print Styles for ticket slips */
+@media print {
+  body {
+    background: #ffffff !important;
+    color: #000000 !important;
+  }
+  .no-print {
+    display: none !important;
+  }
+  .print-only {
+    display: block !important;
+  }
+}

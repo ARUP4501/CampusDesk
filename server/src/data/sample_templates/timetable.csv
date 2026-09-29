@@ -1,0 +1,9 @@
+branch,year,subjectCode,subjectName,facultyName,dayOfWeek,startTime,endTime,room
+CSE,2,CS201,Data Structures and Algorithms,Prof. R. Sengupta,1,09:00,10:00,Room-201
+CSE,2,CS202,Database Management Systems,Dr. S. Mohapatra,1,10:15,11:15,Lab-3
+CSE,2,CS203,Computer Organization,Prof. A. Ray,1,11:30,12:30,Room-201
+CSE,2,CS204,Discrete Mathematics,Dr. K. Nanda,1,14:00,15:00,Room-202
+CSE,2,CS201,Data Structures Lab,Prof. R. Sengupta,2,09:00,11:00,Lab-2
+CSE,2,CS205,Operating Systems,Prof. M. Tripathy,2,11:30,12:30,Room-201
+EE,2,EE201,Circuit Theory,Dr. B. K. Jena,1,09:00,10:00,Room-301
+EE,2,EE202,Electrical Machines I,Prof. T. Mishra,1,10:15,11:15,Room-301
