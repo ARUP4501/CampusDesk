@@ -51,58 +51,60 @@ export const NotificationInbox: React.FC = () => {
     <div className="relative">
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className="relative p-1.5 text-stone-700 hover:text-stone-900 border border-stone-300 rounded-[4px] bg-white hover:bg-stone-50 focus:outline-none"
+        className="relative p-1.5 text-[#A7ADB5] hover:text-[#F3F4F6] border border-[#252B31] rounded-[4px] bg-[#101316] hover:bg-[#14181C] hover:border-[#363E48] transition-colors focus:outline-none"
         aria-label="View notifications"
         aria-expanded={isOpen}
       >
         <Bell className="w-4 h-4" aria-hidden="true" />
         {unreadCount > 0 && (
-          <span className="absolute -top-1 -right-1 bg-red-600 text-white text-[10px] font-bold px-1.5 py-0.2 rounded-full min-w-[16px] text-center">
+          <span className="absolute -top-1 -right-1 bg-[#EF4444] text-white text-[9px] font-mono font-bold px-1.5 py-0.2 rounded-full min-w-[15px] text-center shadow-xs">
             {unreadCount > 9 ? "9+" : unreadCount}
           </span>
         )}
       </button>
 
       {isOpen && (
-        <div className="absolute right-0 mt-2 w-80 sm:w-96 bg-white border border-stone-300 shadow-md rounded-[4px] z-50 overflow-hidden">
-          <div className="px-3 py-2 border-b border-stone-200 bg-stone-50 flex items-center justify-between">
-            <span className="text-xs font-bold text-stone-800 uppercase tracking-wider">
-              Inbox ({unreadCount} unread)
+        <div className="absolute right-0 mt-2 w-80 sm:w-96 bg-[#14181C] border border-[#252B31] shadow-elevated rounded-[6px] z-50 overflow-hidden">
+          <div className="px-3.5 py-2.5 border-b border-[#252B31] bg-[#101316] flex items-center justify-between">
+            <span className="text-[11px] font-mono font-semibold text-[#F3F4F6] uppercase tracking-wider">
+              System Inbox ({unreadCount} unread)
             </span>
             {unreadCount > 0 && (
               <button
                 onClick={markAllRead}
-                className="text-xs text-emerald-800 hover:underline flex items-center space-x-1"
+                className="text-xs text-[#D6A84F] hover:text-[#F0C86A] flex items-center space-x-1 transition-colors"
               >
                 <CheckCheck className="w-3.5 h-3.5 mr-1" />
-                Mark all read
+                <span>Mark read</span>
               </button>
             )}
           </div>
 
-          <div className="max-h-72 overflow-y-auto divide-y divide-stone-100">
+          <div className="max-h-72 overflow-y-auto divide-y divide-[#252B31]">
             {notifications.length === 0 ? (
-              <div className="p-4 text-center text-xs text-stone-500">
-                No notifications in your inbox.
+              <div className="p-6 text-center text-xs text-[#6F7781]">
+                No pending notifications in your inbox.
               </div>
             ) : (
               notifications.map((n) => (
                 <div
                   key={n.id}
-                  className={`p-3 text-xs ${!n.isRead ? "bg-stone-50 font-medium" : "bg-white text-stone-700"}`}
+                  className={`p-3 text-xs transition-colors ${
+                    !n.isRead ? "bg-[#181D22] text-[#F3F4F6]" : "bg-[#14181C] text-[#A7ADB5]"
+                  }`}
                 >
-                  <div className="flex items-start justify-between">
-                    <span className="font-semibold text-stone-900">{n.title}</span>
-                    <span className="text-[10px] text-stone-400">
+                  <div className="flex items-start justify-between gap-2">
+                    <span className="font-semibold text-[#F3F4F6]">{n.title}</span>
+                    <span className="text-[10px] font-mono text-[#6F7781] shrink-0">
                       {new Date(n.createdAt).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
                     </span>
                   </div>
-                  <p className="mt-1 text-stone-600">{n.message}</p>
+                  <p className="mt-1 text-[#A7ADB5] leading-relaxed">{n.message}</p>
                   {n.linkUrl && (
                     <Link
                       to={n.linkUrl}
                       onClick={() => setIsOpen(false)}
-                      className="inline-block mt-1 text-emerald-800 font-semibold hover:underline"
+                      className="inline-block mt-1.5 text-[#D6A84F] hover:text-[#F0C86A] font-medium transition-colors"
                     >
                       View Details &rarr;
                     </Link>

@@ -3,29 +3,101 @@
 @tailwind utilities;
 
 :root {
-  --bg-main: #fbfaf7;
-  --bg-card: #ffffff;
-  --bg-muted: #f4f2ec;
-  --text-main: #1c1917;
-  --text-muted: #57534e;
-  --border-color: #e7e5e4;
-  --primary-color: #0f4c3a;
-  --primary-hover: #0b392b;
-  --danger-color: #b91c1c;
-  --warning-color: #b45309;
-  --success-color: #15803d;
-  --accent-color: #0f4c3a;
+  --bg-main: #07090B;
+  --bg-surface: #0D1013;
+  --bg-card: #14181C;
+  --bg-elevated: #181D22;
+  --border-color: rgba(255, 255, 255, 0.08);
+  --border-hover: rgba(255, 255, 255, 0.15);
+  --primary-color: #D6A84F;
+  --primary-hover: #F0C86A;
+  --danger-color: #EF4444;
+  --warning-color: #F59E0B;
+  --success-color: #10B981;
+  --info-color: #3B82F6;
+  --text-main: #F3F4F6;
+  --text-secondary: #A7ADB5;
+  --text-muted: #6F7781;
 }
 
 body {
-  background-color: var(--bg-main);
-  color: var(--text-main);
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
-  font-size: 16px;
+  background-color: #07090B;
+  color: #F3F4F6;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  font-size: 14px;
   line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
-/* Reduced motion preference support */
+/* Frosted Glass System (Campus OS) */
+.glass-panel {
+  background: rgba(20, 24, 28, 0.65);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.glass-panel-hover {
+  transition: all 180ms ease-in-out;
+}
+.glass-panel-hover:hover {
+  background: rgba(26, 31, 36, 0.8);
+  border-color: rgba(255, 255, 255, 0.14);
+}
+
+.glass-modal {
+  background: rgba(15, 18, 22, 0.85);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.7);
+}
+
+.glass-nav-rail {
+  background: rgba(13, 16, 19, 0.8);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  border-right: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.glass-top-bar {
+  background: rgba(10, 13, 16, 0.75);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+/* Subtle Technical Patterns */
+.bg-grid-technical {
+  background-size: 32px 32px;
+  background-image: 
+    linear-gradient(to right, rgba(255, 255, 255, 0.025) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(255, 255, 255, 0.025) 1px, transparent 1px);
+}
+
+.bg-dots-technical {
+  background-image: radial-gradient(rgba(214, 168, 79, 0.1) 1px, transparent 1px);
+  background-size: 24px 24px;
+}
+
+/* Refined Dark Scrollbar */
+::-webkit-scrollbar {
+  width: 5px;
+  height: 5px;
+}
+::-webkit-scrollbar-track {
+  background: #07090B;
+}
+::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.12);
+  border-radius: 3px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.2);
+}
+
+/* Reduced motion preference */
 @media (prefers-reduced-motion: reduce) {
   *,
   ::before,
@@ -37,18 +109,28 @@ body {
   }
 }
 
-/* Standard focus ring */
+/* Refined gold focus ring */
 *:focus-visible {
-  outline: 2px solid var(--primary-color);
+  outline: 2px solid #D6A84F;
   outline-offset: 2px;
 }
 
-/* Form inputs & buttons adhere to 4px to 6px radius */
-button, input, select, textarea {
+/* Inputs, buttons, and surfaces default styling */
+input, select, textarea {
+  background-color: #0D1013;
+  border-color: rgba(255, 255, 255, 0.08);
+  color: #F3F4F6;
   border-radius: 4px;
 }
+input::placeholder, textarea::placeholder {
+  color: #6F7781;
+}
+input:focus, select:focus, textarea:focus {
+  border-color: #D6A84F;
+  outline: none;
+}
 
-/* Print Styles for ticket slips */
+/* Print Styles */
 @media print {
   body {
     background: #ffffff !important;

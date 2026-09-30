@@ -1,21 +1,16 @@
-import React from "react";
-import { Link } from "react-router-dom";
-import { useTranslation } from "react-i18next";
+import React, { useEffect } from "react";
+import { Link, useLocation } from "react-router-dom";
 import {
   Wrench,
-  QrCode,
-  Bell,
-  Calendar,
+  DoorOpen,
+  Megaphone,
+  CalendarDays,
   Utensils,
-  FileText,
-  CreditCard,
-  HelpCircle,
-  Terminal,
-  BarChart2,
-  ShieldCheck,
-  CheckCircle,
+  ArrowRight,
+  Wifi,
+  Shield,
   Clock,
-  Smartphone
+  QrCode
 } from "lucide-react";
 import { UserProfile } from "../api/client.js";
 
@@ -25,188 +20,198 @@ interface LandingPageProps {
 }
 
 export const LandingPage: React.FC<LandingPageProps> = ({ user }) => {
-  const { t } = useTranslation();
+  const location = useLocation();
+
+  useEffect(() => {
+    if (location.hash) {
+      const id = location.hash.replace("#", "");
+      const el = document.getElementById(id);
+      if (el) {
+        setTimeout(() => el.scrollIntoView({ behavior: "smooth" }), 100);
+      }
+    }
+  }, [location]);
 
   return (
+    <div className="max-w-4xl mx-auto space-y-16 py-8">
+      {/* 1. HERO */}
+      <section id="hero" className="text-center space-y-4 pt-4">
+        <div className="inline-flex items-center space-x-2 px-3 py-1 rounded-full bg-white/5 border border-white/[0.08] text-campus-gold text-xs font-mono">
+          <span>CAMPUS OPERATIONS PORTAL</span>
+        </div>
 
-    <div className="space-y-12">
-      {/* Hero Section: Plain, concrete, no banned words, solid background */}
-      <section className="bg-white border border-stone-300 rounded-[6px] p-6 sm:p-10 shadow-sm">
-        <div className="max-w-3xl">
-          <div className="inline-flex items-center space-x-2 bg-stone-100 text-stone-800 text-xs font-semibold px-2.5 py-1 rounded-[4px] border border-stone-300 mb-4">
-            <ShieldCheck className="w-4 h-4 text-emerald-800" />
-            <span>Official College Operations Portal</span>
-          </div>
+        <h1 className="text-3xl sm:text-5xl font-bold tracking-tight text-campus-text">
+          Campus operations, <br />
+          <span className="text-campus-gold">made simple.</span>
+        </h1>
 
-          <h1 className="text-2xl sm:text-4xl font-extrabold text-stone-900 tracking-tight leading-tight">
-            Raise a hostel complaint, request a gate pass and read college notices in one place.
-          </h1>
+        <p className="text-sm sm:text-base text-campus-secondary max-w-xl mx-auto leading-relaxed">
+          One unified portal for students, staff, and wardens — submit maintenance complaints, request gate passes, read circulars, and check mess menus.
+        </p>
 
-          <p className="mt-4 text-base sm:text-lg text-stone-600 leading-relaxed">
-            Staff see every open request and how long it has been waiting. Built for low-bandwidth hostel networks and smartphones, with a text command fallback for hostel offices.
-          </p>
-
-          <div className="mt-6 flex flex-wrap gap-3">
-            {user ? (
-              <Link
-                to="/tickets"
-                className="bg-[#0f4c3a] text-white hover:bg-[#0b392b] px-5 py-2.5 text-sm font-semibold rounded-[4px] inline-flex items-center space-x-2"
-              >
-                <Wrench className="w-4 h-4" />
-                <span>Go to Complaints Portal</span>
-              </Link>
-            ) : (
-              <>
-                <Link
-                  to="/login"
-                  className="bg-[#0f4c3a] text-white hover:bg-[#0b392b] px-5 py-2.5 text-sm font-semibold rounded-[4px] inline-flex items-center space-x-2"
-                >
-                  <span>Sign In</span>
-                </Link>
-                <Link
-                  to="/register"
-                  className="bg-white text-stone-800 hover:bg-stone-100 border border-stone-300 px-5 py-2.5 text-sm font-semibold rounded-[4px]"
-                >
-                  <span>New Student Registration</span>
-                </Link>
-              </>
-            )}
+        <div className="flex flex-wrap items-center justify-center gap-3 pt-3">
+          {user ? (
             <Link
-              to="/console"
-              className="bg-stone-100 text-stone-800 hover:bg-stone-200 border border-stone-300 px-4 py-2.5 text-sm font-medium rounded-[4px] inline-flex items-center space-x-2"
+              to="/"
+              className="bg-campus-gold hover:bg-campus-goldLight text-campus-bg px-6 py-2.5 text-xs font-bold rounded inline-flex items-center space-x-2 shadow-subtle transition-all"
             >
-              <Terminal className="w-4 h-4 text-stone-700" />
-              <span>Offline Text Command Console</span>
+              <span>Go to Dashboard</span>
+              <ArrowRight className="w-4 h-4" />
             </Link>
-          </div>
+          ) : (
+            <>
+              <Link
+                to="/login"
+                className="bg-campus-gold hover:bg-campus-goldLight text-campus-bg px-6 py-2.5 text-xs font-bold rounded inline-flex items-center space-x-2 shadow-subtle transition-all"
+              >
+                <span>Sign In to Portal</span>
+                <ArrowRight className="w-4 h-4" />
+              </Link>
+              <Link
+                to="/register"
+                className="px-5 py-2.5 text-xs font-medium rounded border border-white/[0.08] bg-campus-surface hover:bg-white/5 text-campus-text transition-all"
+              >
+                <span>Student Registration</span>
+              </Link>
+            </>
+          )}
         </div>
       </section>
 
-      {/* Workflow Features Grid */}
-      <section>
-        <div className="mb-4">
-          <h2 className="text-lg font-bold text-stone-900">Core Campus Workflows</h2>
-          <p className="text-xs text-stone-600">
-            Every feature connects to live PostgreSQL storage with role authorization and audit logging.
+      {/* 2. THREE KEY BENEFITS & OFFLINE RESILIENCE */}
+      <section id="resilience" className="grid grid-cols-1 md:grid-cols-3 gap-4 scroll-mt-20">
+        <div className="p-5 rounded bg-campus-card border border-white/[0.08] space-y-2">
+          <div className="w-8 h-8 rounded bg-campus-surface border border-white/[0.08] flex items-center justify-center text-campus-gold">
+            <Clock className="w-4 h-4" />
+          </div>
+          <h3 className="text-sm font-semibold text-campus-text">Fast Resolution</h3>
+          <p className="text-xs text-campus-muted leading-relaxed">
+            Report room electrical or plumbing defects with photos. Track assigned staff and SLA resolution times directly.
           </p>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          {/* Card 1 */}
-          <div className="bg-white border border-stone-300 p-5 rounded-[4px]">
-            <div className="flex items-center space-x-2 text-stone-900 font-bold mb-2">
-              <Wrench className="w-4 h-4 text-[#0f4c3a]" />
-              <h3>1. Complaint Ticketing & SLA</h3>
+        <div className="p-5 rounded bg-campus-card border border-white/[0.08] space-y-2">
+          <div className="w-8 h-8 rounded bg-campus-surface border border-white/[0.08] flex items-center justify-center text-campus-gold">
+            <QrCode className="w-4 h-4" />
+          </div>
+          <h3 className="text-sm font-semibold text-campus-text">Digital Gate Pass</h3>
+          <p className="text-xs text-campus-muted leading-relaxed">
+            Apply for hostel outing or weekend leave online. Wardens verify and security scans QR codes at the main gate.
+          </p>
+        </div>
+
+        <div className="p-5 rounded bg-campus-card border border-white/[0.08] space-y-2">
+          <div className="w-8 h-8 rounded bg-campus-surface border border-white/[0.08] flex items-center justify-center text-campus-gold">
+            <Wifi className="w-4 h-4" />
+          </div>
+          <h3 className="text-sm font-semibold text-campus-text">Works Offline</h3>
+          <p className="text-xs text-campus-muted leading-relaxed">
+            Weak hostel Wi-Fi? CampusDesk queues your requests locally and automatically syncs when connection returns.
+          </p>
+        </div>
+      </section>
+
+      {/* 3. SIMPLE CORE FEATURES / OVERVIEW */}
+      <section id="features" className="space-y-4 scroll-mt-20">
+        <div className="text-center space-y-1">
+          <h2 className="text-lg font-bold text-campus-text">Core Campus Services</h2>
+          <p className="text-xs text-campus-muted">Everything students and faculty need in one straightforward place</p>
+        </div>
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 text-xs">
+          <div className="p-4 rounded bg-campus-surface border border-white/[0.08] space-y-1.5">
+            <div className="flex items-center space-x-2 font-semibold text-campus-text">
+              <Wrench className="w-4 h-4 text-campus-gold" />
+              <span>Hostel Maintenance</span>
             </div>
-            <p className="text-xs text-stone-600 leading-relaxed">
-              Auto-routes complaint text via TF-IDF classifier into department queues (Plumbing, Electrical, Carpentry). Auto-escalates past 24h and 48h SLAs with immutable audit trails.
-            </p>
-            <div className="mt-3 flex items-center space-x-2 text-[11px] text-stone-500 font-medium">
-              <CheckCircle className="w-3.5 h-3.5 text-emerald-700" />
-              <span>Recurring issue detection by room/block</span>
-            </div>
+            <p className="text-campus-muted leading-relaxed">Submit complaints with photo evidence and view repair status updates.</p>
           </div>
 
-          {/* Card 2 */}
-          <div className="bg-white border border-stone-300 p-5 rounded-[4px]">
-            <div className="flex items-center space-x-2 text-stone-900 font-bold mb-2">
-              <QrCode className="w-4 h-4 text-[#0f4c3a]" />
-              <h3>2. Gate Pass & Leave Approvals</h3>
+          <div className="p-4 rounded bg-campus-surface border border-white/[0.08] space-y-1.5">
+            <div className="flex items-center space-x-2 font-semibold text-campus-text">
+              <DoorOpen className="w-4 h-4 text-campus-gold" />
+              <span>Gate Passes</span>
             </div>
-            <p className="text-xs text-stone-600 leading-relaxed">
-              Warden review with remarks, dynamic cryptographic QR code verification, and security guard gate log with exit/entry timestamps and overdue return tracking.
-            </p>
-            <div className="mt-3 flex items-center space-x-2 text-[11px] text-stone-500 font-medium">
-              <CheckCircle className="w-3.5 h-3.5 text-emerald-700" />
-              <span>Real-time scan verification at main gate</span>
-            </div>
+            <p className="text-campus-muted leading-relaxed">Warden approval workflow with dynamic QR passes for gate security.</p>
           </div>
 
-          {/* Card 3 */}
-          <div className="bg-white border border-stone-300 p-5 rounded-[4px]">
-            <div className="flex items-center space-x-2 text-stone-900 font-bold mb-2">
-              <Bell className="w-4 h-4 text-[#0f4c3a]" />
-              <h3>3. Targeted Notices with Tracking</h3>
+          <div className="p-4 rounded bg-campus-surface border border-white/[0.08] space-y-1.5">
+            <div className="flex items-center space-x-2 font-semibold text-campus-text">
+              <Megaphone className="w-4 h-4 text-campus-gold" />
+              <span>Official Notices</span>
             </div>
-            <p className="text-xs text-stone-600 leading-relaxed">
-              Target by branch, hostel, batch or year. Per-student delivery, read, and action completion tracking with one-click automated reminders for pending students.
-            </p>
-            <div className="mt-3 flex items-center space-x-2 text-[11px] text-stone-500 font-medium">
-              <CheckCircle className="w-3.5 h-3.5 text-emerald-700" />
-              <span>Web Push and in-app notifications</span>
-            </div>
+            <p className="text-campus-muted leading-relaxed">Targeted college announcements and exam registration notices.</p>
           </div>
 
-          {/* Card 4 */}
-          <div className="bg-white border border-stone-300 p-5 rounded-[4px]">
-            <div className="flex items-center space-x-2 text-stone-900 font-bold mb-2">
-              <Calendar className="w-4 h-4 text-[#0f4c3a]" />
-              <h3>4. Timetable & Cancellations</h3>
+          <div className="p-4 rounded bg-campus-surface border border-white/[0.08] space-y-1.5">
+            <div className="flex items-center space-x-2 font-semibold text-campus-text">
+              <Utensils className="w-4 h-4 text-campus-gold" />
+              <span>Mess Dining</span>
             </div>
-            <p className="text-xs text-stone-600 leading-relaxed">
-              Live schedule view with faculty class cancellation alerts and student subject-wise attendance percentage with shortage warnings (&lt;75%).
-            </p>
+            <p className="text-campus-muted leading-relaxed">Weekly mess menu schedule with daily student meal feedback ratings.</p>
           </div>
 
-          {/* Card 5 */}
-          <div className="bg-white border border-stone-300 p-5 rounded-[4px]">
-            <div className="flex items-center space-x-2 text-stone-900 font-bold mb-2">
-              <FileText className="w-4 h-4 text-[#0f4c3a]" />
-              <h3>5. Documents & Bonafide PDF</h3>
+          <div className="p-4 rounded bg-campus-surface border border-white/[0.08] space-y-1.5">
+            <div className="flex items-center space-x-2 font-semibold text-campus-text">
+              <CalendarDays className="w-4 h-4 text-campus-gold" />
+              <span>Academic Timetable</span>
             </div>
-            <p className="text-xs text-stone-600 leading-relaxed">
-              Submit scholarship or certificate requests. Download digitally verifiable A4 Bonafide certificate PDFs with official institutional reference stamps upon approval.
-            </p>
+            <p className="text-campus-muted leading-relaxed">Weekly lecture schedules and real-time class cancellation alerts.</p>
           </div>
 
-          {/* Card 6 */}
-          <div className="bg-white border border-stone-300 p-5 rounded-[4px]">
-            <div className="flex items-center space-x-2 text-stone-900 font-bold mb-2">
-              <Terminal className="w-4 h-4 text-[#0f4c3a]" />
-              <h3>6. Command Fallback & Slips</h3>
+          <div className="p-4 rounded bg-campus-surface border border-white/[0.08] space-y-1.5">
+            <div className="flex items-center space-x-2 font-semibold text-campus-text">
+              <Shield className="w-4 h-4 text-campus-gold" />
+              <span>Digital Certificates</span>
             </div>
-            <p className="text-xs text-stone-600 leading-relaxed">
-              Hostel office console accepting short text commands (<code>STATUS 1001</code>, <code>COMPLAIN ...</code>) for students without smartphones, plus printable physical slips.
-            </p>
+            <p className="text-campus-muted leading-relaxed">Request Bonafide certificates and fee estimates with direct PDF downloads.</p>
           </div>
         </div>
       </section>
 
-      {/* Accessibility & Low-Bandwidth Specs */}
-      <section className="bg-white border border-stone-300 rounded-[6px] p-6">
-        <h2 className="text-base font-bold text-stone-900 mb-2">
-          Hostel Network & Low-Bandwidth Resilience
-        </h2>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-xs text-stone-600">
-          <div className="p-3 bg-stone-50 border border-stone-200 rounded-[4px]">
-            <div className="font-semibold text-stone-900 mb-1 flex items-center space-x-1.5">
-              <Clock className="w-3.5 h-3.5 text-stone-700" />
-              <span>Offline Action Queue</span>
-            </div>
-            <p>
-              Requests made offline are stored in browser IndexedDB with a visible &quot;Waiting to send&quot; badge and auto-dispatched once connection is restored.
-            </p>
-          </div>
+      {/* 4. ROLES OVERVIEW */}
+      <section id="roles" className="p-6 rounded-lg bg-campus-card border border-white/[0.08] space-y-4 scroll-mt-20">
+        <div className="text-center space-y-1">
+          <h2 className="text-base font-bold text-campus-text">Built for Every Campus Role</h2>
+          <p className="text-xs text-campus-muted">Access only the tools and data relevant to you</p>
+        </div>
 
-          <div className="p-3 bg-stone-50 border border-stone-200 rounded-[4px]">
-            <div className="font-semibold text-stone-900 mb-1 flex items-center space-x-1.5">
-              <Smartphone className="w-3.5 h-3.5 text-stone-700" />
-              <span>Compressed Uploads</span>
-            </div>
-            <p>
-              Complaint photos are resized and compressed on the server with Sharp before PostgreSQL bytea storage, keeping payloads below 250KB.
-            </p>
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-center text-xs">
+          <div className="p-3 bg-campus-surface border border-white/[0.08] rounded space-y-1">
+            <span className="font-semibold text-campus-text block">Student</span>
+            <span className="text-[11px] text-campus-muted block">Services & Passes</span>
           </div>
+          <div className="p-3 bg-campus-surface border border-white/[0.08] rounded space-y-1">
+            <span className="font-semibold text-campus-text block">Staff</span>
+            <span className="text-[11px] text-campus-muted block">Work Order Queue</span>
+          </div>
+          <div className="p-3 bg-campus-surface border border-white/[0.08] rounded space-y-1">
+            <span className="font-semibold text-campus-text block">Warden</span>
+            <span className="text-[11px] text-campus-muted block">Hostels & Approvals</span>
+          </div>
+          <div className="p-3 bg-campus-surface border border-white/[0.08] rounded space-y-1">
+            <span className="font-semibold text-campus-text block">Admin</span>
+            <span className="text-[11px] text-campus-muted block">Central Oversight</span>
+          </div>
+        </div>
+      </section>
 
-          <div className="p-3 bg-stone-50 border border-stone-200 rounded-[4px]">
-            <div className="font-semibold text-stone-900 mb-1 flex items-center space-x-1.5">
-              <BarChart2 className="w-3.5 h-3.5 text-stone-700" />
-              <span>Live Database Metrics</span>
-            </div>
-            <p>
-              Zero mock statistics. Every admin metric, ageing bucket, resolution median, and recurring matrix cell is computed directly from SQL queries.
-            </p>
-          </div>
+      {/* 5. GET STARTED CTA */}
+      <section className="text-center space-y-3 py-4">
+        <h2 className="text-xl font-bold text-campus-text">Ready to get started?</h2>
+        <div className="flex items-center justify-center space-x-3">
+          <Link
+            to="/login"
+            className="bg-campus-gold hover:bg-campus-goldLight text-campus-bg px-6 py-2.5 text-xs font-bold rounded shadow-subtle transition-all"
+          >
+            Sign In Now
+          </Link>
+          <Link
+            to="/register"
+            className="px-5 py-2.5 text-xs font-medium rounded border border-white/[0.08] bg-campus-surface hover:bg-white/5 text-campus-text transition-all"
+          >
+            Register as Student
+          </Link>
         </div>
       </section>
     </div>

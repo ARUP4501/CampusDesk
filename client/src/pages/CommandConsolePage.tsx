@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { Terminal, Send, Printer, User, HelpCircle, CheckCircle2 } from "lucide-react";
+import { Terminal, Send, Printer, User, HelpCircle, CheckCircle2, ChevronRight } from "lucide-react";
 import { apiRequest, UserProfile } from "../api/client.js";
 
 interface CommandLogEntry {
@@ -95,24 +95,26 @@ export const CommandConsolePage: React.FC<{ user: UserProfile | null }> = ({ use
   return (
     <div className="max-w-4xl mx-auto space-y-6">
       {/* Top Header */}
-      <div className="bg-white border border-stone-300 p-4 rounded-[6px]">
-        <div className="flex items-center space-x-2">
-          <Terminal className="w-5 h-5 text-[#0f4c3a]" />
-          <h1 className="text-xl font-bold text-stone-900">Hostel Office Command Terminal & Slip Kiosk</h1>
+      <div className="bg-campus-card border border-campus-border p-5 rounded-lg">
+        <div className="flex items-center space-x-2.5">
+          <div className="w-8 h-8 rounded bg-campus-elevated border border-campus-border flex items-center justify-center text-campus-gold">
+            <Terminal className="w-4 h-4" />
+          </div>
+          <h1 className="text-lg font-semibold text-campus-text">Hostel Office Terminal & Slip Kiosk</h1>
         </div>
-        <p className="text-xs text-stone-600 mt-0.5">
-          Staff-assisted console for students without smartphones. Accept short text commands and issue printed physical slips.
+        <p className="text-xs text-campus-muted mt-1.5 ml-10">
+          Low-bandwidth CLI console for front-desk staff. Execute rapid keyboard commands and generate printed receipts.
         </p>
       </div>
 
       {/* Operator Assistant Bar */}
-      <div className="bg-stone-50 border border-stone-300 rounded-[6px] p-4 text-xs space-y-3 shadow-sm">
-        <div className="font-bold text-stone-900 uppercase tracking-wide">
-          Student Identification (for requests filed on student&apos;s behalf)
+      <div className="bg-campus-card border border-campus-border rounded-lg p-4 text-xs space-y-3">
+        <div className="font-mono text-campus-gold text-[11px] uppercase tracking-wider font-semibold">
+          Active Student Context (for requests filed on student&apos;s behalf)
         </div>
         <div className="flex flex-col sm:flex-row items-center gap-3">
           <div className="w-full sm:w-64">
-            <label htmlFor="studentRoll" className="block text-[11px] font-semibold text-stone-700 mb-1">
+            <label htmlFor="studentRoll" className="block text-[11px] text-campus-muted mb-1 font-mono">
               Student Roll Number
             </label>
             <input
@@ -121,46 +123,46 @@ export const CommandConsolePage: React.FC<{ user: UserProfile | null }> = ({ use
               value={studentRoll}
               onChange={(e) => setStudentRoll(e.target.value.toUpperCase())}
               placeholder="e.g. 2024CS101"
-              className="w-full px-2.5 py-1.5 border border-stone-300 rounded-[4px] font-mono bg-white uppercase"
+              className="w-full px-3 py-1.5 border border-campus-border rounded font-mono bg-campus-bg text-campus-text uppercase focus:outline-none focus:border-campus-gold"
             />
           </div>
 
-          <div className="flex-1 text-[11px] text-stone-500">
-            When a student visits the hostel office in person, enter their roll number above and type the request command below. A printed ticket slip can be generated immediately.
+          <div className="flex-1 text-[11px] text-campus-secondary leading-relaxed">
+            When a student visits the hostel office in person, enter their roll number above and execute shorthand commands. Physical thermal slips can be generated on demand.
           </div>
         </div>
       </div>
 
       {/* Quick Command Buttons */}
       <div className="flex items-center space-x-2 overflow-x-auto pb-1 text-xs">
-        <span className="font-semibold text-stone-600 whitespace-nowrap">Quick Commands:</span>
+        <span className="text-campus-muted text-[11px] font-mono whitespace-nowrap">Quick Commands:</span>
         <button
           onClick={() => handleExecute("STATUS CD-1001")}
-          className="whitespace-nowrap bg-white hover:bg-stone-100 border border-stone-300 text-stone-800 px-2.5 py-1 rounded-[4px] font-mono"
+          className="whitespace-nowrap bg-campus-card hover:bg-campus-elevated border border-campus-border text-campus-secondary hover:text-campus-gold px-2.5 py-1 rounded font-mono text-[11px] transition-colors"
         >
           STATUS CD-1001
         </button>
         <button
           onClick={() => handleExecute("COMPLAIN washbasin tap leaking water")}
-          className="whitespace-nowrap bg-white hover:bg-stone-100 border border-stone-300 text-stone-800 px-2.5 py-1 rounded-[4px] font-mono"
+          className="whitespace-nowrap bg-campus-card hover:bg-campus-elevated border border-campus-border text-campus-secondary hover:text-campus-gold px-2.5 py-1 rounded font-mono text-[11px] transition-colors"
         >
           COMPLAIN tap leaking
         </button>
         <button
           onClick={() => handleExecute("MESS TODAY")}
-          className="whitespace-nowrap bg-white hover:bg-stone-100 border border-stone-300 text-stone-800 px-2.5 py-1 rounded-[4px] font-mono"
+          className="whitespace-nowrap bg-campus-card hover:bg-campus-elevated border border-campus-border text-campus-secondary hover:text-campus-gold px-2.5 py-1 rounded font-mono text-[11px] transition-colors"
         >
           MESS TODAY
         </button>
         <button
           onClick={() => handleExecute("CANCEL")}
-          className="whitespace-nowrap bg-white hover:bg-stone-100 border border-stone-300 text-stone-800 px-2.5 py-1 rounded-[4px] font-mono"
+          className="whitespace-nowrap bg-campus-card hover:bg-campus-elevated border border-campus-border text-campus-secondary hover:text-campus-gold px-2.5 py-1 rounded font-mono text-[11px] transition-colors"
         >
           CANCEL
         </button>
         <button
           onClick={() => handleExecute("FEES")}
-          className="whitespace-nowrap bg-white hover:bg-stone-100 border border-stone-300 text-stone-800 px-2.5 py-1 rounded-[4px] font-mono"
+          className="whitespace-nowrap bg-campus-card hover:bg-campus-elevated border border-campus-border text-campus-secondary hover:text-campus-gold px-2.5 py-1 rounded font-mono text-[11px] transition-colors"
         >
           FEES
         </button>
@@ -172,59 +174,61 @@ export const CommandConsolePage: React.FC<{ user: UserProfile | null }> = ({ use
           e.preventDefault();
           handleExecute();
         }}
-        className="bg-white border border-stone-300 rounded-[6px] p-3 shadow-sm flex items-center space-x-2"
+        className="bg-campus-card border border-campus-border rounded-lg p-2.5 shadow-xl flex items-center space-x-2"
       >
-        <div className="font-mono text-emerald-900 font-bold text-sm pl-2 select-none">&gt;</div>
+        <div className="font-mono text-campus-gold font-bold text-sm pl-2 select-none flex items-center">
+          <ChevronRight className="w-4 h-4" />
+        </div>
         <input
           type="text"
           value={commandInput}
           onChange={(e) => setCommandInput(e.target.value)}
           placeholder="Enter command (e.g. COMPLAIN tube light flickering A-204, or STATUS CD-1001)..."
-          className="flex-1 text-xs font-mono px-3 py-2 border border-stone-300 rounded-[4px] focus:outline-none"
+          className="flex-1 text-xs font-mono px-3 py-2 bg-campus-bg border border-campus-border rounded text-campus-text placeholder-campus-muted focus:outline-none focus:border-campus-gold"
           autoFocus
         />
         <button
           type="submit"
           disabled={loading || !commandInput.trim()}
-          className="px-4 py-2 bg-stone-900 hover:bg-black text-white text-xs font-mono font-bold rounded-[4px] flex items-center space-x-1.5 disabled:opacity-50"
+          className="px-4 py-2 bg-campus-gold hover:bg-campus-gold-light text-campus-bg text-xs font-mono font-bold rounded flex items-center space-x-1.5 disabled:opacity-40 transition-colors"
         >
           <Send className="w-3.5 h-3.5" />
-          <span>Execute</span>
+          <span>Run</span>
         </button>
       </form>
 
       {/* Terminal History Logs */}
-      <div className="bg-stone-900 text-stone-100 border border-stone-800 rounded-[6px] p-4 font-mono text-xs shadow-inner min-h-[360px] max-h-[550px] overflow-y-auto space-y-4">
+      <div className="bg-[#0b0e11] text-campus-text border border-campus-border rounded-lg p-5 font-mono text-xs shadow-2xl min-h-[360px] max-h-[550px] overflow-y-auto space-y-4">
         {logs.map((entry) => (
-          <div key={entry.id} className="border-b border-stone-800 pb-3 last:border-none">
-            <div className="flex items-center justify-between text-stone-400 text-[11px] mb-1">
+          <div key={entry.id} className="border-b border-campus-border/60 pb-3.5 last:border-none">
+            <div className="flex items-center justify-between text-campus-muted text-[11px] mb-1.5">
               <div className="flex items-center space-x-2">
-                <span className="text-emerald-400 font-bold">&gt; {entry.command}</span>
+                <span className="text-campus-gold font-bold">&gt; {entry.command}</span>
                 {entry.studentRoll && (
-                  <span className="text-stone-400">[Student: {entry.studentRoll}]</span>
+                  <span className="text-campus-secondary font-mono">[Student: {entry.studentRoll}]</span>
                 )}
               </div>
-              <span>{entry.timestamp}</span>
+              <span className="text-campus-muted font-mono">{entry.timestamp}</span>
             </div>
 
             <div
-              className={`p-2.5 rounded-[4px] whitespace-pre-wrap leading-relaxed ${
+              className={`p-3 rounded whitespace-pre-wrap leading-relaxed border ${
                 entry.response.success
-                  ? "bg-stone-950 text-emerald-300 border border-emerald-950"
-                  : "bg-stone-950 text-red-400 border border-red-950"
+                  ? "bg-campus-bg text-campus-text border-campus-border font-mono text-[11px]"
+                  : "bg-campus-error/10 text-campus-error border-campus-error/30 font-mono text-[11px]"
               }`}
             >
               {entry.response.message}
             </div>
 
             {entry.response.printableTicketId && (
-              <div className="mt-2">
+              <div className="mt-2.5">
                 <button
                   onClick={() => handlePrintSlip(entry.response.printableTicketId!)}
-                  className="px-3 py-1 bg-emerald-800 hover:bg-emerald-700 text-white text-xs font-semibold rounded-[4px] inline-flex items-center space-x-1.5"
+                  className="px-3 py-1.5 bg-campus-gold hover:bg-campus-gold-light text-campus-bg text-xs font-semibold rounded inline-flex items-center space-x-1.5 transition-colors"
                 >
                   <Printer className="w-3.5 h-3.5" />
-                  <span>Print Ticket Slip Receipt for Student</span>
+                  <span>Print Ticket Slip Receipt</span>
                 </button>
               </div>
             )}

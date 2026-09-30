@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { FileText, Download, Plus, CheckCircle, Clock, XCircle, AlertCircle } from "lucide-react";
+import { FileText, Download, Plus, CheckCircle, Clock, XCircle, AlertCircle, X, ShieldCheck } from "lucide-react";
 import { apiRequest, UserProfile } from "../api/client.js";
 
 interface DocumentRequestItem {
@@ -87,25 +87,50 @@ export const DocumentRequestsPage: React.FC<{ user: UserProfile | null }> = ({ u
   const getStatusBadge = (status: string) => {
     switch (status) {
       case "APPROVED":
-        return <span className="px-2 py-0.5 text-xs font-semibold bg-emerald-100 text-emerald-900 border border-emerald-300 rounded-[4px]">Approved</span>;
+        return (
+          <span className="inline-flex items-center space-x-1 px-2 py-0.5 text-[11px] font-mono font-medium bg-campus-success/10 text-campus-success border border-campus-success/30 rounded">
+            <CheckCircle className="w-3 h-3" />
+            <span>Approved</span>
+          </span>
+        );
       case "SUBMITTED":
-        return <span className="px-2 py-0.5 text-xs font-semibold bg-amber-100 text-amber-900 border border-amber-300 rounded-[4px]">Submitted</span>;
+        return (
+          <span className="inline-flex items-center space-x-1 px-2 py-0.5 text-[11px] font-mono font-medium bg-campus-warning/10 text-campus-warning border border-campus-warning/30 rounded">
+            <Clock className="w-3 h-3" />
+            <span>Submitted</span>
+          </span>
+        );
       case "PROCESSING":
-        return <span className="px-2 py-0.5 text-xs font-semibold bg-blue-100 text-blue-900 border border-blue-300 rounded-[4px]">Processing</span>;
+        return (
+          <span className="inline-flex items-center space-x-1 px-2 py-0.5 text-[11px] font-mono font-medium bg-campus-info/10 text-campus-info border border-campus-info/30 rounded">
+            <Clock className="w-3 h-3" />
+            <span>Processing</span>
+          </span>
+        );
       case "REJECTED":
-        return <span className="px-2 py-0.5 text-xs font-semibold bg-red-100 text-red-900 border border-red-300 rounded-[4px]">Rejected</span>;
+        return (
+          <span className="inline-flex items-center space-x-1 px-2 py-0.5 text-[11px] font-mono font-medium bg-campus-error/10 text-campus-error border border-campus-error/30 rounded">
+            <XCircle className="w-3 h-3" />
+            <span>Rejected</span>
+          </span>
+        );
       default:
-        return <span className="px-2 py-0.5 text-xs font-semibold bg-stone-100 text-stone-800 rounded-[4px]">{status}</span>;
+        return <span className="px-2 py-0.5 text-[11px] font-mono bg-campus-elevated text-campus-secondary rounded border border-campus-border">{status}</span>;
     }
   };
 
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 bg-white border border-stone-300 p-4 rounded-[6px]">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 bg-campus-card border border-campus-border p-5 rounded-lg">
         <div>
-          <h1 className="text-xl font-bold text-stone-900">Document & Certificate Requests</h1>
-          <p className="text-xs text-stone-600 mt-0.5">
+          <div className="flex items-center space-x-2.5">
+            <div className="w-8 h-8 rounded bg-campus-elevated border border-campus-border flex items-center justify-center text-campus-gold">
+              <FileText className="w-4 h-4" />
+            </div>
+            <h1 className="text-lg font-semibold text-campus-text">Document & Certificate Requests</h1>
+          </div>
+          <p className="text-xs text-campus-muted mt-1.5 ml-10">
             Request official Bonafide certificates, fee estimates, and transcripts with downloadable PDF generation
           </p>
         </div>
@@ -113,7 +138,7 @@ export const DocumentRequestsPage: React.FC<{ user: UserProfile | null }> = ({ u
         {user?.role === "STUDENT" && (
           <button
             onClick={() => setShowModal(true)}
-            className="inline-flex items-center space-x-2 bg-[#0f4c3a] text-white hover:bg-[#0b392b] text-xs font-semibold px-4 py-2 rounded-[4px]"
+            className="inline-flex items-center space-x-2 bg-campus-gold hover:bg-campus-gold-light text-campus-bg text-xs font-semibold px-4 py-2 rounded transition-colors"
           >
             <Plus className="w-4 h-4" />
             <span>Request New Document</span>
@@ -122,59 +147,63 @@ export const DocumentRequestsPage: React.FC<{ user: UserProfile | null }> = ({ u
       </div>
 
       {/* Requests Table */}
-      <div className="bg-white border border-stone-300 rounded-[6px] overflow-hidden shadow-sm">
+      <div className="bg-campus-card border border-campus-border rounded-lg overflow-hidden">
         {loading ? (
-          <div className="p-8 text-center text-xs text-stone-500">Loading document requests...</div>
+          <div className="p-12 text-center text-xs text-campus-muted">
+            <div className="w-6 h-6 border-2 border-campus-gold border-t-transparent rounded-full animate-spin mx-auto mb-2" />
+            Loading document requests...
+          </div>
         ) : requests.length === 0 ? (
-          <div className="p-8 text-center text-xs text-stone-500">
+          <div className="p-12 text-center text-xs text-campus-muted">
+            <FileText className="w-8 h-8 text-campus-muted/40 mx-auto mb-2" />
             No document requests recorded on file.
           </div>
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full text-left text-xs border-collapse">
               <thead>
-                <tr className="bg-stone-100 border-b border-stone-300 text-stone-700 font-bold uppercase tracking-wider">
-                  <th className="py-2.5 px-3">Req #</th>
-                  <th className="py-2.5 px-3">Student</th>
-                  <th className="py-2.5 px-3">Document Type</th>
-                  <th className="py-2.5 px-3">Purpose</th>
-                  <th className="py-2.5 px-3">Date Requested</th>
-                  <th className="py-2.5 px-3">Status</th>
-                  <th className="py-2.5 px-3 text-right">Actions</th>
+                <tr className="bg-campus-elevated/60 border-b border-campus-border text-campus-muted font-mono uppercase tracking-wider text-[11px]">
+                  <th className="py-3 px-4">Req #</th>
+                  <th className="py-3 px-4">Student</th>
+                  <th className="py-3 px-4">Document Type</th>
+                  <th className="py-3 px-4">Purpose</th>
+                  <th className="py-3 px-4">Date Requested</th>
+                  <th className="py-3 px-4">Status</th>
+                  <th className="py-3 px-4 text-right">Actions</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-stone-200">
+              <tbody className="divide-y divide-campus-border/60">
                 {requests.map((r) => (
-                  <tr key={r.id} className="hover:bg-stone-50 transition-colors">
-                    <td className="py-2.5 px-3 font-mono font-bold text-emerald-950">
+                  <tr key={r.id} className="hover:bg-campus-elevated/40 transition-colors">
+                    <td className="py-3 px-4 font-mono font-semibold text-campus-gold">
                       #{r.requestNumber}
                     </td>
-                    <td className="py-2.5 px-3">
-                      <div className="font-semibold text-stone-900">{r.student.fullName}</div>
-                      <div className="text-[11px] text-stone-500 font-mono">{r.student.rollNumber}</div>
+                    <td className="py-3 px-4">
+                      <div className="font-semibold text-campus-text">{r.student.fullName}</div>
+                      <div className="text-[11px] text-campus-muted font-mono">{r.student.rollNumber}</div>
                     </td>
-                    <td className="py-2.5 px-3 font-medium text-stone-800">
+                    <td className="py-3 px-4 font-medium text-campus-secondary">
                       {r.docType.replace(/_/g, " ")}
                     </td>
-                    <td className="py-2.5 px-3 text-stone-600 max-w-xs truncate">
-                      {r.purpose}
+                    <td className="py-3 px-4 text-campus-muted max-w-xs truncate">
+                      <span>{r.purpose}</span>
                       {r.remarks && (
-                        <span className="block text-[11px] text-stone-500 italic">
+                        <span className="block text-[10px] text-campus-warning/90 italic mt-0.5">
                           Note: {r.remarks}
                         </span>
                       )}
                     </td>
-                    <td className="py-2.5 px-3 text-stone-700">
+                    <td className="py-3 px-4 text-campus-muted font-mono">
                       {new Date(r.createdAt).toLocaleDateString()}
                     </td>
-                    <td className="py-2.5 px-3">{getStatusBadge(r.status)}</td>
-                    <td className="py-2.5 px-3 text-right">
+                    <td className="py-3 px-4">{getStatusBadge(r.status)}</td>
+                    <td className="py-3 px-4 text-right">
                       <div className="flex items-center justify-end space-x-2">
                         {r.status === "APPROVED" && (
                           <a
                             href={`/api/documents/${r.id}/download`}
                             download
-                            className="inline-flex items-center space-x-1 px-3 py-1 bg-[#0f4c3a] text-white hover:bg-[#0b392b] font-semibold text-xs rounded-[4px]"
+                            className="inline-flex items-center space-x-1 px-3 py-1 bg-campus-gold hover:bg-campus-gold-light text-campus-bg font-semibold text-xs rounded transition-colors"
                           >
                             <Download className="w-3.5 h-3.5" />
                             <span>Download PDF</span>
@@ -185,13 +214,13 @@ export const DocumentRequestsPage: React.FC<{ user: UserProfile | null }> = ({ u
                           <div className="flex items-center space-x-1">
                             <button
                               onClick={() => handleUpdateStatus(r.id, "APPROVED")}
-                              className="px-2 py-1 bg-emerald-800 hover:bg-emerald-900 text-white font-semibold rounded-[4px] text-[11px]"
+                              className="px-2.5 py-1 bg-campus-success/20 hover:bg-campus-success/30 text-campus-success border border-campus-success/40 font-medium rounded text-[11px] transition-colors"
                             >
                               Approve
                             </button>
                             <button
                               onClick={() => handleUpdateStatus(r.id, "REJECTED")}
-                              className="px-2 py-1 bg-red-800 hover:bg-red-900 text-white font-semibold rounded-[4px] text-[11px]"
+                              className="px-2.5 py-1 bg-campus-error/20 hover:bg-campus-error/30 text-campus-error border border-campus-error/40 font-medium rounded text-[11px] transition-colors"
                             >
                               Reject
                             </button>
@@ -209,28 +238,31 @@ export const DocumentRequestsPage: React.FC<{ user: UserProfile | null }> = ({ u
 
       {/* Request Modal */}
       {showModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-40 z-50 flex items-center justify-center p-4">
-          <div className="bg-white border border-stone-300 rounded-[6px] max-w-md w-full p-6 space-y-4 shadow-lg">
-            <div className="flex items-center justify-between border-b border-stone-200 pb-2">
-              <h2 className="text-base font-bold text-stone-900">Request Official Document</h2>
-              <button onClick={() => setShowModal(false)} className="text-stone-500 hover:text-stone-800 font-bold text-sm">
-                &times;
+        <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="bg-campus-card border border-campus-border rounded-lg max-w-md w-full p-6 space-y-4 shadow-2xl">
+            <div className="flex items-center justify-between border-b border-campus-border pb-3">
+              <h2 className="text-sm font-semibold text-campus-text flex items-center space-x-2">
+                <FileText className="w-4 h-4 text-campus-gold" />
+                <span>Request Official Document</span>
+              </h2>
+              <button onClick={() => setShowModal(false)} className="text-campus-muted hover:text-campus-text transition-colors">
+                <X className="w-4 h-4" />
               </button>
             </div>
 
             {error && (
-              <div className="p-2 text-xs text-red-900 bg-red-50 border border-red-200 rounded-[4px]">
+              <div className="p-2.5 text-xs text-campus-error bg-campus-error/10 border border-campus-error/30 rounded">
                 {error}
               </div>
             )}
 
-            <form onSubmit={handleSubmit} className="space-y-3 text-xs">
+            <form onSubmit={handleSubmit} className="space-y-3.5 text-xs">
               <div>
-                <label className="block font-semibold text-stone-800 mb-1">Document Type *</label>
+                <label className="block font-medium text-campus-secondary mb-1">Document Type *</label>
                 <select
                   value={docType}
                   onChange={(e) => setDocType(e.target.value)}
-                  className="w-full px-2.5 py-1.5 border border-stone-300 rounded-[4px] bg-white text-stone-800"
+                  className="w-full px-3 py-2 border border-campus-border rounded bg-campus-bg text-campus-text focus:outline-none focus:border-campus-gold"
                 >
                   <option value="BONAFIDE_CERTIFICATE">Bonafide Certificate (Scholarships & Bank)</option>
                   <option value="FEE_ESTIMATE">Fee Estimate Certificate (Education Loan)</option>
@@ -241,29 +273,29 @@ export const DocumentRequestsPage: React.FC<{ user: UserProfile | null }> = ({ u
               </div>
 
               <div>
-                <label className="block font-semibold text-stone-800 mb-1">Purpose of Certificate *</label>
+                <label className="block font-medium text-campus-secondary mb-1">Purpose of Certificate *</label>
                 <textarea
                   required
                   rows={3}
                   value={purpose}
                   onChange={(e) => setPurpose(e.target.value)}
                   placeholder="e.g. State post-matric scholarship application, bank education loan renewal, passport application..."
-                  className="w-full p-2 border border-stone-300 rounded-[4px]"
+                  className="w-full p-2.5 bg-campus-bg border border-campus-border rounded text-campus-text placeholder-campus-muted focus:outline-none focus:border-campus-gold resize-none"
                 />
               </div>
 
-              <div className="pt-2 border-t border-stone-200 flex justify-end space-x-2">
+              <div className="pt-3 border-t border-campus-border flex justify-end space-x-2">
                 <button
                   type="button"
                   onClick={() => setShowModal(false)}
-                  className="px-3 py-1.5 border border-stone-300 rounded-[4px]"
+                  className="px-3.5 py-2 border border-campus-border rounded text-campus-secondary hover:text-campus-text hover:bg-campus-elevated transition-colors"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
                   disabled={submitting}
-                  className="px-4 py-1.5 bg-[#0f4c3a] text-white font-semibold rounded-[4px] hover:bg-[#0b392b] disabled:opacity-50"
+                  className="px-4 py-2 bg-campus-gold text-campus-bg font-semibold rounded hover:bg-campus-gold-light disabled:opacity-50 transition-colors"
                 >
                   {submitting ? "Submitting..." : "Submit Request"}
                 </button>

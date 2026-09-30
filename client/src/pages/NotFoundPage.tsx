@@ -4,20 +4,22 @@ import { ArrowLeft, FileQuestion } from "lucide-react";
 
 export const NotFoundPage: React.FC = () => {
   return (
-    <div className="max-w-md mx-auto my-16 text-center">
-      <div className="bg-white border border-stone-300 rounded-[6px] p-8 shadow-sm space-y-4">
-        <FileQuestion className="w-12 h-12 text-stone-400 mx-auto" />
-        <h1 className="text-2xl font-bold text-stone-900">404 - Page Not Found</h1>
-        <p className="text-xs text-stone-600 leading-relaxed">
-          The requested page or service route does not exist in the CampusDesk portal. Please verify the URL or return to the main dashboard.
+    <div className="max-w-md mx-auto my-20 text-center">
+      <div className="bg-campus-card border border-campus-border rounded-lg p-8 shadow-2xl space-y-4">
+        <div className="w-12 h-12 rounded bg-campus-elevated border border-campus-border flex items-center justify-center mx-auto text-campus-gold">
+          <FileQuestion className="w-6 h-6" />
+        </div>
+        <h1 className="text-xl font-semibold text-campus-text">404 — Endpoint Not Found</h1>
+        <p className="text-xs text-campus-muted leading-relaxed">
+          The requested system route or operational resource does not exist in the CampusDesk service layer.
         </p>
-        <div className="pt-2">
+        <div className="pt-3">
           <Link
             to="/"
-            className="inline-flex items-center space-x-2 bg-[#0f4c3a] text-white hover:bg-[#0b392b] text-xs font-semibold px-4 py-2 rounded-[4px]"
+            className="inline-flex items-center space-x-2 bg-campus-gold hover:bg-campus-gold-light text-campus-bg text-xs font-semibold px-4 py-2 rounded transition-colors"
           >
             <ArrowLeft className="w-4 h-4" />
-            <span>Return to Portal Home</span>
+            <span>Return to Platform Console</span>
           </Link>
         </div>
       </div>

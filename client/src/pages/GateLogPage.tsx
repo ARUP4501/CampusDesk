@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { Shield, Search, ArrowRight, ArrowLeft, Clock, AlertTriangle, CheckCircle } from "lucide-react";
+import { Shield, Search, ArrowRight, ArrowLeft, Clock, AlertTriangle, CheckCircle, RefreshCw } from "lucide-react";
 import { apiRequest, UserProfile } from "../api/client.js";
 
 interface OutsideStudent {
@@ -22,7 +22,7 @@ interface OutsideStudent {
 
 export const GateLogPage: React.FC<{ user: UserProfile | null }> = ({ user }) => {
   const [passIdentifier, setPassIdentifier] = useState<string>("");
-  const [guardName, setGuardName] = useState<string>(user?.fullName || "Main Gate Security Guard");
+  const [guardName, setGuardName] = useState<string>(user?.fullName || "Main Gate Security Officer");
   const [securityNotes, setSecurityNotes] = useState<string>("");
   const [activeOutside, setActiveOutside] = useState<OutsideStudent[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
@@ -78,28 +78,32 @@ export const GateLogPage: React.FC<{ user: UserProfile | null }> = ({ user }) =>
 
   return (
     <div className="space-y-6">
-      <div className="bg-white border border-stone-300 p-4 rounded-[6px]">
-        <div className="flex items-center space-x-2">
-          <Shield className="w-5 h-5 text-[#0f4c3a]" />
-          <h1 className="text-xl font-bold text-stone-900">Main Gate Security Terminal</h1>
+      <div className="bg-[#14181C] border border-[#252B31] p-5 rounded-[6px] shadow-subtle">
+        <div className="flex items-center space-x-2.5">
+          <div className="w-8 h-8 rounded-[4px] bg-[#181D22] border border-[#252B31] flex items-center justify-center text-[#D6A84F]">
+            <Shield className="w-4 h-4" />
+          </div>
+          <div>
+            <h1 className="text-xl font-bold text-[#F3F4F6]">Main Gate Security Terminal</h1>
+            <p className="text-xs text-[#A7ADB5] mt-0.5">
+              Scan student dynamic QR passes or enter reference codes to log physical campus departures and arrivals
+            </p>
+          </div>
         </div>
-        <p className="text-xs text-stone-600 mt-0.5">
-          Scan student QR pass or enter reference code to log physical exit and campus re-entry
-        </p>
       </div>
 
       {/* Security Check-in / Check-out Box */}
-      <div className="bg-white border border-stone-300 rounded-[6px] p-6 shadow-sm">
-        <h2 className="text-xs font-bold text-stone-700 uppercase tracking-wider border-b border-stone-200 pb-2 mb-4">
-          Gate Scanner & Entry Logger
+      <div className="bg-[#14181C] border border-[#252B31] rounded-[6px] p-6 shadow-subtle">
+        <h2 className="text-xs font-mono font-bold text-[#D6A84F] uppercase tracking-wider border-b border-[#252B31] pb-2 mb-4">
+          Gate Scanner & Physical Access Controller
         </h2>
 
         {resultMsg && (
           <div
             className={`p-3 mb-4 rounded-[4px] text-xs font-medium ${
               resultMsg.success
-                ? "bg-emerald-50 text-emerald-900 border border-emerald-300"
-                : "bg-red-50 text-red-900 border border-red-200"
+                ? "bg-emerald-500/10 text-emerald-200 border border-emerald-500/30"
+                : "bg-red-500/10 text-red-200 border border-red-500/30"
             }`}
           >
             {resultMsg.text}
@@ -109,47 +113,45 @@ export const GateLogPage: React.FC<{ user: UserProfile | null }> = ({ user }) =>
         <div className="space-y-4">
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
-              <label htmlFor="passIdentifier" className="block text-xs font-semibold text-stone-800 mb-1">
+              <label htmlFor="passIdentifier" className="block text-xs font-semibold text-[#A7ADB5] mb-1">
                 Pass Number or Scanned QR Content *
               </label>
-              <div className="relative">
-                <input
-                  id="passIdentifier"
-                  type="text"
-                  value={passIdentifier}
-                  onChange={(e) => setPassIdentifier(e.target.value)}
-                  placeholder="e.g. GP-5001 or paste QR string"
-                  className="w-full text-sm font-mono px-3 py-2 border border-stone-300 rounded-[4px] focus:outline-none"
-                  autoFocus
-                />
-              </div>
+              <input
+                id="passIdentifier"
+                type="text"
+                value={passIdentifier}
+                onChange={(e) => setPassIdentifier(e.target.value)}
+                placeholder="e.g. GP-5001 or scanned token"
+                className="w-full text-sm font-mono px-3 py-2 bg-[#101316] border border-[#252B31] text-[#F3F4F6] rounded-[4px] focus:outline-none focus:border-[#D6A84F]"
+                autoFocus
+              />
             </div>
 
             <div>
-              <label htmlFor="guardName" className="block text-xs font-semibold text-stone-800 mb-1">
-                Duty Security Guard Name *
+              <label htmlFor="guardName" className="block text-xs font-semibold text-[#A7ADB5] mb-1">
+                Duty Officer Name *
               </label>
               <input
                 id="guardName"
                 type="text"
                 value={guardName}
                 onChange={(e) => setGuardName(e.target.value)}
-                className="w-full text-sm px-3 py-2 border border-stone-300 rounded-[4px] focus:outline-none"
+                className="w-full text-sm px-3 py-2 bg-[#101316] border border-[#252B31] text-[#F3F4F6] rounded-[4px] focus:outline-none focus:border-[#D6A84F]"
               />
             </div>
           </div>
 
           <div>
-            <label htmlFor="securityNotes" className="block text-xs font-semibold text-stone-800 mb-1">
-              Security Remarks (Optional)
+            <label htmlFor="securityNotes" className="block text-xs font-semibold text-[#A7ADB5] mb-1">
+              Security Remarks & Verification Notes (Optional)
             </label>
             <input
               id="securityNotes"
               type="text"
               value={securityNotes}
               onChange={(e) => setSecurityNotes(e.target.value)}
-              placeholder="e.g. Identity checked, accompanied by guardian, baggage inspected"
-              className="w-full text-xs px-3 py-2 border border-stone-300 rounded-[4px] focus:outline-none"
+              placeholder="e.g. Physical ID inspected, baggage cleared, accompanied by guardian"
+              className="w-full text-xs px-3 py-2 bg-[#101316] border border-[#252B31] text-[#F3F4F6] rounded-[4px] focus:outline-none focus:border-[#D6A84F]"
             />
           </div>
 
@@ -157,16 +159,16 @@ export const GateLogPage: React.FC<{ user: UserProfile | null }> = ({ user }) =>
             <button
               onClick={() => handleRecordAction("EXIT")}
               disabled={actionLoading}
-              className="px-5 py-2.5 bg-blue-800 hover:bg-blue-900 text-white font-bold text-xs rounded-[4px] flex items-center space-x-2 disabled:opacity-50"
+              className="px-5 py-2.5 bg-[#181D22] hover:bg-[#252B31] border border-[#3B82F6]/50 text-[#60A5FA] font-bold text-xs rounded-[4px] flex items-center space-x-2 disabled:opacity-50 transition-colors shadow-xs"
             >
-              <ArrowRight className="w-4 h-4" />
+              <ArrowRight className="w-4 h-4 text-[#3B82F6]" />
               <span>Record Campus Exit</span>
             </button>
 
             <button
               onClick={() => handleRecordAction("ENTRY")}
               disabled={actionLoading}
-              className="px-5 py-2.5 bg-[#0f4c3a] hover:bg-[#0b392b] text-white font-bold text-xs rounded-[4px] flex items-center space-x-2 disabled:opacity-50"
+              className="px-5 py-2.5 bg-[#D6A84F] hover:bg-[#F0C86A] text-[#090B0D] font-bold text-xs rounded-[4px] flex items-center space-x-2 disabled:opacity-50 transition-colors shadow-xs"
             >
               <ArrowLeft className="w-4 h-4" />
               <span>Record Campus Entry</span>
@@ -176,91 +178,92 @@ export const GateLogPage: React.FC<{ user: UserProfile | null }> = ({ user }) =>
       </div>
 
       {/* Currently Outside Students Live Register */}
-      <div className="bg-white border border-stone-300 rounded-[6px] overflow-hidden shadow-sm">
-        <div className="p-4 bg-stone-100 border-b border-stone-300 flex items-center justify-between">
-          <div className="font-bold text-xs text-stone-800 uppercase tracking-wider flex items-center space-x-2">
+      <div className="bg-[#14181C] border border-[#252B31] rounded-[6px] overflow-hidden shadow-subtle">
+        <div className="p-4 bg-[#101316] border-b border-[#252B31] flex items-center justify-between">
+          <div className="font-mono font-bold text-xs text-[#F3F4F6] uppercase tracking-wider flex items-center space-x-2">
             <span>Students Currently Outside Campus</span>
-            <span className="bg-blue-800 text-white text-[10px] px-2 py-0.5 rounded-full font-bold">
-              {activeOutside.length} Outside
+            <span className="bg-[#3B82F6]/20 text-[#60A5FA] border border-[#3B82F6]/30 text-[10px] px-2 py-0.5 rounded-full font-bold">
+              {activeOutside.length} Active Outside
             </span>
           </div>
           <button
             onClick={fetchActiveOutside}
-            className="text-xs text-emerald-800 hover:underline font-medium"
+            className="text-xs text-[#D6A84F] hover:text-[#F0C86A] flex items-center space-x-1 font-mono transition-colors"
           >
-            Refresh List
+            <RefreshCw className="w-3 h-3" />
+            <span>Sync Roster</span>
           </button>
         </div>
 
         {loading ? (
-          <div className="p-6 text-center text-xs text-stone-500">Loading active exits...</div>
+          <div className="p-12 text-center text-xs text-[#A7ADB5] font-mono">Querying security register...</div>
         ) : activeOutside.length === 0 ? (
-          <div className="p-6 text-center text-xs text-stone-500">
-            No students are currently recorded as outside campus on active gate passes.
+          <div className="p-12 text-center text-xs text-[#6F7781]">
+            No students are currently recorded as outside campus on active passes.
           </div>
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full text-left text-xs border-collapse">
               <thead>
-                <tr className="bg-stone-50 border-b border-stone-200 text-stone-700 font-bold uppercase tracking-wider">
-                  <th className="py-2.5 px-3">Pass #</th>
-                  <th className="py-2.5 px-3">Student Name</th>
-                  <th className="py-2.5 px-3">Hostel & Room</th>
-                  <th className="py-2.5 px-3">Destination</th>
-                  <th className="py-2.5 px-3">Exit Recorded At</th>
-                  <th className="py-2.5 px-3">Expected Return</th>
-                  <th className="py-2.5 px-3">Return Status</th>
-                  <th className="py-2.5 px-3 text-right">Quick Action</th>
+                <tr className="bg-[#101316] border-b border-[#252B31] text-[#A7ADB5] font-mono uppercase tracking-wider text-[11px]">
+                  <th className="py-3 px-4">Pass ID</th>
+                  <th className="py-3 px-4">Student</th>
+                  <th className="py-3 px-4">Hostel & Room</th>
+                  <th className="py-3 px-4">Destination</th>
+                  <th className="py-3 px-4">Exit Recorded</th>
+                  <th className="py-3 px-4">Expected Return</th>
+                  <th className="py-3 px-4">Status</th>
+                  <th className="py-3 px-4 text-right">Quick Action</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-stone-200">
+              <tbody className="divide-y divide-[#252B31]">
                 {activeOutside.map((p) => (
                   <tr
                     key={p.id}
-                    className={`hover:bg-stone-50 transition-colors ${
-                      p.isOverdue ? "bg-red-50" : ""
+                    className={`hover:bg-[#181D22] transition-colors ${
+                      p.isOverdue ? "bg-red-500/5" : ""
                     }`}
                   >
-                    <td className="py-2.5 px-3 font-mono font-bold text-emerald-950">
+                    <td className="py-3 px-4 font-mono font-bold text-[#D6A84F]">
                       #{p.passNumber}
                     </td>
-                    <td className="py-2.5 px-3">
-                      <div className="font-semibold text-stone-900">{p.student.fullName}</div>
-                      <div className="text-[11px] text-stone-500 font-mono">
+                    <td className="py-3 px-4">
+                      <div className="font-semibold text-[#F3F4F6]">{p.student.fullName}</div>
+                      <div className="text-[11px] text-[#6F7781] font-mono">
                         {p.student.rollNumber} &bull; Ph: {p.student.phone}
                       </div>
                     </td>
-                    <td className="py-2.5 px-3 text-stone-700">
+                    <td className="py-3 px-4 text-[#A7ADB5] font-mono">
                       {p.student.hostelBlock} {p.student.roomNumber}
                     </td>
-                    <td className="py-2.5 px-3 text-stone-700 font-medium">{p.destination}</td>
-                    <td className="py-2.5 px-3 text-stone-700">
+                    <td className="py-3 px-4 text-[#F3F4F6] font-medium">{p.destination}</td>
+                    <td className="py-3 px-4 text-[#A7ADB5] font-mono">
                       {new Date(p.actualExitTime).toLocaleString([], { dateStyle: "short", timeStyle: "short" })}
                     </td>
-                    <td className="py-2.5 px-3 text-stone-700">
+                    <td className="py-3 px-4 text-[#A7ADB5] font-mono">
                       {new Date(p.expectedReturnDate).toLocaleString([], { dateStyle: "short", timeStyle: "short" })}
                     </td>
-                    <td className="py-2.5 px-3">
+                    <td className="py-3 px-4">
                       {p.isOverdue ? (
-                        <span className="px-2 py-0.5 text-[11px] font-bold bg-red-100 text-red-900 border border-red-300 rounded-[4px] flex items-center space-x-1 w-max">
-                          <AlertTriangle className="w-3 h-3 text-red-700" />
+                        <span className="px-2 py-0.5 text-[10px] font-mono font-bold bg-red-500/10 text-red-300 border border-red-500/30 rounded flex items-center space-x-1 w-max">
+                          <AlertTriangle className="w-3 h-3 text-red-400" />
                           <span>OVERDUE RETURN</span>
                         </span>
                       ) : (
-                        <span className="px-2 py-0.5 text-[11px] font-semibold bg-emerald-100 text-emerald-900 border border-emerald-300 rounded-[4px]">
-                          On Time
+                        <span className="px-2 py-0.5 text-[10px] font-mono font-semibold bg-emerald-500/10 text-emerald-300 border border-emerald-500/30 rounded">
+                          ON TIME
                         </span>
                       )}
                     </td>
-                    <td className="py-2.5 px-3 text-right">
+                    <td className="py-3 px-4 text-right">
                       <button
                         onClick={() => {
                           setPassIdentifier(p.passNumber);
                           handleRecordAction("ENTRY");
                         }}
-                        className="px-3 py-1 bg-stone-800 hover:bg-stone-900 text-white font-semibold text-xs rounded-[4px]"
+                        className="px-3 py-1 bg-[#181D22] hover:bg-[#D6A84F] hover:text-[#090B0D] text-[#F3F4F6] border border-[#252B31] font-mono font-bold text-[11px] rounded-[3px] transition-colors"
                       >
-                        Log Entry
+                        Log Arrival
                       </button>
                     </td>
                   </tr>

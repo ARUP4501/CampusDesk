@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useTranslation } from "react-i18next";
-import { WifiOff, RefreshCw } from "lucide-react";
+import { WifiOff, RefreshCw, CheckCircle2 } from "lucide-react";
 import { getQueuedRequests, flushOfflineQueue } from "../api/offlineQueue.js";
 
 export const OfflineBanner: React.FC = () => {
@@ -54,37 +54,38 @@ export const OfflineBanner: React.FC = () => {
     <div
       role="alert"
       aria-live="polite"
-      className={`px-4 py-2 border-b text-sm font-medium flex items-center justify-between ${
+      className={`px-4 py-2 border-b text-xs font-medium flex items-center justify-between transition-colors ${
         !isOnline
-          ? "bg-amber-100 border-amber-300 text-amber-900"
-          : "bg-emerald-50 border-emerald-300 text-emerald-900"
+          ? "bg-[#78350F]/20 border-amber-500/30 text-amber-200"
+          : "bg-[#064E3B]/20 border-emerald-500/30 text-emerald-200"
       }`}
     >
-      <div className="flex items-center space-x-2">
+      <div className="flex items-center space-x-2.5">
         {!isOnline ? (
-          <WifiOff className="w-4 h-4 text-amber-700 flex-shrink-0" aria-hidden="true" />
+          <WifiOff className="w-4 h-4 text-[#F59E0B] shrink-0" aria-hidden="true" />
         ) : (
-          <RefreshCw className="w-4 h-4 text-emerald-700 flex-shrink-0" aria-hidden="true" />
+          <CheckCircle2 className="w-4 h-4 text-[#10B981] shrink-0" aria-hidden="true" />
         )}
         <span>
           {!isOnline
-            ? t("common.offlineNotice", "You are currently offline. Actions will be queued and sent when network returns.")
-            : `Network restored. ${queueCount} item(s) pending sync.`}
+            ? t("common.offlineNotice", "Network offline. CampusDesk is operating in local queue mode via IndexedDB. Actions will auto-sync when connection resumes.")
+            : `Campus network connected. ${queueCount} pending action(s) in local queue ready for synchronization.`}
         </span>
       </div>
 
       {queueCount > 0 && (
         <div className="flex items-center space-x-2">
-          <span className="bg-white px-2 py-0.5 border border-stone-300 text-xs font-semibold rounded-[4px]">
-            {t("common.waitingToSend", "Waiting to send")}: {queueCount}
+          <span className="bg-[#14181C] px-2 py-0.5 border border-[#252B31] text-[11px] font-mono text-[#F3F4F6] rounded-[3px]">
+            {t("common.waitingToSend", "Queue")}: {queueCount}
           </span>
           {isOnline && (
             <button
               onClick={triggerSync}
               disabled={isSyncing}
-              className="bg-emerald-800 text-white text-xs px-2.5 py-1 rounded-[4px] font-medium hover:bg-emerald-900 disabled:opacity-50"
+              className="bg-[#D6A84F] hover:bg-[#F0C86A] text-[#090B0D] text-[11px] font-bold px-2.5 py-1 rounded-[3px] disabled:opacity-50 flex items-center space-x-1 transition-colors"
             >
-              {isSyncing ? "Syncing..." : "Sync Now"}
+              <RefreshCw className={`w-3 h-3 ${isSyncing ? "animate-spin" : ""}`} />
+              <span>{isSyncing ? "Syncing..." : "Sync Now"}</span>
             </button>
           )}
         </div>

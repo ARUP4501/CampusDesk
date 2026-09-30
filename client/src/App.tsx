@@ -63,146 +63,152 @@ export const App: React.FC = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-[#fbfaf7] text-xs font-semibold text-stone-600">
-        Loading CampusDesk Portal...
+      <div className="min-h-screen flex flex-col items-center justify-center bg-[#07090B] text-campus-secondary">
+        <div className="w-9 h-9 border-2 border-campus-gold/30 border-t-campus-gold rounded-full animate-spin mb-4"></div>
+        <div className="text-xs font-mono uppercase tracking-widest text-campus-gold">
+          CampusDesk OS
+        </div>
+        <div className="text-[11px] text-campus-muted mt-1">Initializing secure kernel session...</div>
       </div>
     );
   }
 
   return (
     <BrowserRouter>
-      <div className="min-h-screen flex flex-col bg-[#fbfaf7] text-[#1c1917]">
+      <div className="min-h-screen flex flex-col bg-[#07090B] text-[#F3F4F6] selection:bg-[#D6A84F]/20 selection:text-[#F0C86A]">
         <OfflineBanner />
         <Navbar user={user} onLogout={handleLogout} />
 
-        <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6">
-          <Routes>
-            <Route
-              path="/"
-              element={
-                user ? (
-                  <DashboardPage user={user} />
-                ) : (
-                  <LandingPage user={user} onLoginSuccess={(u) => setUser(u)} />
-                )
-              }
-            />
-            <Route
-              path="/login"
-              element={
-                user ? (
-                  <Navigate to="/" replace />
-                ) : (
-                  <LoginPage onLoginSuccess={(u) => setUser(u)} />
-                )
-              }
-            />
-            <Route
-              path="/register"
-              element={
-                user ? (
-                  <Navigate to="/" replace />
-                ) : (
-                  <RegisterPage onLoginSuccess={(u) => setUser(u)} />
-                )
-              }
-            />
+        <div className={`flex-1 flex flex-col transition-all duration-200 ${user ? "lg:pl-60" : ""}`}>
+          <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6">
+            <Routes>
+              <Route
+                path="/"
+                element={
+                  user ? (
+                    <DashboardPage user={user} />
+                  ) : (
+                    <LandingPage user={user} onLoginSuccess={(u) => setUser(u)} />
+                  )
+                }
+              />
+              <Route
+                path="/login"
+                element={
+                  user ? (
+                    <Navigate to="/" replace />
+                  ) : (
+                    <LoginPage onLoginSuccess={(u) => setUser(u)} />
+                  )
+                }
+              />
+              <Route
+                path="/register"
+                element={
+                  user ? (
+                    <Navigate to="/" replace />
+                  ) : (
+                    <RegisterPage onLoginSuccess={(u) => setUser(u)} />
+                  )
+                }
+              />
 
-            {/* Authenticated Application Routes */}
-            <Route
-              path="/dashboard"
-              element={user ? <DashboardPage user={user} /> : <Navigate to="/login" replace />}
-            />
-            <Route
-              path="/tickets"
-              element={user ? <TicketsPage user={user} /> : <Navigate to="/login" replace />}
-            />
-            <Route
-              path="/tickets/new"
-              element={user ? <NewTicketPage user={user} /> : <Navigate to="/login" replace />}
-            />
-            <Route
-              path="/tickets/:id"
-              element={user ? <TicketDetailPage user={user} /> : <Navigate to="/login" replace />}
-            />
-            <Route
-              path="/gatepass"
-              element={user ? <GatePassPage user={user} /> : <Navigate to="/login" replace />}
-            />
-            <Route
-              path="/gate-log"
-              element={
-                user && user.role !== "STUDENT" ? (
-                  <GateLogPage user={user} />
-                ) : (
-                  <Navigate to="/" replace />
-                )
-              }
-            />
-            <Route
-              path="/notices"
-              element={user ? <NoticesPage user={user} /> : <Navigate to="/login" replace />}
-            />
-            <Route
-              path="/notices/:id"
-              element={user ? <NoticeDetailPage user={user} /> : <Navigate to="/login" replace />}
-            />
-            <Route
-              path="/academics"
-              element={user ? <TimetableAttendancePage user={user} /> : <Navigate to="/login" replace />}
-            />
-            <Route
-              path="/mess"
-              element={user ? <MessPage user={user} /> : <Navigate to="/login" replace />}
-            />
-            <Route
-              path="/documents"
-              element={user ? <DocumentRequestsPage user={user} /> : <Navigate to="/login" replace />}
-            />
-            <Route
-              path="/fees"
-              element={user ? <FeeStatusPage user={user} /> : <Navigate to="/login" replace />}
-            />
-            <Route
-              path="/faq"
-              element={user ? <FaqAssistantPage user={user} /> : <Navigate to="/login" replace />}
-            />
-            <Route
-              path="/console"
-              element={user ? <CommandConsolePage user={user} /> : <Navigate to="/login" replace />}
-            />
-            <Route
-              path="/admin"
-              element={
-                user && (user.role === "ADMIN" || user.role === "WARDEN") ? (
-                  <AdminDashboardPage user={user} />
-                ) : (
-                  <Navigate to="/" replace />
-                )
-              }
-            />
-            <Route
-              path="/import"
-              element={
-                user && user.role === "ADMIN" ? (
-                  <DataImportPage user={user} />
-                ) : (
-                  <Navigate to="/" replace />
-                )
-              }
-            />
+              {/* Authenticated Application Routes */}
+              <Route
+                path="/dashboard"
+                element={user ? <DashboardPage user={user} /> : <Navigate to="/login" replace />}
+              />
+              <Route
+                path="/tickets"
+                element={user ? <TicketsPage user={user} /> : <Navigate to="/login" replace />}
+              />
+              <Route
+                path="/tickets/new"
+                element={user ? <NewTicketPage user={user} /> : <Navigate to="/login" replace />}
+              />
+              <Route
+                path="/tickets/:id"
+                element={user ? <TicketDetailPage user={user} /> : <Navigate to="/login" replace />}
+              />
+              <Route
+                path="/gatepass"
+                element={user ? <GatePassPage user={user} /> : <Navigate to="/login" replace />}
+              />
+              <Route
+                path="/gate-log"
+                element={
+                  user && user.role !== "STUDENT" ? (
+                    <GateLogPage user={user} />
+                  ) : (
+                    <Navigate to="/" replace />
+                  )
+                }
+              />
+              <Route
+                path="/notices"
+                element={user ? <NoticesPage user={user} /> : <Navigate to="/login" replace />}
+              />
+              <Route
+                path="/notices/:id"
+                element={user ? <NoticeDetailPage user={user} /> : <Navigate to="/login" replace />}
+              />
+              <Route
+                path="/academics"
+                element={user ? <TimetableAttendancePage user={user} /> : <Navigate to="/login" replace />}
+              />
+              <Route
+                path="/mess"
+                element={user ? <MessPage user={user} /> : <Navigate to="/login" replace />}
+              />
+              <Route
+                path="/documents"
+                element={user ? <DocumentRequestsPage user={user} /> : <Navigate to="/login" replace />}
+              />
+              <Route
+                path="/fees"
+                element={user ? <FeeStatusPage user={user} /> : <Navigate to="/login" replace />}
+              />
+              <Route
+                path="/faq"
+                element={user ? <FaqAssistantPage user={user} /> : <Navigate to="/login" replace />}
+              />
+              <Route
+                path="/console"
+                element={user ? <CommandConsolePage user={user} /> : <Navigate to="/login" replace />}
+              />
+              <Route
+                path="/admin"
+                element={
+                  user && (user.role === "ADMIN" || user.role === "WARDEN") ? (
+                    <AdminDashboardPage user={user} />
+                  ) : (
+                    <Navigate to="/" replace />
+                  )
+                }
+              />
+              <Route
+                path="/import"
+                element={
+                  user && user.role === "ADMIN" ? (
+                    <DataImportPage user={user} />
+                  ) : (
+                    <Navigate to="/" replace />
+                  )
+                }
+              />
 
-            {/* Public Policies & Guides */}
-            <Route path="/privacy" element={<PrivacyPage />} />
-            <Route path="/terms" element={<TermsPage />} />
-            <Route path="/adoption" element={<AdoptionPage />} />
+              {/* Public Policies & Guides */}
+              <Route path="/privacy" element={<PrivacyPage />} />
+              <Route path="/terms" element={<TermsPage />} />
+              <Route path="/adoption" element={<AdoptionPage />} />
 
-            {/* 404 Fallback */}
-            <Route path="*" element={<NotFoundPage />} />
-          </Routes>
-        </main>
+              {/* 404 Fallback */}
+              <Route path="*" element={<NotFoundPage />} />
+            </Routes>
+          </main>
 
-        <Footer />
+          <Footer />
+        </div>
       </div>
     </BrowserRouter>
   );

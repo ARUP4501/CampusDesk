@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { CreditCard, AlertCircle, CheckCircle, Clock, Search, Building } from "lucide-react";
+import { CreditCard, AlertCircle, CheckCircle, Clock, Search, Building, DollarSign } from "lucide-react";
 import { apiRequest, UserProfile } from "../api/client.js";
 
 interface FeeRecordItem {
@@ -56,13 +56,32 @@ export const FeeStatusPage: React.FC<{ user: UserProfile | null }> = ({ user }) 
   const getStatusBadge = (status: string) => {
     switch (status) {
       case "PAID":
-        return <span className="px-2 py-0.5 text-xs font-bold bg-emerald-100 text-emerald-900 border border-emerald-300 rounded-[4px]">Paid in Full</span>;
+        return (
+          <span className="inline-flex items-center space-x-1 px-2.5 py-0.5 text-[11px] font-mono font-medium bg-campus-success/10 text-campus-success border border-campus-success/30 rounded">
+            <CheckCircle className="w-3 h-3" />
+            <span>Paid in Full</span>
+          </span>
+        );
       case "PARTIAL":
-        return <span className="px-2 py-0.5 text-xs font-bold bg-amber-100 text-amber-900 border border-amber-300 rounded-[4px]">Partial Payment</span>;
+        return (
+          <span className="inline-flex items-center space-x-1 px-2.5 py-0.5 text-[11px] font-mono font-medium bg-campus-warning/10 text-campus-warning border border-campus-warning/30 rounded">
+            <Clock className="w-3 h-3" />
+            <span>Partial Payment</span>
+          </span>
+        );
       case "OVERDUE":
-        return <span className="px-2 py-0.5 text-xs font-bold bg-red-100 text-red-900 border border-red-300 rounded-[4px]">Overdue</span>;
+        return (
+          <span className="inline-flex items-center space-x-1 px-2.5 py-0.5 text-[11px] font-mono font-medium bg-campus-error/10 text-campus-error border border-campus-error/30 rounded">
+            <AlertCircle className="w-3 h-3" />
+            <span>Overdue</span>
+          </span>
+        );
       default:
-        return <span className="px-2 py-0.5 text-xs font-bold bg-stone-100 text-stone-800 border border-stone-300 rounded-[4px]">Payment Due</span>;
+        return (
+          <span className="px-2.5 py-0.5 text-[11px] font-mono bg-campus-elevated text-campus-secondary border border-campus-border rounded">
+            Payment Due
+          </span>
+        );
     }
   };
 
@@ -74,9 +93,14 @@ export const FeeStatusPage: React.FC<{ user: UserProfile | null }> = ({ user }) 
 
   return (
     <div className="space-y-6">
-      <div className="bg-white border border-stone-300 p-4 rounded-[6px]">
-        <h1 className="text-xl font-bold text-stone-900">Academic & Hostel Fee Status</h1>
-        <p className="text-xs text-stone-600 mt-0.5">
+      <div className="bg-campus-card border border-campus-border p-5 rounded-lg">
+        <div className="flex items-center space-x-2.5">
+          <div className="w-8 h-8 rounded bg-campus-elevated border border-campus-border flex items-center justify-center text-campus-gold">
+            <CreditCard className="w-4 h-4" />
+          </div>
+          <h1 className="text-lg font-semibold text-campus-text">Academic & Hostel Fee Status</h1>
+        </div>
+        <p className="text-xs text-campus-muted mt-1.5 ml-10">
           Read-only fee records imported from official accounts CSV registers
         </p>
       </div>
@@ -85,62 +109,63 @@ export const FeeStatusPage: React.FC<{ user: UserProfile | null }> = ({ user }) 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           <div className="md:col-span-2 space-y-4">
             {loading ? (
-              <div className="p-8 text-center text-xs text-stone-500 bg-white border border-stone-300 rounded-[4px]">
+              <div className="p-12 text-center text-xs text-campus-muted bg-campus-card border border-campus-border rounded-lg">
+                <div className="w-6 h-6 border-2 border-campus-gold border-t-transparent rounded-full animate-spin mx-auto mb-2" />
                 Loading fee records...
               </div>
             ) : !myFee ? (
-              <div className="p-6 bg-white border border-stone-300 rounded-[6px] text-xs text-stone-600 shadow-sm">
+              <div className="p-8 bg-campus-card border border-campus-border rounded-lg text-xs text-campus-secondary">
                 No fee record is currently imported for your roll number ({user?.rollNumber || "N/A"}). Please contact the Accounts Desk if you recently enrolled.
               </div>
             ) : (
-              <div className="bg-white border border-stone-300 rounded-[6px] p-6 space-y-6 shadow-sm">
-                <div className="flex items-center justify-between border-b border-stone-200 pb-3">
+              <div className="bg-campus-card border border-campus-border rounded-lg p-6 space-y-6">
+                <div className="flex items-center justify-between border-b border-campus-border pb-4">
                   <div>
-                    <h2 className="text-sm font-bold text-stone-900">
+                    <h2 className="text-sm font-semibold text-campus-text">
                       Semester {myFee.semester} Fee Statement ({myFee.academicYear})
                     </h2>
-                    <span className="text-xs text-stone-500 font-mono">Roll: {myFee.rollNumber}</span>
+                    <span className="text-xs text-campus-gold font-mono">Roll: {myFee.rollNumber}</span>
                   </div>
                   <div>{getStatusBadge(myFee.status)}</div>
                 </div>
 
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 text-xs">
-                  <div className="p-3 bg-stone-50 border border-stone-200 rounded-[4px]">
-                    <span className="text-stone-500 block">Total Tuition & Hostel</span>
-                    <span className="text-lg font-bold text-stone-900">Rs. {myFee.totalFee.toLocaleString("en-IN")}</span>
+                  <div className="p-4 bg-campus-elevated/40 border border-campus-border rounded-lg">
+                    <span className="text-campus-muted block mb-1">Total Tuition & Hostel</span>
+                    <span className="text-xl font-bold font-mono text-campus-text">₹{myFee.totalFee.toLocaleString("en-IN")}</span>
                   </div>
-                  <div className="p-3 bg-emerald-50 border border-emerald-200 rounded-[4px]">
-                    <span className="text-emerald-800 block font-medium">Total Paid</span>
-                    <span className="text-lg font-bold text-emerald-900">Rs. {myFee.paidFee.toLocaleString("en-IN")}</span>
+                  <div className="p-4 bg-campus-success/5 border border-campus-success/20 rounded-lg">
+                    <span className="text-campus-success block font-medium mb-1">Total Paid</span>
+                    <span className="text-xl font-bold font-mono text-campus-success">₹{myFee.paidFee.toLocaleString("en-IN")}</span>
                   </div>
-                  <div className={`p-3 border rounded-[4px] ${myFee.dueFee > 0 ? "bg-red-50 border-red-200" : "bg-stone-50 border-stone-200"}`}>
-                    <span className={`block font-medium ${myFee.dueFee > 0 ? "text-red-800" : "text-stone-500"}`}>Outstanding Dues</span>
-                    <span className={`text-lg font-bold ${myFee.dueFee > 0 ? "text-red-900" : "text-stone-900"}`}>
-                      Rs. {myFee.dueFee.toLocaleString("en-IN")}
+                  <div className={`p-4 border rounded-lg ${myFee.dueFee > 0 ? "bg-campus-error/5 border-campus-error/30" : "bg-campus-elevated/40 border-campus-border"}`}>
+                    <span className={`block font-medium mb-1 ${myFee.dueFee > 0 ? "text-campus-error" : "text-campus-muted"}`}>Outstanding Dues</span>
+                    <span className={`text-xl font-bold font-mono ${myFee.dueFee > 0 ? "text-campus-error" : "text-campus-text"}`}>
+                      ₹{myFee.dueFee.toLocaleString("en-IN")}
                     </span>
                   </div>
                 </div>
 
-                <div className="text-xs text-stone-600 bg-stone-50 p-3 border border-stone-200 rounded-[4px] flex items-center justify-between">
-                  <span>Due Date for Clearance:</span>
-                  <span className="font-bold text-stone-900">{new Date(myFee.dueDate).toLocaleDateString()}</span>
+                <div className="text-xs text-campus-secondary bg-campus-elevated/60 p-3.5 border border-campus-border rounded flex items-center justify-between font-mono">
+                  <span className="text-campus-muted">Due Date for Clearance:</span>
+                  <span className="font-semibold text-campus-text">{new Date(myFee.dueDate).toLocaleDateString()}</span>
                 </div>
               </div>
             )}
           </div>
 
-          <div className="bg-white border border-stone-300 rounded-[6px] p-5 space-y-3 shadow-sm text-xs">
-            <h3 className="font-bold text-stone-900 uppercase tracking-wider border-b border-stone-200 pb-2 flex items-center space-x-1.5">
-              <Building className="w-4 h-4 text-stone-700" />
+          <div className="bg-campus-card border border-campus-border rounded-lg p-5 space-y-4 text-xs">
+            <h3 className="font-semibold text-campus-text uppercase tracking-wider border-b border-campus-border pb-2.5 flex items-center space-x-2">
+              <Building className="w-4 h-4 text-campus-gold" />
               <span>Payment & Accounts Help</span>
             </h3>
-            <p className="text-stone-600 leading-relaxed">
+            <p className="text-campus-secondary leading-relaxed">
               Payments can be made at the college bank branch or via institutional NEFT/RTGS transfer. Submit the physical bank deposit receipt at the Accounts Section (Admin Block Room 104) to update your digital clearance status.
             </p>
-            <div className="pt-2 border-t border-stone-200 text-stone-600 space-y-1">
-              <div><strong>Accounts Desk:</strong> accounts@campusdesk.edu</div>
-              <div><strong>Contact:</strong> +91-9876543204</div>
-              <div><strong>Hours:</strong> Mon - Sat, 09:30 to 16:30</div>
+            <div className="pt-3 border-t border-campus-border text-campus-muted space-y-2">
+              <div className="flex justify-between"><span className="text-campus-secondary">Accounts Desk:</span> <span className="font-mono text-campus-text">accounts@campusdesk.edu</span></div>
+              <div className="flex justify-between"><span className="text-campus-secondary">Contact:</span> <span className="font-mono text-campus-text">+91-9876543204</span></div>
+              <div className="flex justify-between"><span className="text-campus-secondary">Hours:</span> <span className="text-campus-text">Mon - Sat, 09:30 - 16:30</span></div>
             </div>
           </div>
         </div>
@@ -149,66 +174,66 @@ export const FeeStatusPage: React.FC<{ user: UserProfile | null }> = ({ user }) 
           {/* Admin Summary Cards */}
           {summary && (
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-              <div className="bg-white border border-stone-300 p-4 rounded-[6px]">
-                <span className="text-xs text-stone-500 font-semibold block">Total Students Recorded</span>
-                <span className="text-2xl font-bold text-stone-900">{summary.totalStudents}</span>
+              <div className="bg-campus-card border border-campus-border p-5 rounded-lg">
+                <span className="text-xs text-campus-muted font-mono uppercase tracking-wider block mb-1">Total Students Recorded</span>
+                <span className="text-2xl font-bold font-mono text-campus-text">{summary.totalStudents}</span>
               </div>
-              <div className="bg-white border border-stone-300 p-4 rounded-[6px]">
-                <span className="text-xs text-stone-500 font-semibold block">Total Fees Collected</span>
-                <span className="text-2xl font-bold text-emerald-800">
-                  Rs. {summary.totalCollected.toLocaleString("en-IN")}
+              <div className="bg-campus-card border border-campus-border p-5 rounded-lg">
+                <span className="text-xs text-campus-success/80 font-mono uppercase tracking-wider block mb-1">Total Fees Collected</span>
+                <span className="text-2xl font-bold font-mono text-campus-success">
+                  ₹{summary.totalCollected.toLocaleString("en-IN")}
                 </span>
               </div>
-              <div className="bg-white border border-stone-300 p-4 rounded-[6px]">
-                <span className="text-xs text-stone-500 font-semibold block">Total Outstanding Dues</span>
-                <span className="text-2xl font-bold text-red-800">
-                  Rs. {summary.totalPending.toLocaleString("en-IN")}
+              <div className="bg-campus-card border border-campus-border p-5 rounded-lg">
+                <span className="text-xs text-campus-error/80 font-mono uppercase tracking-wider block mb-1">Total Outstanding Dues</span>
+                <span className="text-2xl font-bold font-mono text-campus-error">
+                  ₹{summary.totalPending.toLocaleString("en-IN")}
                 </span>
               </div>
             </div>
           )}
 
           {/* Search bar */}
-          <div className="bg-white border border-stone-300 p-3 rounded-[4px] flex items-center justify-between">
-            <div className="flex items-center space-x-2 w-full sm:max-w-md">
-              <Search className="w-4 h-4 text-stone-400" />
+          <div className="bg-campus-card border border-campus-border p-3 rounded-lg flex items-center justify-between">
+            <div className="flex items-center space-x-2.5 w-full sm:max-w-md">
+              <Search className="w-4 h-4 text-campus-muted" />
               <input
                 type="text"
                 placeholder="Search by student name or roll number..."
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
-                className="w-full text-xs px-2 py-1 border border-stone-300 rounded-[4px] focus:outline-none"
+                className="w-full text-xs px-3 py-1.5 bg-campus-bg border border-campus-border rounded text-campus-text placeholder-campus-muted focus:outline-none focus:border-campus-gold"
               />
             </div>
           </div>
 
           {/* All Fees Table */}
-          <div className="bg-white border border-stone-300 rounded-[6px] overflow-hidden shadow-sm">
+          <div className="bg-campus-card border border-campus-border rounded-lg overflow-hidden">
             <div className="overflow-x-auto">
               <table className="w-full text-left text-xs border-collapse">
                 <thead>
-                  <tr className="bg-stone-100 border-b border-stone-300 text-stone-700 font-bold uppercase tracking-wider">
-                    <th className="py-2.5 px-3">Roll Number</th>
-                    <th className="py-2.5 px-3">Student Name</th>
-                    <th className="py-2.5 px-3">Semester</th>
-                    <th className="py-2.5 px-3">Total Fee</th>
-                    <th className="py-2.5 px-3">Paid Fee</th>
-                    <th className="py-2.5 px-3">Due Amount</th>
-                    <th className="py-2.5 px-3">Due Date</th>
-                    <th className="py-2.5 px-3">Status</th>
+                  <tr className="bg-campus-elevated/60 border-b border-campus-border text-campus-muted font-mono uppercase tracking-wider text-[11px]">
+                    <th className="py-3 px-4">Roll Number</th>
+                    <th className="py-3 px-4">Student Name</th>
+                    <th className="py-3 px-4">Semester</th>
+                    <th className="py-3 px-4">Total Fee</th>
+                    <th className="py-3 px-4">Paid Fee</th>
+                    <th className="py-3 px-4">Due Amount</th>
+                    <th className="py-3 px-4">Due Date</th>
+                    <th className="py-3 px-4">Status</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-stone-200">
+                <tbody className="divide-y divide-campus-border/60">
                   {filteredFees.map((f) => (
-                    <tr key={f.id} className="hover:bg-stone-50 transition-colors">
-                      <td className="py-2.5 px-3 font-mono font-bold text-stone-900">{f.rollNumber}</td>
-                      <td className="py-2.5 px-3 font-semibold text-stone-900">{f.studentName}</td>
-                      <td className="py-2.5 px-3 text-stone-700">Sem {f.semester} ({f.academicYear})</td>
-                      <td className="py-2.5 px-3 text-stone-800 font-medium">Rs. {f.totalFee.toLocaleString("en-IN")}</td>
-                      <td className="py-2.5 px-3 text-emerald-800 font-medium">Rs. {f.paidFee.toLocaleString("en-IN")}</td>
-                      <td className="py-2.5 px-3 text-red-800 font-bold">Rs. {f.dueFee.toLocaleString("en-IN")}</td>
-                      <td className="py-2.5 px-3 text-stone-600">{new Date(f.dueDate).toLocaleDateString()}</td>
-                      <td className="py-2.5 px-3">{getStatusBadge(f.status)}</td>
+                    <tr key={f.id} className="hover:bg-campus-elevated/40 transition-colors">
+                      <td className="py-3 px-4 font-mono font-semibold text-campus-gold">{f.rollNumber}</td>
+                      <td className="py-3 px-4 font-medium text-campus-text">{f.studentName}</td>
+                      <td className="py-3 px-4 text-campus-secondary">Sem {f.semester} ({f.academicYear})</td>
+                      <td className="py-3 px-4 text-campus-secondary font-mono">₹{f.totalFee.toLocaleString("en-IN")}</td>
+                      <td className="py-3 px-4 text-campus-success font-mono font-medium">₹{f.paidFee.toLocaleString("en-IN")}</td>
+                      <td className="py-3 px-4 text-campus-error font-mono font-bold">₹{f.dueFee.toLocaleString("en-IN")}</td>
+                      <td className="py-3 px-4 text-campus-muted font-mono">{new Date(f.dueDate).toLocaleDateString()}</td>
+                      <td className="py-3 px-4">{getStatusBadge(f.status)}</td>
                     </tr>
                   ))}
                 </tbody>

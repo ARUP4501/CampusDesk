@@ -7,10 +7,11 @@ import {
   Printer,
   AlertCircle,
   CheckCircle2,
-  FileText,
   ShieldAlert,
   User,
-  Image as ImageIcon
+  Image as ImageIcon,
+  Wrench,
+  Layers
 } from "lucide-react";
 import { apiRequest, UserProfile } from "../api/client.js";
 
@@ -154,13 +155,18 @@ export const TicketDetailPage: React.FC<{ user: UserProfile | null }> = ({ user 
   };
 
   if (loading) {
-    return <div className="p-8 text-center text-xs text-stone-500">Loading ticket records...</div>;
+    return (
+      <div className="p-12 text-center text-xs text-[#A7ADB5] flex flex-col items-center justify-center space-y-2">
+        <div className="w-6 h-6 border-2 border-[#D6A84F] border-t-transparent rounded-full animate-spin"></div>
+        <span className="font-mono">Loading ticket record from database...</span>
+      </div>
+    );
   }
 
   if (error || !ticket) {
     return (
-      <div className="p-6 bg-red-50 border border-red-200 text-red-900 rounded-[4px] text-xs">
-        {error || "Ticket not found."}
+      <div className="p-6 bg-red-500/10 border border-red-500/30 text-red-200 rounded-[4px] text-xs">
+        {error || "Ticket record not found."}
       </div>
     );
   }
@@ -168,39 +174,39 @@ export const TicketDetailPage: React.FC<{ user: UserProfile | null }> = ({ user 
   return (
     <div className="space-y-6">
       {/* Top Bar */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 bg-white border border-stone-300 p-4 rounded-[6px]">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 bg-[#14181C] border border-[#252B31] p-4 rounded-[6px] shadow-subtle">
         <div className="flex items-center space-x-3">
           <button
             onClick={() => navigate("/tickets")}
-            className="p-1.5 bg-white border border-stone-300 rounded-[4px] text-stone-700 hover:bg-stone-100"
+            className="p-1.5 bg-[#101316] border border-[#252B31] rounded-[4px] text-[#A7ADB5] hover:text-[#F3F4F6] hover:bg-[#181D22] transition-colors"
             aria-label="Back to tickets list"
           >
             <ArrowLeft className="w-4 h-4" />
           </button>
           <div>
             <div className="flex items-center space-x-2">
-              <span className="font-mono font-bold text-sm text-stone-900">
+              <span className="font-mono font-bold text-sm text-[#D6A84F]">
                 #{ticket.ticketNumber}
               </span>
-              <span className="px-2 py-0.5 text-xs font-semibold bg-stone-100 text-stone-800 border border-stone-300 rounded-[4px]">
+              <span className="px-2 py-0.5 text-[10px] font-mono font-semibold bg-[#181D22] text-[#F3F4F6] border border-[#252B31] rounded-[3px]">
                 {ticket.status}
               </span>
               {ticket.escalationLevel > 0 && (
-                <span className="px-2 py-0.5 text-xs font-bold bg-amber-100 text-amber-900 border border-amber-300 rounded-[4px]">
-                  Escalated Level {ticket.escalationLevel}
+                <span className="px-2 py-0.5 text-[10px] font-mono font-bold bg-amber-500/10 text-amber-300 border border-amber-500/30 rounded-[3px]">
+                  ESCALATED L{ticket.escalationLevel}
                 </span>
               )}
             </div>
-            <h1 className="text-base font-bold text-stone-900 mt-0.5">{ticket.title}</h1>
+            <h1 className="text-base font-bold text-[#F3F4F6] mt-0.5">{ticket.title}</h1>
           </div>
         </div>
 
         <div className="flex items-center space-x-2">
           <button
             onClick={handlePrintSlip}
-            className="inline-flex items-center space-x-1.5 bg-stone-100 hover:bg-stone-200 text-stone-800 border border-stone-300 text-xs font-medium px-3 py-1.5 rounded-[4px]"
+            className="inline-flex items-center space-x-1.5 bg-[#101316] hover:bg-[#181D22] text-[#F3F4F6] border border-[#252B31] hover:border-[#363E48] text-xs font-medium px-3 py-1.5 rounded-[4px] transition-colors"
           >
-            <Printer className="w-3.5 h-3.5" />
+            <Printer className="w-3.5 h-3.5 text-[#D6A84F]" />
             <span>Print Physical Slip</span>
           </button>
         </div>
@@ -208,10 +214,10 @@ export const TicketDetailPage: React.FC<{ user: UserProfile | null }> = ({ user 
 
       {/* Recurring Issue Alert Banner */}
       {ticket.isRecurring && (
-        <div className="p-3 bg-amber-50 border border-amber-300 rounded-[4px] flex items-start space-x-2.5 text-xs text-amber-900">
-          <AlertCircle className="w-4 h-4 text-amber-700 flex-shrink-0 mt-0.5" />
+        <div className="p-3 bg-amber-500/10 border border-amber-500/30 rounded-[4px] flex items-start space-x-2.5 text-xs text-amber-200">
+          <AlertCircle className="w-4 h-4 text-amber-400 flex-shrink-0 mt-0.5" />
           <div>
-            <span className="font-bold">Recurring Issue Warning:</span> {ticket.recurringCount} similar complaints in category <strong>{ticket.category}</strong> were filed for <strong>{ticket.hostelBlock} {ticket.roomNumber}</strong> within the past 14 days. Staff should inspect for underlying structural or maintenance defects.
+            <span className="font-bold text-amber-300">Recurring Issue Detected:</span> {ticket.recurringCount} similar complaints in category <strong className="text-[#F3F4F6]">{ticket.category}</strong> were registered for <strong className="text-[#F3F4F6]">{ticket.hostelBlock} {ticket.roomNumber}</strong> within the past 14 days. Staff should inspect for underlying structural defects.
           </div>
         </div>
       )}
@@ -220,75 +226,75 @@ export const TicketDetailPage: React.FC<{ user: UserProfile | null }> = ({ user 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <div className="lg:col-span-2 space-y-6">
           {/* Issue Overview Card */}
-          <div className="bg-white border border-stone-300 rounded-[6px] p-5 space-y-4 shadow-sm">
-            <h2 className="text-xs font-bold text-stone-700 uppercase tracking-wider border-b border-stone-200 pb-2">
-              Complaint Description & Location
+          <div className="bg-[#14181C] border border-[#252B31] rounded-[6px] p-5 space-y-4 shadow-subtle">
+            <h2 className="text-xs font-mono font-bold text-[#D6A84F] uppercase tracking-wider border-b border-[#252B31] pb-2">
+              Complaint Description & Location Context
             </h2>
 
-            <p className="text-sm text-stone-800 whitespace-pre-wrap leading-relaxed">
+            <p className="text-xs text-[#F3F4F6] whitespace-pre-wrap leading-relaxed">
               {ticket.description}
             </p>
 
             {ticket.hasPhoto && (
-              <div className="pt-3 border-t border-stone-200">
-                <div className="text-xs font-semibold text-stone-800 mb-2 flex items-center space-x-1.5">
-                  <ImageIcon className="w-4 h-4 text-stone-600" />
-                  <span>Attached Photo (Stored in Database):</span>
+              <div className="pt-3 border-t border-[#252B31]">
+                <div className="text-xs font-semibold text-[#A7ADB5] mb-2 flex items-center space-x-1.5">
+                  <ImageIcon className="w-4 h-4 text-[#D6A84F]" />
+                  <span>Attached Evidence Photo (Stored in Database Bytea):</span>
                 </div>
                 <img
                   src={`/api/tickets/${ticket.id}/photo`}
                   alt="Complaint evidence"
-                  className="max-h-72 max-w-full rounded-[4px] border border-stone-300 object-contain bg-stone-50"
+                  className="max-h-72 max-w-full rounded-[4px] border border-[#252B31] object-contain bg-[#101316]"
                 />
               </div>
             )}
 
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 pt-3 border-t border-stone-200 text-xs">
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 pt-3 border-t border-[#252B31] text-xs">
               <div>
-                <span className="text-stone-500 block">Hostel Block</span>
-                <span className="font-semibold text-stone-800">{ticket.hostelBlock}</span>
+                <span className="text-[#6F7781] block font-mono text-[11px]">Hostel Block</span>
+                <span className="font-semibold text-[#F3F4F6]">{ticket.hostelBlock}</span>
               </div>
               <div>
-                <span className="text-stone-500 block">Room / Location</span>
-                <span className="font-semibold text-stone-800">{ticket.roomNumber}</span>
+                <span className="text-[#6F7781] block font-mono text-[11px]">Room / Location</span>
+                <span className="font-semibold text-[#F3F4F6]">{ticket.roomNumber}</span>
               </div>
               <div>
-                <span className="text-stone-500 block">Priority</span>
-                <span className="font-semibold text-stone-800">{ticket.priority}</span>
+                <span className="text-[#6F7781] block font-mono text-[11px]">Priority Level</span>
+                <span className="font-semibold text-[#F3F4F6]">{ticket.priority}</span>
               </div>
               <div>
-                <span className="text-stone-500 block">Waiting Time</span>
-                <span className="font-semibold text-stone-800">{ticket.ageHours} hours</span>
+                <span className="text-[#6F7781] block font-mono text-[11px]">Queue Age</span>
+                <span className="font-semibold text-[#D6A84F] font-mono">{ticket.ageHours} hours</span>
               </div>
             </div>
           </div>
 
           {/* Immutable Audit Trail */}
-          <div className="bg-white border border-stone-300 rounded-[6px] p-5 shadow-sm">
-            <div className="flex items-center justify-between border-b border-stone-200 pb-2 mb-4">
-              <h2 className="text-xs font-bold text-stone-700 uppercase tracking-wider flex items-center space-x-1.5">
-                <ShieldAlert className="w-4 h-4 text-emerald-800" />
-                <span>Immutable Audit Trail ({ticket.auditLogs.length} Records)</span>
+          <div className="bg-[#14181C] border border-[#252B31] rounded-[6px] p-5 shadow-subtle">
+            <div className="flex items-center justify-between border-b border-[#252B31] pb-2 mb-4">
+              <h2 className="text-xs font-mono font-bold text-[#D6A84F] uppercase tracking-wider flex items-center space-x-1.5">
+                <ShieldAlert className="w-4 h-4 text-[#10B981]" />
+                <span>Immutable Audit Log ({ticket.auditLogs.length} Events)</span>
               </h2>
-              <span className="text-[11px] text-stone-500">Read-Only System Log</span>
+              <span className="text-[10px] font-mono text-[#6F7781]">Cryptographically Logged</span>
             </div>
 
-            <div className="relative pl-6 space-y-4 before:absolute before:left-2 before:top-2 before:bottom-2 before:w-0.5 before:bg-stone-200">
+            <div className="relative pl-6 space-y-4 before:absolute before:left-2 before:top-2 before:bottom-2 before:w-0.5 before:bg-[#252B31]">
               {ticket.auditLogs.map((log) => (
                 <div key={log.id} className="relative text-xs">
-                  <div className="absolute -left-6 top-1 w-2.5 h-2.5 rounded-full bg-[#0f4c3a] border-2 border-white" />
-                  <div className="flex items-center space-x-2">
-                    <span className="font-bold text-stone-900">{log.action.replace(/_/g, " ")}</span>
-                    <span className="text-stone-400">&bull;</span>
-                    <span className="text-stone-600 font-medium">
+                  <div className="absolute -left-6 top-1 w-2.5 h-2.5 rounded-full bg-[#D6A84F] border-2 border-[#14181C]" />
+                  <div className="flex items-center space-x-2 flex-wrap">
+                    <span className="font-semibold text-[#F3F4F6]">{log.action.replace(/_/g, " ")}</span>
+                    <span className="text-[#6F7781]">&bull;</span>
+                    <span className="text-[#A7ADB5] font-mono text-[11px]">
                       By {log.changedBy.fullName} ({log.changedBy.role})
                     </span>
-                    <span className="text-stone-400">&bull;</span>
-                    <span className="text-[10px] text-stone-400">
+                    <span className="text-[#6F7781]">&bull;</span>
+                    <span className="text-[10px] font-mono text-[#6F7781]">
                       {new Date(log.createdAt).toLocaleString()}
                     </span>
                   </div>
-                  <p className="text-stone-700 mt-1 bg-stone-50 p-2 border border-stone-200 rounded-[4px]">
+                  <p className="text-[#A7ADB5] mt-1 bg-[#101316] p-2.5 border border-[#252B31] rounded-[4px] leading-relaxed">
                     {log.note}
                   </p>
                 </div>
@@ -300,25 +306,25 @@ export const TicketDetailPage: React.FC<{ user: UserProfile | null }> = ({ user 
         {/* Right Sidebar: Student Info & Staff Update Panel */}
         <div className="space-y-6">
           {/* Student Info Card */}
-          <div className="bg-white border border-stone-300 rounded-[6px] p-4 text-xs space-y-3 shadow-sm">
-            <h3 className="font-bold text-stone-700 uppercase tracking-wider border-b border-stone-200 pb-2 flex items-center space-x-1.5">
-              <User className="w-3.5 h-3.5 text-stone-600" />
+          <div className="bg-[#14181C] border border-[#252B31] rounded-[6px] p-4 text-xs space-y-3 shadow-subtle">
+            <h3 className="font-mono font-bold text-[#D6A84F] uppercase tracking-wider border-b border-[#252B31] pb-2 flex items-center space-x-1.5">
+              <User className="w-3.5 h-3.5 text-[#D6A84F]" />
               <span>Reported By</span>
             </h3>
             <div>
-              <div className="font-bold text-stone-900 text-sm">{ticket.student.fullName}</div>
-              <div className="text-stone-600 font-mono">Roll: {ticket.student.rollNumber || "N/A"}</div>
-              <div className="text-stone-600">Phone: {ticket.student.phone}</div>
-              <div className="text-stone-500 text-[11px] mt-1">
+              <div className="font-bold text-[#F3F4F6] text-sm">{ticket.student.fullName}</div>
+              <div className="text-[#D6A84F] font-mono">Roll: {ticket.student.rollNumber || "N/A"}</div>
+              <div className="text-[#A7ADB5] font-mono">Phone: {ticket.student.phone}</div>
+              <div className="text-[#6F7781] text-[11px] mt-1">
                 Resident: {ticket.student.hostelBlock}, Room {ticket.student.roomNumber}
               </div>
             </div>
 
-            <div className="pt-2 border-t border-stone-200">
-              <div className="text-stone-500">Department Routing:</div>
-              <div className="font-semibold text-stone-800">{ticket.category}</div>
+            <div className="pt-2 border-t border-[#252B31]">
+              <div className="text-[#6F7781] font-mono text-[10px] uppercase">Department Routing:</div>
+              <div className="font-semibold text-[#F3F4F6] mt-0.5">{ticket.category}</div>
               {ticket.predictedCategory && (
-                <div className="text-[10px] text-stone-500">
+                <div className="text-[10px] font-mono text-[#D6A84F] mt-0.5">
                   Initial AI Prediction: {ticket.predictedCategory}
                 </div>
               )}
@@ -327,27 +333,28 @@ export const TicketDetailPage: React.FC<{ user: UserProfile | null }> = ({ user 
 
           {/* Staff Update Action Box */}
           {isStaffOrAdmin && (
-            <div className="bg-stone-50 border border-stone-300 rounded-[6px] p-4 text-xs space-y-4 shadow-sm">
-              <h3 className="font-bold text-stone-900 uppercase tracking-wider border-b border-stone-300 pb-2">
-                Staff Resolution Panel
+            <div className="bg-[#14181C] border border-[#252B31] rounded-[6px] p-4 text-xs space-y-4 shadow-subtle">
+              <h3 className="font-mono font-bold text-[#D6A84F] uppercase tracking-wider border-b border-[#252B31] pb-2 flex items-center space-x-1.5">
+                <Wrench className="w-3.5 h-3.5 text-[#D6A84F]" />
+                <span>Staff Work Order Controls</span>
               </h3>
 
               {updateSuccess && (
-                <div className="p-2 bg-emerald-100 text-emerald-900 border border-emerald-300 rounded-[4px] font-medium">
+                <div className="p-2.5 bg-emerald-500/10 text-emerald-200 border border-emerald-500/30 rounded-[4px] font-medium">
                   {updateSuccess}
                 </div>
               )}
 
               <form onSubmit={handleStatusUpdate} className="space-y-3">
                 <div>
-                  <label htmlFor="statusInput" className="block font-semibold text-stone-800 mb-1">
+                  <label htmlFor="statusInput" className="block font-semibold text-[#A7ADB5] mb-1">
                     Update Status *
                   </label>
                   <select
                     id="statusInput"
                     value={statusInput}
                     onChange={(e) => setStatusInput(e.target.value)}
-                    className="w-full text-xs px-2.5 py-1.5 border border-stone-300 rounded-[4px] bg-white text-stone-800"
+                    className="w-full text-xs px-2.5 py-1.5 border border-[#252B31] rounded-[4px] bg-[#101316] text-[#F3F4F6] focus:outline-none focus:border-[#D6A84F]"
                   >
                     <option value="SUBMITTED">Submitted</option>
                     <option value="ASSIGNED">Assigned</option>
@@ -358,14 +365,14 @@ export const TicketDetailPage: React.FC<{ user: UserProfile | null }> = ({ user 
                 </div>
 
                 <div>
-                  <label htmlFor="assignedStaffInput" className="block font-semibold text-stone-800 mb-1">
+                  <label htmlFor="assignedStaffInput" className="block font-semibold text-[#A7ADB5] mb-1">
                     Assign Staff Member
                   </label>
                   <select
                     id="assignedStaffInput"
                     value={assignedStaffInput}
                     onChange={(e) => setAssignedStaffInput(e.target.value)}
-                    className="w-full text-xs px-2.5 py-1.5 border border-stone-300 rounded-[4px] bg-white text-stone-800"
+                    className="w-full text-xs px-2.5 py-1.5 border border-[#252B31] rounded-[4px] bg-[#101316] text-[#F3F4F6] focus:outline-none focus:border-[#D6A84F]"
                   >
                     <option value="">Unassigned (Queue)</option>
                     {staffList.map((s) => (
@@ -377,14 +384,14 @@ export const TicketDetailPage: React.FC<{ user: UserProfile | null }> = ({ user 
                 </div>
 
                 <div>
-                  <label htmlFor="categoryCorrectionInput" className="block font-semibold text-stone-800 mb-1">
+                  <label htmlFor="categoryCorrectionInput" className="block font-semibold text-[#A7ADB5] mb-1">
                     Correct Category (if misclassified)
                   </label>
                   <select
                     id="categoryCorrectionInput"
                     value={categoryCorrectionInput}
                     onChange={(e) => setCategoryCorrectionInput(e.target.value)}
-                    className="w-full text-xs px-2.5 py-1.5 border border-stone-300 rounded-[4px] bg-white text-stone-800"
+                    className="w-full text-xs px-2.5 py-1.5 border border-[#252B31] rounded-[4px] bg-[#101316] text-[#F3F4F6] focus:outline-none focus:border-[#D6A84F]"
                   >
                     <option value="">Keep current ({ticket.category})</option>
                     <option value="PLUMBING">Plumbing</option>
@@ -399,7 +406,7 @@ export const TicketDetailPage: React.FC<{ user: UserProfile | null }> = ({ user 
                 </div>
 
                 <div>
-                  <label htmlFor="auditNoteInput" className="block font-semibold text-stone-800 mb-1">
+                  <label htmlFor="auditNoteInput" className="block font-semibold text-[#A7ADB5] mb-1">
                     Audit Note (Mandatory) *
                   </label>
                   <textarea
@@ -409,14 +416,14 @@ export const TicketDetailPage: React.FC<{ user: UserProfile | null }> = ({ user 
                     value={auditNoteInput}
                     onChange={(e) => setAuditNoteInput(e.target.value)}
                     placeholder="Describe action taken, inspection findings or parts replaced..."
-                    className="w-full text-xs px-2.5 py-1.5 border border-stone-300 rounded-[4px] bg-white focus:outline-none"
+                    className="w-full text-xs px-2.5 py-1.5 border border-[#252B31] rounded-[4px] bg-[#101316] text-[#F3F4F6] focus:outline-none focus:border-[#D6A84F]"
                   />
                 </div>
 
                 <button
                   type="submit"
                   disabled={updateLoading}
-                  className="w-full bg-[#0f4c3a] hover:bg-[#0b392b] text-white font-semibold py-2 px-3 text-xs rounded-[4px] disabled:opacity-50"
+                  className="w-full bg-[#D6A84F] hover:bg-[#F0C86A] text-[#090B0D] font-bold py-2 px-3 text-xs rounded-[4px] disabled:opacity-50 transition-colors shadow-xs"
                 >
                   {updateLoading ? "Saving Audit Entry..." : "Save Audit Status"}
                 </button>

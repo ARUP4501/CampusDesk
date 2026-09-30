@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useTranslation } from "react-i18next";
-import { QrCode, Plus, CheckCircle, XCircle, Clock, Shield, ArrowRight, User } from "lucide-react";
+import { QrCode, Plus, CheckCircle, XCircle, Clock, Shield, ArrowRight, User, X } from "lucide-react";
 import { apiRequest, UserProfile } from "../api/client.js";
 
 interface GatePassItem {
@@ -123,95 +123,102 @@ export const GatePassPage: React.FC<{ user: UserProfile | null }> = ({ user }) =
   const getStatusBadge = (status: string) => {
     switch (status) {
       case "APPROVED":
-        return <span className="px-2 py-0.5 text-xs font-semibold bg-emerald-100 text-emerald-900 border border-emerald-300 rounded-[4px]">Approved</span>;
+        return <span className="px-2 py-0.5 text-[10px] font-mono font-semibold bg-emerald-500/10 text-emerald-300 border border-emerald-500/30 rounded-[3px]">Approved</span>;
       case "PENDING":
-        return <span className="px-2 py-0.5 text-xs font-semibold bg-amber-100 text-amber-900 border border-amber-300 rounded-[4px]">Pending Review</span>;
+        return <span className="px-2 py-0.5 text-[10px] font-mono font-semibold bg-amber-500/10 text-amber-300 border border-amber-500/30 rounded-[3px]">Pending Review</span>;
       case "EXITED":
-        return <span className="px-2 py-0.5 text-xs font-semibold bg-blue-100 text-blue-900 border border-blue-300 rounded-[4px]">Outside Campus</span>;
+        return <span className="px-2 py-0.5 text-[10px] font-mono font-semibold bg-blue-500/10 text-blue-300 border border-blue-500/30 rounded-[3px]">Outside Campus</span>;
       case "RETURNED":
-        return <span className="px-2 py-0.5 text-xs font-semibold bg-stone-200 text-stone-800 border border-stone-300 rounded-[4px]">Returned</span>;
+        return <span className="px-2 py-0.5 text-[10px] font-mono font-semibold bg-[#181D22] text-[#A7ADB5] border border-[#252B31] rounded-[3px]">Returned</span>;
       case "REJECTED":
-        return <span className="px-2 py-0.5 text-xs font-semibold bg-red-100 text-red-900 border border-red-300 rounded-[4px]">Rejected</span>;
+        return <span className="px-2 py-0.5 text-[10px] font-mono font-semibold bg-red-500/10 text-red-300 border border-red-500/30 rounded-[3px]">Rejected</span>;
       default:
-        return <span className="px-2 py-0.5 text-xs font-semibold bg-stone-100 text-stone-800 rounded-[4px]">{status}</span>;
+        return <span className="px-2 py-0.5 text-[10px] font-mono font-semibold bg-[#181D22] text-[#F3F4F6] rounded-[3px] border border-[#252B31]">{status}</span>;
     }
   };
 
   return (
     <div className="space-y-6">
       {/* Top Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 bg-white border border-stone-300 p-4 rounded-[6px]">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 bg-[#14181C] border border-[#252B31] p-5 rounded-[6px] shadow-subtle">
         <div>
-          <h1 className="text-xl font-bold text-stone-900">
-            {t("gatepass.title", "Gate Pass & Leave Requests")}
+          <div className="flex items-center space-x-2 text-[#D6A84F] text-[11px] font-mono uppercase mb-1">
+            <QrCode className="w-3.5 h-3.5" />
+            <span>Digital Gate Passes</span>
+          </div>
+          <h1 className="text-xl font-bold text-[#F3F4F6]">
+            {t("gatepass.title", "Gate Pass & Leave Management")}
           </h1>
-          <p className="text-xs text-stone-600 mt-0.5">
-            Digital gate pass authorization, QR verification for security guards and exit/entry logging
+          <p className="text-xs text-[#A7ADB5] mt-0.5">
+            Digital gate pass authorization, cryptographic QR verification for campus security and departure logging
           </p>
         </div>
 
         {user?.role === "STUDENT" && (
           <button
             onClick={() => setShowModal(true)}
-            className="inline-flex items-center space-x-2 bg-[#0f4c3a] text-white hover:bg-[#0b392b] text-xs font-semibold px-4 py-2 rounded-[4px]"
+            className="inline-flex items-center space-x-2 bg-[#D6A84F] hover:bg-[#F0C86A] text-[#090B0D] text-xs font-bold px-4 py-2.5 rounded-[4px] shadow-xs transition-colors"
           >
             <Plus className="w-4 h-4" />
-            <span>{t("gatepass.newPass", "New Gate Pass Request")}</span>
+            <span>{t("gatepass.newPass", "Apply for Gate Pass")}</span>
           </button>
         )}
       </div>
 
       {/* Gate Pass Table */}
-      <div className="bg-white border border-stone-300 rounded-[6px] overflow-hidden shadow-sm">
+      <div className="bg-[#14181C] border border-[#252B31] rounded-[6px] overflow-hidden shadow-subtle">
         {loading ? (
-          <div className="p-8 text-center text-xs text-stone-500">Loading gate pass records...</div>
+          <div className="p-12 text-center text-xs text-[#A7ADB5] flex flex-col items-center justify-center space-y-2">
+            <div className="w-6 h-6 border-2 border-[#D6A84F] border-t-transparent rounded-full animate-spin"></div>
+            <span className="font-mono">Loading gate pass records...</span>
+          </div>
         ) : passes.length === 0 ? (
-          <div className="p-8 text-center text-xs text-stone-500">
+          <div className="p-12 text-center text-xs text-[#6F7781]">
             No gate pass requests found on file.
           </div>
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full text-left text-xs border-collapse">
               <thead>
-                <tr className="bg-stone-100 border-b border-stone-300 text-stone-700 font-bold uppercase tracking-wider">
-                  <th className="py-2.5 px-3">Pass #</th>
-                  <th className="py-2.5 px-3">Student</th>
-                  <th className="py-2.5 px-3">Type</th>
-                  <th className="py-2.5 px-3">Destination & Reason</th>
-                  <th className="py-2.5 px-3">Departure</th>
-                  <th className="py-2.5 px-3">Expected Return</th>
-                  <th className="py-2.5 px-3">Status</th>
-                  <th className="py-2.5 px-3 text-right">Actions</th>
+                <tr className="bg-[#101316] border-b border-[#252B31] text-[#A7ADB5] font-mono uppercase tracking-wider text-[11px]">
+                  <th className="py-3 px-4">Pass ID</th>
+                  <th className="py-3 px-4">Student</th>
+                  <th className="py-3 px-4">Type</th>
+                  <th className="py-3 px-4">Destination & Purpose</th>
+                  <th className="py-3 px-4">Departure</th>
+                  <th className="py-3 px-4">Expected Return</th>
+                  <th className="py-3 px-4">Status</th>
+                  <th className="py-3 px-4 text-right">Actions</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-stone-200">
+              <tbody className="divide-y divide-[#252B31]">
                 {passes.map((p) => (
-                  <tr key={p.id} className="hover:bg-stone-50 transition-colors">
-                    <td className="py-2.5 px-3 font-mono font-bold text-emerald-950">
+                  <tr key={p.id} className="hover:bg-[#181D22] transition-colors">
+                    <td className="py-3 px-4 font-mono font-bold text-[#D6A84F]">
                       #{p.passNumber}
                     </td>
-                    <td className="py-2.5 px-3">
-                      <div className="font-semibold text-stone-900">{p.student.fullName}</div>
-                      <div className="text-[11px] text-stone-500 font-mono">{p.student.rollNumber}</div>
+                    <td className="py-3 px-4">
+                      <div className="font-semibold text-[#F3F4F6]">{p.student.fullName}</div>
+                      <div className="text-[11px] text-[#6F7781] font-mono">{p.student.rollNumber}</div>
                     </td>
-                    <td className="py-2.5 px-3 font-medium text-stone-800">{p.type}</td>
-                    <td className="py-2.5 px-3">
-                      <div className="font-semibold text-stone-900">{p.destination}</div>
-                      <div className="text-[11px] text-stone-600 truncate max-w-xs">{p.reason}</div>
+                    <td className="py-3 px-4 font-medium text-[#A7ADB5]">{p.type}</td>
+                    <td className="py-3 px-4">
+                      <div className="font-medium text-[#F3F4F6]">{p.destination}</div>
+                      <div className="text-[11px] text-[#6F7781] truncate max-w-xs mt-0.5">{p.reason}</div>
                     </td>
-                    <td className="py-2.5 px-3 text-stone-700">
+                    <td className="py-3 px-4 text-[#A7ADB5] font-mono">
                       {new Date(p.departureDate).toLocaleString([], { dateStyle: "short", timeStyle: "short" })}
                     </td>
-                    <td className="py-2.5 px-3 text-stone-700">
+                    <td className="py-3 px-4 text-[#A7ADB5] font-mono">
                       {new Date(p.expectedReturnDate).toLocaleString([], { dateStyle: "short", timeStyle: "short" })}
                     </td>
-                    <td className="py-2.5 px-3">{getStatusBadge(p.status)}</td>
-                    <td className="py-2.5 px-3 text-right">
+                    <td className="py-3 px-4">{getStatusBadge(p.status)}</td>
+                    <td className="py-3 px-4 text-right">
                       <div className="flex items-center justify-end space-x-2">
                         {(p.status === "APPROVED" || p.status === "EXITED") && (
                           <button
                             onClick={() => handleViewQr(p.id)}
-                            className="inline-flex items-center space-x-1 px-2.5 py-1 text-xs font-bold text-[#0f4c3a] bg-stone-100 hover:bg-stone-200 border border-stone-300 rounded-[4px]"
+                            className="inline-flex items-center space-x-1.5 px-3 py-1 text-xs font-bold text-[#D6A84F] hover:text-[#090B0D] bg-[#181D22] hover:bg-[#D6A84F] border border-[#D6A84F]/30 rounded-[4px] transition-all shadow-xs"
                           >
                             <QrCode className="w-3.5 h-3.5" />
                             <span>View QR</span>
@@ -219,16 +226,16 @@ export const GatePassPage: React.FC<{ user: UserProfile | null }> = ({ user }) =
                         )}
 
                         {isWardenOrAdmin && p.status === "PENDING" && (
-                          <div className="flex items-center space-x-1">
+                          <div className="flex items-center space-x-1.5">
                             <button
                               onClick={() => handleReview(p.id, "APPROVED")}
-                              className="px-2 py-1 bg-emerald-800 hover:bg-emerald-900 text-white font-semibold rounded-[4px] text-[11px]"
+                              className="px-2.5 py-1 bg-[#10B981] hover:bg-emerald-400 text-[#090B0D] font-bold rounded-[3px] text-[11px] transition-colors"
                             >
                               Approve
                             </button>
                             <button
                               onClick={() => handleReview(p.id, "REJECTED")}
-                              className="px-2 py-1 bg-red-800 hover:bg-red-900 text-white font-semibold rounded-[4px] text-[11px]"
+                              className="px-2.5 py-1 bg-red-500/20 hover:bg-red-500/40 text-red-300 border border-red-500/30 font-bold rounded-[3px] text-[11px] transition-colors"
                             >
                               Reject
                             </button>
@@ -246,18 +253,18 @@ export const GatePassPage: React.FC<{ user: UserProfile | null }> = ({ user }) =
 
       {/* QR Code Modal for Gate Pass */}
       {activeQrPass && (
-        <div className="fixed inset-0 bg-black bg-opacity-40 z-50 flex items-center justify-center p-4">
-          <div className="bg-white border border-stone-300 rounded-[6px] max-w-sm w-full p-6 text-center space-y-4 shadow-lg">
-            <div className="flex items-center justify-between border-b border-stone-200 pb-2">
-              <span className="font-mono font-bold text-sm text-stone-900">
+        <div className="fixed inset-0 bg-black/75 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="bg-[#14181C] border border-[#252B31] rounded-[6px] max-w-sm w-full p-6 text-center space-y-4 shadow-elevated">
+            <div className="flex items-center justify-between border-b border-[#252B31] pb-2">
+              <span className="font-mono font-bold text-sm text-[#D6A84F]">
                 Gate Pass #{activeQrPass.pass.passNumber}
               </span>
-              <span className="text-xs px-2 py-0.5 bg-emerald-100 text-emerald-900 font-bold border border-emerald-300 rounded-[4px]">
+              <span className="text-[10px] font-mono px-2 py-0.5 bg-emerald-500/10 text-emerald-300 font-bold border border-emerald-500/30 rounded-[3px]">
                 {activeQrPass.pass.status}
               </span>
             </div>
 
-            <div className="p-3 bg-stone-50 border border-stone-200 rounded-[4px] inline-block">
+            <div className="p-4 bg-white rounded-[6px] inline-block shadow-subtle">
               <img
                 src={activeQrPass.qrUrl}
                 alt="Gate Pass QR Code"
@@ -265,22 +272,22 @@ export const GatePassPage: React.FC<{ user: UserProfile | null }> = ({ user }) =
               />
             </div>
 
-            <div className="text-xs text-left space-y-1 bg-stone-50 p-3 rounded-[4px] border border-stone-200">
-              <div><strong>Student:</strong> {activeQrPass.pass.student.fullName} ({activeQrPass.pass.student.rollNumber})</div>
-              <div><strong>Destination:</strong> {activeQrPass.pass.destination}</div>
-              <div><strong>Valid Until:</strong> {new Date(activeQrPass.pass.expectedReturnDate).toLocaleString()}</div>
+            <div className="text-xs text-left space-y-1.5 bg-[#101316] p-3.5 rounded-[4px] border border-[#252B31]">
+              <div><strong className="text-[#A7ADB5]">Student:</strong> <span className="text-[#F3F4F6] font-medium">{activeQrPass.pass.student.fullName} ({activeQrPass.pass.student.rollNumber})</span></div>
+              <div><strong className="text-[#A7ADB5]">Destination:</strong> <span className="text-[#F3F4F6]">{activeQrPass.pass.destination}</span></div>
+              <div><strong className="text-[#A7ADB5]">Valid Return:</strong> <span className="text-[#F3F4F6] font-mono">{new Date(activeQrPass.pass.expectedReturnDate).toLocaleString()}</span></div>
               {activeQrPass.pass.wardenComment && (
-                <div><strong>Warden Note:</strong> {activeQrPass.pass.wardenComment}</div>
+                <div><strong className="text-[#A7ADB5]">Warden Remark:</strong> <span className="text-[#F3F4F6]">{activeQrPass.pass.wardenComment}</span></div>
               )}
             </div>
 
-            <p className="text-[11px] text-stone-500">
-              Present this QR code to campus security at the main turnstile upon exit and return.
+            <p className="text-[11px] text-[#6F7781] leading-relaxed">
+              Present this encrypted QR code to the main gate scanner upon physical exit and entry.
             </p>
 
             <button
               onClick={() => setActiveQrPass(null)}
-              className="w-full py-2 bg-stone-800 text-white text-xs font-semibold rounded-[4px] hover:bg-stone-900"
+              className="w-full py-2 bg-[#181D22] hover:bg-[#252B31] text-[#F3F4F6] text-xs font-semibold rounded-[4px] border border-[#252B31] transition-colors"
             >
               Close QR Pass
             </button>
@@ -290,109 +297,109 @@ export const GatePassPage: React.FC<{ user: UserProfile | null }> = ({ user }) =
 
       {/* New Gate Pass Request Modal */}
       {showModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-40 z-50 flex items-center justify-center p-4">
-          <div className="bg-white border border-stone-300 rounded-[6px] max-w-lg w-full p-6 space-y-4 shadow-lg">
-            <div className="flex items-center justify-between border-b border-stone-200 pb-2">
-              <h2 className="text-base font-bold text-stone-900">New Gate Pass / Leave Request</h2>
-              <button onClick={() => setShowModal(false)} className="text-stone-500 hover:text-stone-800 font-bold text-sm">
-                &times;
+        <div className="fixed inset-0 bg-black/75 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="bg-[#14181C] border border-[#252B31] rounded-[6px] max-w-lg w-full p-6 space-y-4 shadow-elevated">
+            <div className="flex items-center justify-between border-b border-[#252B31] pb-2">
+              <h2 className="text-base font-bold text-[#F3F4F6]">New Gate Pass / Leave Application</h2>
+              <button onClick={() => setShowModal(false)} className="text-[#6F7781] hover:text-[#F3F4F6]">
+                <X className="w-4 h-4" />
               </button>
             </div>
 
             {error && (
-              <div className="p-2 text-xs text-red-900 bg-red-50 border border-red-200 rounded-[4px]">
+              <div className="p-2.5 text-xs text-red-200 bg-red-500/10 border border-red-500/30 rounded-[4px]">
                 {error}
               </div>
             )}
 
-            <form onSubmit={handleCreateSubmit} className="space-y-3 text-xs">
+            <form onSubmit={handleCreateSubmit} className="space-y-3.5 text-xs">
               <div>
-                <label className="block font-semibold text-stone-800 mb-1">Pass Type *</label>
+                <label className="block font-semibold text-[#A7ADB5] mb-1">Pass Classification *</label>
                 <select
                   value={formData.type}
                   onChange={(e) => setFormData({ ...formData, type: e.target.value })}
-                  className="w-full px-2.5 py-1.5 border border-stone-300 rounded-[4px] bg-white text-stone-800"
+                  className="w-full px-3 py-2 border border-[#252B31] rounded-[4px] bg-[#101316] text-[#F3F4F6] focus:outline-none focus:border-[#D6A84F]"
                 >
-                  <option value="OUTING">Daytime Outing (Return by evening)</option>
+                  <option value="OUTING">Daytime Outing (Return before curfew)</option>
                   <option value="HOME_LEAVE">Home Leave / Vacation</option>
                   <option value="EMERGENCY">Emergency Leave</option>
                 </select>
               </div>
 
               <div>
-                <label className="block font-semibold text-stone-800 mb-1">Destination *</label>
+                <label className="block font-semibold text-[#A7ADB5] mb-1">Destination Address *</label>
                 <input
                   type="text"
                   required
                   value={formData.destination}
                   onChange={(e) => setFormData({ ...formData, destination: e.target.value })}
                   placeholder="e.g. Bhubaneswar City Center"
-                  className="w-full px-2.5 py-1.5 border border-stone-300 rounded-[4px]"
+                  className="w-full px-3 py-2 border border-[#252B31] rounded-[4px] bg-[#101316] text-[#F3F4F6] focus:outline-none focus:border-[#D6A84F]"
                 />
               </div>
 
               <div>
-                <label className="block font-semibold text-stone-800 mb-1">Reason for Leave *</label>
+                <label className="block font-semibold text-[#A7ADB5] mb-1">Detailed Reason for Leave *</label>
                 <textarea
                   required
                   rows={2}
                   value={formData.reason}
                   onChange={(e) => setFormData({ ...formData, reason: e.target.value })}
                   placeholder="Specify purpose of visit..."
-                  className="w-full px-2.5 py-1.5 border border-stone-300 rounded-[4px]"
+                  className="w-full px-3 py-2 border border-[#252B31] rounded-[4px] bg-[#101316] text-[#F3F4F6] focus:outline-none focus:border-[#D6A84F]"
                 />
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
-                  <label className="block font-semibold text-stone-800 mb-1">Departure Date & Time *</label>
+                  <label className="block font-semibold text-[#A7ADB5] mb-1">Departure Schedule *</label>
                   <input
                     type="datetime-local"
                     required
                     value={formData.departureDate}
                     onChange={(e) => setFormData({ ...formData, departureDate: e.target.value })}
-                    className="w-full px-2.5 py-1.5 border border-stone-300 rounded-[4px]"
+                    className="w-full px-3 py-2 border border-[#252B31] rounded-[4px] bg-[#101316] text-[#F3F4F6] focus:outline-none focus:border-[#D6A84F]"
                   />
                 </div>
 
                 <div>
-                  <label className="block font-semibold text-stone-800 mb-1">Expected Return Date & Time *</label>
+                  <label className="block font-semibold text-[#A7ADB5] mb-1">Expected Return Schedule *</label>
                   <input
                     type="datetime-local"
                     required
                     value={formData.expectedReturnDate}
                     onChange={(e) => setFormData({ ...formData, expectedReturnDate: e.target.value })}
-                    className="w-full px-2.5 py-1.5 border border-stone-300 rounded-[4px]"
+                    className="w-full px-3 py-2 border border-[#252B31] rounded-[4px] bg-[#101316] text-[#F3F4F6] focus:outline-none focus:border-[#D6A84F]"
                   />
                 </div>
               </div>
 
               <div>
-                <label className="block font-semibold text-stone-800 mb-1">Parent Contact Number *</label>
+                <label className="block font-semibold text-[#A7ADB5] mb-1">Parent / Guardian Verification Phone *</label>
                 <input
                   type="tel"
                   required
                   value={formData.parentContact}
                   onChange={(e) => setFormData({ ...formData, parentContact: e.target.value })}
                   placeholder="e.g. 9876543210"
-                  className="w-full px-2.5 py-1.5 border border-stone-300 rounded-[4px]"
+                  className="w-full px-3 py-2 border border-[#252B31] rounded-[4px] bg-[#101316] text-[#F3F4F6] focus:outline-none focus:border-[#D6A84F]"
                 />
               </div>
 
-              <div className="pt-2 border-t border-stone-200 flex justify-end space-x-2">
+              <div className="pt-3 border-t border-[#252B31] flex justify-end space-x-2">
                 <button
                   type="button"
                   onClick={() => setShowModal(false)}
-                  className="px-3 py-1.5 border border-stone-300 rounded-[4px] text-stone-700 hover:bg-stone-100"
+                  className="px-3.5 py-1.5 border border-[#252B31] rounded-[4px] text-[#A7ADB5] hover:text-[#F3F4F6] hover:bg-[#181D22] transition-colors"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
                   disabled={submitting}
-                  className="px-4 py-1.5 bg-[#0f4c3a] text-white font-semibold rounded-[4px] hover:bg-[#0b392b] disabled:opacity-50"
+                  className="px-4 py-1.5 bg-[#D6A84F] hover:bg-[#F0C86A] text-[#090B0D] font-bold rounded-[4px] disabled:opacity-50 transition-colors shadow-xs"
                 >
-                  {submitting ? "Submitting..." : "Submit Pass Request"}
+                  {submitting ? "Submitting Application..." : "Submit Pass Request"}
                 </button>
               </div>
             </form>

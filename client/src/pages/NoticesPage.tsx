@@ -10,12 +10,9 @@ import {
   ArrowRight,
   Edit3,
   Trash2,
-  Filter,
   Search,
-  Calendar,
   X,
   Save,
-  AlertTriangle,
   Megaphone
 } from "lucide-react";
 import { apiRequest, UserProfile } from "../api/client.js";
@@ -73,7 +70,6 @@ export const NoticesPage: React.FC<{ user: UserProfile | null }> = ({ user }) =>
   const [formError, setFormError] = useState<string | null>(null);
   const [actionSuccess, setActionSuccess] = useState<string | null>(null);
 
-  // Permission checks: Only ADMIN and WARDEN can create/edit/delete notices
   const canManageNotices = user && (user.role === "ADMIN" || user.role === "WARDEN");
 
   const fetchNotices = async () => {
@@ -149,19 +145,17 @@ export const NoticesPage: React.FC<{ user: UserProfile | null }> = ({ user }) =>
       };
 
       if (editingNoticeId) {
-        // Update existing notice
         await apiRequest(`/api/notices/${editingNoticeId}`, {
           method: "PUT",
           body: JSON.stringify(payload)
         });
         setActionSuccess("Official notice updated successfully.");
       } else {
-        // Publish new notice
         await apiRequest("/api/notices", {
           method: "POST",
           body: JSON.stringify(payload)
         });
-        setActionSuccess("Official notice published and delivered.");
+        setActionSuccess("Official notice published and delivered to target audience.");
       }
 
       setShowCreateModal(false);
@@ -202,28 +196,28 @@ export const NoticesPage: React.FC<{ user: UserProfile | null }> = ({ user }) =>
   const getCategoryBadge = (category: string) => {
     switch (category) {
       case "EMERGENCY":
-        return <span className="px-2 py-0.5 text-[11px] font-bold bg-red-100 text-red-900 border border-red-300 rounded-[4px]">Emergency</span>;
+        return <span className="px-2 py-0.5 text-[10px] font-mono font-bold bg-red-500/10 text-red-300 border border-red-500/30 rounded-[3px]">Emergency</span>;
       case "ACADEMIC":
-        return <span className="px-2 py-0.5 text-[11px] font-bold bg-blue-100 text-blue-900 border border-blue-300 rounded-[4px]">Academic</span>;
+        return <span className="px-2 py-0.5 text-[10px] font-mono font-bold bg-blue-500/10 text-blue-300 border border-blue-500/30 rounded-[3px]">Academic</span>;
       case "HOSTEL":
-        return <span className="px-2 py-0.5 text-[11px] font-bold bg-emerald-100 text-emerald-900 border border-emerald-300 rounded-[4px]">Hostel</span>;
+        return <span className="px-2 py-0.5 text-[10px] font-mono font-bold bg-emerald-500/10 text-emerald-300 border border-emerald-500/30 rounded-[3px]">Hostel</span>;
       case "MESS":
-        return <span className="px-2 py-0.5 text-[11px] font-bold bg-amber-100 text-amber-900 border border-amber-300 rounded-[4px]">Mess</span>;
+        return <span className="px-2 py-0.5 text-[10px] font-mono font-bold bg-amber-500/10 text-amber-300 border border-amber-500/30 rounded-[3px]">Mess</span>;
       case "MAINTENANCE":
-        return <span className="px-2 py-0.5 text-[11px] font-bold bg-stone-200 text-stone-800 border border-stone-400 rounded-[4px]">Maintenance</span>;
+        return <span className="px-2 py-0.5 text-[10px] font-mono font-bold bg-[#181D22] text-[#A7ADB5] border border-[#252B31] rounded-[3px]">Maintenance</span>;
       case "HOLIDAY":
-        return <span className="px-2 py-0.5 text-[11px] font-bold bg-teal-100 text-teal-900 border border-teal-300 rounded-[4px]">Holiday</span>;
+        return <span className="px-2 py-0.5 text-[10px] font-mono font-bold bg-teal-500/10 text-teal-300 border border-teal-500/30 rounded-[3px]">Holiday</span>;
       default:
-        return <span className="px-2 py-0.5 text-[11px] font-bold bg-stone-100 text-stone-700 border border-stone-300 rounded-[4px]">General</span>;
+        return <span className="px-2 py-0.5 text-[10px] font-mono font-bold bg-[#181D22] text-[#F3F4F6] border border-[#252B31] rounded-[3px]">General</span>;
     }
   };
 
   const getPriorityBadge = (priority: string) => {
     switch (priority) {
       case "CRITICAL":
-        return <span className="px-2 py-0.5 text-[11px] font-bold bg-red-50 text-red-900 border border-red-300 rounded-[4px]">Critical Priority</span>;
+        return <span className="px-2 py-0.5 text-[10px] font-mono font-bold bg-red-500/20 text-red-200 border border-red-500/40 rounded-[3px]">Critical Priority</span>;
       case "URGENT":
-        return <span className="px-2 py-0.5 text-[11px] font-bold bg-amber-50 text-amber-900 border border-amber-300 rounded-[4px]">Urgent</span>;
+        return <span className="px-2 py-0.5 text-[10px] font-mono font-bold bg-amber-500/20 text-amber-200 border border-amber-500/40 rounded-[3px]">Urgent</span>;
       default:
         return null;
     }
@@ -238,43 +232,43 @@ export const NoticesPage: React.FC<{ user: UserProfile | null }> = ({ user }) =>
   return (
     <div className="space-y-6">
       {/* Top Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 bg-white border border-stone-300 p-4 rounded-[6px]">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 bg-[#14181C] border border-[#252B31] p-5 rounded-[6px] shadow-subtle">
         <div>
-          <div className="flex items-center space-x-2">
-            <Megaphone className="w-5 h-5 text-[#0f4c3a]" />
-            <h1 className="text-xl font-bold text-stone-900">Official Notices & Circulars</h1>
+          <div className="flex items-center space-x-2 text-[#D6A84F] text-[11px] font-mono uppercase mb-1">
+            <Megaphone className="w-3.5 h-3.5" />
+            <span>Official Communications</span>
           </div>
-          <p className="text-xs text-stone-600 mt-0.5">
-            Verified campus announcements, hostel instructions, academic circulars and urgent alerts
+          <h1 className="text-xl font-bold text-[#F3F4F6]">Official Notices & Circulars</h1>
+          <p className="text-xs text-[#A7ADB5] mt-0.5">
+            Institutional announcements, hostel instructions, academic circulars and urgent alerts
           </p>
         </div>
 
-        {/* Create Notice Button strictly for ADMIN and WARDEN */}
         {canManageNotices && (
           <button
             onClick={handleOpenCreateModal}
-            className="inline-flex items-center space-x-2 bg-[#0f4c3a] text-white hover:bg-[#0b392b] text-xs font-semibold px-4 py-2 rounded-[4px]"
+            className="inline-flex items-center space-x-2 bg-[#D6A84F] hover:bg-[#F0C86A] text-[#090B0D] text-xs font-bold px-4 py-2.5 rounded-[4px] shadow-xs transition-colors"
           >
             <Plus className="w-4 h-4" />
-            <span>+ Create Notice</span>
+            <span>Publish Notice</span>
           </button>
         )}
       </div>
 
       {actionSuccess && (
-        <div className="p-3 text-xs bg-emerald-50 text-emerald-900 border border-emerald-300 rounded-[4px] font-medium flex items-center justify-between">
+        <div className="p-3 text-xs bg-emerald-500/10 text-emerald-200 border border-emerald-500/30 rounded-[4px] font-medium flex items-center justify-between">
           <div className="flex items-center space-x-2">
-            <CheckCircle2 className="w-4 h-4 text-emerald-700 flex-shrink-0" />
+            <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
             <span>{actionSuccess}</span>
           </div>
-          <button onClick={() => setActionSuccess(null)} className="text-emerald-700 hover:text-emerald-900">
+          <button onClick={() => setActionSuccess(null)} className="text-emerald-400 hover:text-emerald-200">
             <X className="w-3.5 h-3.5" />
           </button>
         </div>
       )}
 
       {/* Filter and Search Bar */}
-      <div className="bg-white border border-stone-300 rounded-[6px] p-4 space-y-3">
+      <div className="bg-[#14181C] border border-[#252B31] rounded-[6px] p-4 space-y-3 shadow-subtle">
         <div className="flex flex-col md:flex-row gap-3 items-stretch md:items-center justify-between">
           {/* Category Filter Pills */}
           <div className="flex flex-wrap gap-1.5 text-xs">
@@ -284,8 +278,8 @@ export const NoticesPage: React.FC<{ user: UserProfile | null }> = ({ user }) =>
                 onClick={() => setSelectedCategory(cat.key)}
                 className={`px-3 py-1.5 font-medium rounded-[4px] border transition-colors ${
                   selectedCategory === cat.key
-                    ? "bg-[#0f4c3a] text-white border-[#0f4c3a]"
-                    : "bg-stone-50 text-stone-700 border-stone-300 hover:bg-stone-100"
+                    ? "bg-[#D6A84F] text-[#090B0D] border-[#D6A84F] font-bold"
+                    : "bg-[#101316] text-[#A7ADB5] border-[#252B31] hover:text-[#F3F4F6] hover:bg-[#181D22]"
                 }`}
               >
                 {cat.label}
@@ -295,13 +289,13 @@ export const NoticesPage: React.FC<{ user: UserProfile | null }> = ({ user }) =>
 
           {/* Search Input */}
           <div className="relative w-full md:w-64">
-            <Search className="w-3.5 h-3.5 absolute left-3 top-3 text-stone-400" />
+            <Search className="w-3.5 h-3.5 absolute left-3 top-3 text-[#6F7781]" />
             <input
               type="text"
-              placeholder="Search notices..."
+              placeholder="Search circulars..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-8 pr-3 py-1.5 text-xs border border-stone-300 rounded-[4px] bg-white text-stone-800"
+              className="w-full pl-8 pr-3 py-1.5 text-xs border border-[#252B31] rounded-[4px] bg-[#101316] text-[#F3F4F6] focus:outline-none focus:border-[#D6A84F]"
             />
           </div>
         </div>
@@ -310,57 +304,56 @@ export const NoticesPage: React.FC<{ user: UserProfile | null }> = ({ user }) =>
       {/* Notice List */}
       <div className="space-y-3">
         {loading ? (
-          <div className="p-8 text-center text-xs text-stone-500 bg-white border border-stone-300 rounded-[4px]">
-            Loading notices...
+          <div className="p-12 text-center text-xs text-[#A7ADB5] font-mono bg-[#14181C] border border-[#252B31] rounded-[6px]">
+            Querying official circulars...
           </div>
         ) : filteredNotices.length === 0 ? (
-          <div className="p-8 text-center text-xs text-stone-500 bg-white border border-stone-300 rounded-[4px]">
+          <div className="p-12 text-center text-xs text-[#6F7781] bg-[#14181C] border border-[#252B31] rounded-[6px]">
             No official notices found under the selected category.
           </div>
         ) : (
           filteredNotices.map((n) => (
             <div
               key={n.id}
-              className={`bg-white border p-4 sm:p-5 rounded-[6px] shadow-sm transition-colors ${
+              className={`bg-[#14181C] border p-5 rounded-[6px] shadow-subtle transition-colors ${
                 n.priority === "CRITICAL"
-                  ? "border-red-300 bg-red-50/20"
+                  ? "border-red-500/40 bg-red-500/5"
                   : n.priority === "URGENT"
-                  ? "border-amber-300 bg-amber-50/20"
-                  : "border-stone-300"
+                  ? "border-amber-500/40 bg-amber-500/5"
+                  : "border-[#252B31] hover:border-[#363E48]"
               }`}
             >
               <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mb-2">
                 <div className="flex items-center space-x-2 flex-wrap gap-y-1">
                   {getCategoryBadge(n.category)}
                   {getPriorityBadge(n.priority)}
-                  <span className="text-[11px] text-stone-500 flex items-center space-x-1">
-                    <Clock className="w-3 h-3 text-stone-400" />
+                  <span className="text-[11px] text-[#6F7781] font-mono flex items-center space-x-1">
+                    <Clock className="w-3 h-3" />
                     <span>Published {new Date(n.createdAt).toLocaleDateString()} at {new Date(n.createdAt).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}</span>
                   </span>
                   {n.expiresAt && (
-                    <span className="text-[11px] text-amber-800 bg-amber-50 px-2 py-0.5 border border-amber-200 rounded-[4px]">
+                    <span className="text-[10px] font-mono text-amber-300 bg-amber-500/10 px-2 py-0.5 border border-amber-500/30 rounded">
                       Expires: {new Date(n.expiresAt).toLocaleDateString()}
                     </span>
                   )}
                 </div>
 
-                {/* Edit and Delete Buttons (Strictly for Admin & Warden) */}
                 {canManageNotices && (
                   <div className="flex items-center space-x-2">
                     <button
                       onClick={() => handleOpenEditModal(n)}
-                      className="px-2.5 py-1 text-xs border border-stone-300 bg-stone-50 hover:bg-stone-100 text-stone-700 font-medium rounded-[4px] flex items-center space-x-1"
+                      className="px-2.5 py-1 text-xs border border-[#252B31] bg-[#101316] hover:bg-[#181D22] text-[#A7ADB5] hover:text-[#F3F4F6] font-medium rounded-[3px] flex items-center space-x-1 transition-colors"
                       title="Edit Notice"
                     >
-                      <Edit3 className="w-3 h-3 text-stone-600" />
+                      <Edit3 className="w-3 h-3" />
                       <span>Edit</span>
                     </button>
                     <button
                       onClick={() => handleDeleteNotice(n.id, n.title)}
-                      className="px-2.5 py-1 text-xs border border-red-200 bg-red-50 hover:bg-red-100 text-red-700 font-medium rounded-[4px] flex items-center space-x-1"
+                      className="px-2.5 py-1 text-xs border border-red-500/30 bg-red-500/10 hover:bg-red-500/20 text-red-300 font-medium rounded-[3px] flex items-center space-x-1 transition-colors"
                       title="Delete Notice"
                     >
-                      <Trash2 className="w-3 h-3 text-red-600" />
+                      <Trash2 className="w-3 h-3" />
                       <span>Delete</span>
                     </button>
                   </div>
@@ -368,37 +361,37 @@ export const NoticesPage: React.FC<{ user: UserProfile | null }> = ({ user }) =>
               </div>
 
               {/* Title & Body */}
-              <h2 className="text-base font-bold text-stone-900 hover:text-emerald-900 transition-colors">
+              <h2 className="text-base font-bold text-[#F3F4F6] hover:text-[#D6A84F] transition-colors">
                 <Link to={`/notices/${n.id}`}>{n.title}</Link>
               </h2>
 
-              <p className="mt-2 text-xs text-stone-700 leading-relaxed whitespace-pre-line line-clamp-3">
+              <p className="mt-2 text-xs text-[#A7ADB5] leading-relaxed whitespace-pre-line line-clamp-3">
                 {n.content}
               </p>
 
               {/* Notice Metadata Footer */}
-              <div className="mt-4 pt-3 border-t border-stone-200 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 text-xs text-stone-600">
+              <div className="mt-4 pt-3 border-t border-[#252B31] flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 text-xs text-[#6F7781]">
                 <div className="flex items-center space-x-3">
                   <span>
-                    Authority: <strong className="text-stone-800">{n.publishedBy?.fullName || "College Administration"}</strong> ({n.publishedBy?.role || "ADMIN"})
+                    Authority: <strong className="text-[#F3F4F6]">{n.publishedBy?.fullName || "Campus Administration"}</strong> ({n.publishedBy?.role || "ADMIN"})
                   </span>
-                  <span className="text-stone-300">•</span>
-                  <span>Target: <strong className="text-stone-800">{n.targetType} {n.targetValue ? `(${n.targetValue})` : ""}</strong></span>
+                  <span>•</span>
+                  <span>Target: <strong className="text-[#D6A84F] font-mono">{n.targetType} {n.targetValue ? `(${n.targetValue})` : ""}</strong></span>
                 </div>
 
                 <div className="flex items-center space-x-3">
                   {canManageNotices && n.stats && (
-                    <div className="flex items-center space-x-2 text-[11px] text-stone-600 bg-stone-100 px-2 py-1 rounded-[4px] border border-stone-200">
-                      <Users className="w-3 h-3 text-stone-500" />
+                    <div className="flex items-center space-x-2 text-[11px] font-mono text-[#A7ADB5] bg-[#101316] px-2 py-1 rounded-[3px] border border-[#252B31]">
+                      <Users className="w-3 h-3 text-[#D6A84F]" />
                       <span>{n.stats.readCount}/{n.stats.totalRecipients} read ({n.stats.readRate}%)</span>
                     </div>
                   )}
 
                   <Link
                     to={`/notices/${n.id}`}
-                    className="text-[#0f4c3a] font-semibold hover:underline flex items-center space-x-1"
+                    className="text-[#D6A84F] hover:text-[#F0C86A] font-semibold flex items-center space-x-1 transition-colors"
                   >
-                    <span>View Notice Details</span>
+                    <span>View Circular Details</span>
                     <ArrowRight className="w-3.5 h-3.5" />
                   </Link>
                 </div>
@@ -408,51 +401,51 @@ export const NoticesPage: React.FC<{ user: UserProfile | null }> = ({ user }) =>
         )}
       </div>
 
-      {/* Create / Edit Notice Modal (Strictly Admin and Warden) */}
+      {/* Create / Edit Notice Modal */}
       {canManageNotices && showCreateModal && (
-        <div className="fixed inset-0 bg-stone-900/60 z-50 flex items-center justify-center p-4">
-          <div className="bg-white border border-stone-300 rounded-[6px] max-w-2xl w-full p-6 shadow-xl space-y-4 max-h-[90vh] overflow-y-auto">
-            <div className="flex items-center justify-between border-b border-stone-200 pb-3">
+        <div className="fixed inset-0 bg-black/75 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="bg-[#14181C] border border-[#252B31] rounded-[6px] max-w-2xl w-full p-6 shadow-elevated space-y-4 max-h-[90vh] overflow-y-auto">
+            <div className="flex items-center justify-between border-b border-[#252B31] pb-3">
               <div className="flex items-center space-x-2">
-                <Megaphone className="w-5 h-5 text-[#0f4c3a]" />
-                <h2 className="text-base font-bold text-stone-900">
+                <Megaphone className="w-5 h-5 text-[#D6A84F]" />
+                <h2 className="text-base font-bold text-[#F3F4F6]">
                   {editingNoticeId ? "Edit Official Notice" : "Create Official Campus Notice"}
                 </h2>
               </div>
               <button
                 onClick={() => setShowCreateModal(false)}
-                className="text-stone-400 hover:text-stone-700 p-1"
+                className="text-[#6F7781] hover:text-[#F3F4F6]"
               >
                 <X className="w-5 h-5" />
               </button>
             </div>
 
             {formError && (
-              <div className="p-3 text-xs bg-red-50 text-red-900 border border-red-200 rounded-[4px] font-medium">
+              <div className="p-3 text-xs bg-red-500/10 text-red-200 border border-red-500/30 rounded-[4px] font-medium">
                 {formError}
               </div>
             )}
 
             <form onSubmit={handleFormSubmit} className="space-y-4 text-xs">
               <div>
-                <label className="block font-semibold text-stone-800 mb-1">Notice Title</label>
+                <label className="block font-semibold text-[#A7ADB5] mb-1">Notice Title *</label>
                 <input
                   type="text"
                   required
                   value={formData.title}
                   onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-                  placeholder="e.g. Hostel-A Water Maintenance Schedule & Interruption"
-                  className="w-full px-3 py-2 border border-stone-300 rounded-[4px] text-xs focus:outline-none focus:border-stone-500"
+                  placeholder="e.g. Hostel-A Water Maintenance Schedule & Temporary Interruption"
+                  className="w-full px-3 py-2 border border-[#252B31] rounded-[4px] bg-[#101316] text-[#F3F4F6] focus:outline-none focus:border-[#D6A84F]"
                 />
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                 <div>
-                  <label className="block font-semibold text-stone-800 mb-1">Category</label>
+                  <label className="block font-semibold text-[#A7ADB5] mb-1">Category</label>
                   <select
                     value={formData.category}
-                    onChange={(e) => setFormData({ ...formData, category: e.target.value })}
-                    className="w-full px-2.5 py-1.5 border border-stone-300 rounded-[4px] bg-white text-stone-800 font-medium"
+                    onChange={(e) => setFormData({ ...formData, category: e.target.value as any })}
+                    className="w-full px-2.5 py-1.5 border border-[#252B31] rounded-[4px] bg-[#101316] text-[#F3F4F6] focus:outline-none focus:border-[#D6A84F]"
                   >
                     <option value="GENERAL">General Announcement</option>
                     <option value="ACADEMIC">Academic</option>
@@ -465,11 +458,11 @@ export const NoticesPage: React.FC<{ user: UserProfile | null }> = ({ user }) =>
                 </div>
 
                 <div>
-                  <label className="block font-semibold text-stone-800 mb-1">Priority</label>
+                  <label className="block font-semibold text-[#A7ADB5] mb-1">Priority</label>
                   <select
                     value={formData.priority}
                     onChange={(e) => setFormData({ ...formData, priority: e.target.value })}
-                    className="w-full px-2.5 py-1.5 border border-stone-300 rounded-[4px] bg-white text-stone-800 font-medium"
+                    className="w-full px-2.5 py-1.5 border border-[#252B31] rounded-[4px] bg-[#101316] text-[#F3F4F6] focus:outline-none focus:border-[#D6A84F]"
                   >
                     <option value="NORMAL">Normal</option>
                     <option value="URGENT">Urgent</option>
@@ -478,11 +471,11 @@ export const NoticesPage: React.FC<{ user: UserProfile | null }> = ({ user }) =>
                 </div>
 
                 <div>
-                  <label className="block font-semibold text-stone-800 mb-1">Target Audience</label>
+                  <label className="block font-semibold text-[#A7ADB5] mb-1">Target Audience</label>
                   <select
                     value={formData.targetType}
                     onChange={(e) => setFormData({ ...formData, targetType: e.target.value })}
-                    className="w-full px-2.5 py-1.5 border border-stone-300 rounded-[4px] bg-white text-stone-800 font-medium"
+                    className="w-full px-2.5 py-1.5 border border-[#252B31] rounded-[4px] bg-[#101316] text-[#F3F4F6] focus:outline-none focus:border-[#D6A84F]"
                   >
                     <option value="ALL">All Campus Students</option>
                     <option value="HOSTEL">Specific Hostel Block</option>
@@ -495,8 +488,8 @@ export const NoticesPage: React.FC<{ user: UserProfile | null }> = ({ user }) =>
 
               {formData.targetType !== "ALL" && (
                 <div>
-                  <label className="block font-semibold text-stone-800 mb-1">
-                    Target Specific Value ({formData.targetType})
+                  <label className="block font-semibold text-[#A7ADB5] mb-1">
+                    Target Specific Scope ({formData.targetType}) *
                   </label>
                   <input
                     type="text"
@@ -512,66 +505,66 @@ export const NoticesPage: React.FC<{ user: UserProfile | null }> = ({ user }) =>
                         ? "e.g. 2"
                         : "e.g. 2024"
                     }
-                    className="w-full px-3 py-2 border border-stone-300 rounded-[4px] text-xs"
+                    className="w-full px-3 py-2 border border-[#252B31] rounded-[4px] bg-[#101316] text-[#F3F4F6] focus:outline-none focus:border-[#D6A84F]"
                   />
                 </div>
               )}
 
               <div>
-                <label className="block font-semibold text-stone-800 mb-1">
-                  Notice Content & Instructions
+                <label className="block font-semibold text-[#A7ADB5] mb-1">
+                  Notice Content & Instructions *
                 </label>
                 <textarea
                   rows={6}
                   required
                   value={formData.content}
                   onChange={(e) => setFormData({ ...formData, content: e.target.value })}
-                  placeholder="Provide complete details, instructions, affected rooms/hostels, and required student actions..."
-                  className="w-full p-3 border border-stone-300 rounded-[4px] text-xs"
+                  placeholder="Provide complete details, instructions, affected areas, and required student actions..."
+                  className="w-full p-3 border border-[#252B31] rounded-[4px] bg-[#101316] text-[#F3F4F6] focus:outline-none focus:border-[#D6A84F]"
                 />
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
-                  <label className="block font-semibold text-stone-800 mb-1">
+                  <label className="block font-semibold text-[#A7ADB5] mb-1">
                     Optional Expiry Date
                   </label>
                   <input
                     type="datetime-local"
                     value={formData.expiresAt}
                     onChange={(e) => setFormData({ ...formData, expiresAt: e.target.value })}
-                    className="w-full px-3 py-2 border border-stone-300 rounded-[4px] text-xs bg-white"
+                    className="w-full px-3 py-2 border border-[#252B31] rounded-[4px] bg-[#101316] text-[#F3F4F6] focus:outline-none focus:border-[#D6A84F]"
                   />
                 </div>
 
                 <div>
-                  <label className="block font-semibold text-stone-800 mb-1">
-                    Action Deadline (If student response needed)
+                  <label className="block font-semibold text-[#A7ADB5] mb-1">
+                    Action Deadline (If response required)
                   </label>
                   <input
                     type="datetime-local"
                     value={formData.actionDeadline}
                     onChange={(e) => setFormData({ ...formData, actionDeadline: e.target.value })}
-                    className="w-full px-3 py-2 border border-stone-300 rounded-[4px] text-xs bg-white"
+                    className="w-full px-3 py-2 border border-[#252B31] rounded-[4px] bg-[#101316] text-[#F3F4F6] focus:outline-none focus:border-[#D6A84F]"
                   />
                 </div>
               </div>
 
-              <div className="flex items-center justify-end space-x-3 pt-3 border-t border-stone-200">
+              <div className="flex items-center justify-end space-x-3 pt-3 border-t border-[#252B31]">
                 <button
                   type="button"
                   onClick={() => setShowCreateModal(false)}
-                  className="px-4 py-2 border border-stone-300 bg-white text-stone-700 font-medium rounded-[4px] hover:bg-stone-100"
+                  className="px-4 py-2 border border-[#252B31] bg-[#101316] hover:bg-[#181D22] text-[#A7ADB5] hover:text-[#F3F4F6] font-medium rounded-[4px] transition-colors"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
                   disabled={submitting}
-                  className="px-5 py-2 bg-[#0f4c3a] text-white font-semibold rounded-[4px] hover:bg-[#0b392b] disabled:opacity-50 flex items-center space-x-1.5"
+                  className="px-5 py-2 bg-[#D6A84F] hover:bg-[#F0C86A] text-[#090B0D] font-bold rounded-[4px] disabled:opacity-50 flex items-center space-x-1.5 transition-colors shadow-xs"
                 >
                   <Save className="w-4 h-4" />
-                  <span>{submitting ? "Saving..." : editingNoticeId ? "Update Notice" : "Publish Official Notice"}</span>
+                  <span>{submitting ? "Publishing..." : editingNoticeId ? "Update Notice" : "Publish Notice"}</span>
                 </button>
               </div>
             </form>

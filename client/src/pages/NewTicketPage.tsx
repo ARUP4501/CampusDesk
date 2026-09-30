@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
-import { Wrench, ArrowLeft, Upload, Sparkles, AlertTriangle } from "lucide-react";
+import { ArrowLeft, Sparkles, Upload } from "lucide-react";
 import { apiRequest, UserProfile } from "../api/client.js";
 
 export const NewTicketPage: React.FC<{ user: UserProfile | null }> = ({ user }) => {
@@ -72,7 +72,7 @@ export const NewTicketPage: React.FC<{ user: UserProfile | null }> = ({ user }) 
       );
 
       if (response._offlineQueued) {
-        setResultMessage(response.message || "Complaint saved offline in queue.");
+        setResultMessage(response.message || "Complaint saved offline in local queue.");
         setTimeout(() => navigate("/tickets"), 2000);
         return;
       }
@@ -94,36 +94,36 @@ export const NewTicketPage: React.FC<{ user: UserProfile | null }> = ({ user }) 
       <div className="flex items-center space-x-3">
         <button
           onClick={() => navigate("/tickets")}
-          className="p-1.5 bg-white border border-stone-300 rounded-[4px] text-stone-700 hover:bg-stone-100"
+          className="p-1.5 bg-[#14181C] border border-[#252B31] rounded-[4px] text-[#A7ADB5] hover:text-[#F3F4F6] hover:bg-[#181D22] transition-colors"
           aria-label="Back to tickets list"
         >
           <ArrowLeft className="w-4 h-4" />
         </button>
         <div>
-          <h1 className="text-xl font-bold text-stone-900">
+          <h1 className="text-xl font-bold text-[#F3F4F6]">
             {t("tickets.newTicket", "Register Maintenance Complaint")}
           </h1>
-          <p className="text-xs text-stone-600">
-            Auto-classified into the correct departmental queue using text pattern analysis
+          <p className="text-xs text-[#A7ADB5]">
+            Auto-classified into the correct departmental queue using keyword pattern analysis
           </p>
         </div>
       </div>
 
       {error && (
-        <div role="alert" className="p-3 text-xs font-medium text-red-900 bg-red-50 border border-red-200 rounded-[4px]">
+        <div role="alert" className="p-3 text-xs font-medium text-red-200 bg-red-500/10 border border-red-500/30 rounded-[4px]">
           {error}
         </div>
       )}
 
       {resultMessage && (
-        <div role="status" className="p-3 text-xs font-medium text-emerald-900 bg-emerald-50 border border-emerald-300 rounded-[4px]">
+        <div role="status" className="p-3 text-xs font-medium text-emerald-200 bg-emerald-500/10 border border-emerald-500/30 rounded-[4px]">
           {resultMessage}
         </div>
       )}
 
-      <form onSubmit={handleSubmit} className="bg-white border border-stone-300 rounded-[6px] p-6 space-y-4 shadow-sm">
+      <form onSubmit={handleSubmit} className="bg-[#14181C] border border-[#252B31] rounded-[6px] p-6 space-y-4 shadow-subtle">
         <div>
-          <label htmlFor="title" className="block text-xs font-semibold text-stone-800 mb-1">
+          <label htmlFor="title" className="block text-xs font-semibold text-[#F3F4F6] mb-1">
             Complaint Summary / Title *
           </label>
           <input
@@ -133,12 +133,12 @@ export const NewTicketPage: React.FC<{ user: UserProfile | null }> = ({ user }) 
             value={formData.title}
             onChange={(e) => setFormData({ ...formData, title: e.target.value })}
             placeholder="e.g. Tap leaking continuously in bathroom"
-            className="w-full text-sm px-3 py-2 border border-stone-300 rounded-[4px] focus:outline-none"
+            className="w-full text-xs px-3 py-2 bg-[#101316] border border-[#252B31] text-[#F3F4F6] rounded-[4px] focus:outline-none focus:border-[#D6A84F]"
           />
         </div>
 
         <div>
-          <label htmlFor="description" className="block text-xs font-semibold text-stone-800 mb-1">
+          <label htmlFor="description" className="block text-xs font-semibold text-[#F3F4F6] mb-1">
             Detailed Problem Description *
           </label>
           <textarea
@@ -148,24 +148,24 @@ export const NewTicketPage: React.FC<{ user: UserProfile | null }> = ({ user }) 
             value={formData.description}
             onChange={(e) => setFormData({ ...formData, description: e.target.value })}
             placeholder="Describe the exact location, symptoms, and urgency..."
-            className="w-full text-sm px-3 py-2 border border-stone-300 rounded-[4px] focus:outline-none"
+            className="w-full text-xs px-3 py-2 bg-[#101316] border border-[#252B31] text-[#F3F4F6] rounded-[4px] focus:outline-none focus:border-[#D6A84F]"
           />
-          <div className="flex items-center space-x-1 text-[11px] text-stone-500 mt-1">
-            <Sparkles className="w-3 h-3 text-emerald-700" />
-            <span>The system automatically identifies the department based on your description keywords.</span>
+          <div className="flex items-center space-x-1.5 text-[11px] text-[#D6A84F] mt-1.5 font-mono">
+            <Sparkles className="w-3.5 h-3.5" />
+            <span>AI model auto-classifies department and priority from description text.</span>
           </div>
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
           <div>
-            <label htmlFor="category" className="block text-xs font-semibold text-stone-800 mb-1">
+            <label htmlFor="category" className="block text-xs font-semibold text-[#A7ADB5] mb-1">
               Category (or Auto-Detect)
             </label>
             <select
               id="category"
               value={formData.category}
               onChange={(e) => setFormData({ ...formData, category: e.target.value })}
-              className="w-full text-xs px-2.5 py-2 border border-stone-300 rounded-[4px] bg-white text-stone-800"
+              className="w-full text-xs px-2.5 py-2 bg-[#101316] border border-[#252B31] text-[#F3F4F6] rounded-[4px] focus:outline-none focus:border-[#D6A84F]"
             >
               <option value="">Auto-Detect via ML Classifier</option>
               <option value="PLUMBING">Plumbing</option>
@@ -180,7 +180,7 @@ export const NewTicketPage: React.FC<{ user: UserProfile | null }> = ({ user }) 
           </div>
 
           <div>
-            <label htmlFor="hostelBlock" className="block text-xs font-semibold text-stone-800 mb-1">
+            <label htmlFor="hostelBlock" className="block text-xs font-semibold text-[#A7ADB5] mb-1">
               Hostel Block *
             </label>
             <select
@@ -188,7 +188,7 @@ export const NewTicketPage: React.FC<{ user: UserProfile | null }> = ({ user }) 
               required
               value={formData.hostelBlock}
               onChange={(e) => setFormData({ ...formData, hostelBlock: e.target.value })}
-              className="w-full text-xs px-2.5 py-2 border border-stone-300 rounded-[4px] bg-white text-stone-800"
+              className="w-full text-xs px-2.5 py-2 bg-[#101316] border border-[#252B31] text-[#F3F4F6] rounded-[4px] focus:outline-none focus:border-[#D6A84F]"
             >
               <option value="Hostel-A">Hostel-A</option>
               <option value="Hostel-B">Hostel-B</option>
@@ -199,7 +199,7 @@ export const NewTicketPage: React.FC<{ user: UserProfile | null }> = ({ user }) 
           </div>
 
           <div>
-            <label htmlFor="roomNumber" className="block text-xs font-semibold text-stone-800 mb-1">
+            <label htmlFor="roomNumber" className="block text-xs font-semibold text-[#A7ADB5] mb-1">
               Room / Wing Number *
             </label>
             <input
@@ -208,21 +208,21 @@ export const NewTicketPage: React.FC<{ user: UserProfile | null }> = ({ user }) 
               required
               value={formData.roomNumber}
               onChange={(e) => setFormData({ ...formData, roomNumber: e.target.value })}
-              placeholder="e.g. A-204 or Lab-3"
-              className="w-full text-xs px-3 py-2 border border-stone-300 rounded-[4px] focus:outline-none"
+              placeholder="e.g. A-204"
+              className="w-full text-xs px-3 py-2 bg-[#101316] border border-[#252B31] text-[#F3F4F6] rounded-[4px] focus:outline-none focus:border-[#D6A84F]"
             />
           </div>
         </div>
 
         <div>
-          <label htmlFor="priority" className="block text-xs font-semibold text-stone-800 mb-1">
+          <label htmlFor="priority" className="block text-xs font-semibold text-[#A7ADB5] mb-1">
             Priority Level
           </label>
           <select
             id="priority"
             value={formData.priority}
             onChange={(e) => setFormData({ ...formData, priority: e.target.value })}
-            className="w-full text-xs px-2.5 py-2 border border-stone-300 rounded-[4px] bg-white text-stone-800"
+            className="w-full text-xs px-2.5 py-2 bg-[#101316] border border-[#252B31] text-[#F3F4F6] rounded-[4px] focus:outline-none focus:border-[#D6A84F]"
           >
             <option value="LOW">Low (Routine maintenance)</option>
             <option value="MEDIUM">Medium (Standard 24h queue)</option>
@@ -233,8 +233,8 @@ export const NewTicketPage: React.FC<{ user: UserProfile | null }> = ({ user }) 
 
         {/* Photo Upload with Sharp server-side compression */}
         <div>
-          <label className="block text-xs font-semibold text-stone-800 mb-1">
-            Upload Photo (Optional, Compressed to &lt;250KB before storage)
+          <label className="block text-xs font-semibold text-[#A7ADB5] mb-1">
+            Attach Issue Photo (Optional, Compressed to &lt;250KB before DB storage)
           </label>
           <div className="flex items-center space-x-3">
             <input
@@ -242,36 +242,36 @@ export const NewTicketPage: React.FC<{ user: UserProfile | null }> = ({ user }) 
               type="file"
               accept="image/*"
               onChange={handlePhotoChange}
-              className="text-xs text-stone-600 file:mr-3 file:py-1.5 file:px-3 file:rounded-[4px] file:border file:border-stone-300 file:text-xs file:font-semibold file:bg-stone-50 hover:file:bg-stone-100"
+              className="text-xs text-[#A7ADB5] file:mr-3 file:py-1.5 file:px-3 file:rounded-[4px] file:border file:border-[#252B31] file:text-xs file:font-semibold file:bg-[#101316] file:text-[#F3F4F6] hover:file:bg-[#181D22] cursor-pointer"
             />
           </div>
 
           {photoPreview && (
-            <div className="mt-3 p-2 bg-stone-50 border border-stone-200 rounded-[4px] inline-block">
-              <div className="text-[11px] font-semibold text-stone-700 mb-1">Preview:</div>
+            <div className="mt-3 p-2 bg-[#101316] border border-[#252B31] rounded-[4px] inline-block">
+              <div className="text-[11px] font-mono text-[#A7ADB5] mb-1">Attachment Preview:</div>
               <img
                 src={photoPreview}
                 alt="Selected issue preview"
-                className="max-h-48 max-w-full rounded-[2px] border border-stone-300 object-contain"
+                className="max-h-48 max-w-full rounded-[3px] border border-[#252B31] object-contain"
               />
             </div>
           )}
         </div>
 
-        <div className="pt-3 border-t border-stone-200 flex items-center justify-end space-x-3">
+        <div className="pt-4 border-t border-[#252B31] flex items-center justify-end space-x-3">
           <button
             type="button"
             onClick={() => navigate("/tickets")}
-            className="px-4 py-2 border border-stone-300 text-xs font-medium rounded-[4px] text-stone-700 hover:bg-stone-100"
+            className="px-4 py-2 border border-[#252B31] text-xs font-medium rounded-[4px] text-[#A7ADB5] hover:text-[#F3F4F6] hover:bg-[#181D22] transition-colors"
           >
             Cancel
           </button>
           <button
             type="submit"
             disabled={loading}
-            className="px-5 py-2 bg-[#0f4c3a] text-white text-xs font-semibold rounded-[4px] hover:bg-[#0b392b] disabled:opacity-50"
+            className="px-5 py-2 bg-[#D6A84F] hover:bg-[#F0C86A] text-[#090B0D] text-xs font-bold rounded-[4px] disabled:opacity-50 transition-colors shadow-xs"
           >
-            {loading ? "Submitting Complaint..." : "Submit Complaint"}
+            {loading ? "Registering Complaint..." : "Submit Complaint"}
           </button>
         </div>
       </form>
