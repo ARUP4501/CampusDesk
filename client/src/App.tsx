@@ -4,6 +4,7 @@ import { apiRequest, UserProfile } from "./api/client.js";
 import { Navbar } from "./components/Navbar.js";
 import { Footer } from "./components/Footer.js";
 import { OfflineBanner } from "./components/OfflineBanner.js";
+import { StudentProfileModal } from "./components/StudentProfileModal.js";
 
 // Pages
 import { LandingPage } from "./pages/LandingPage.js";
@@ -33,6 +34,7 @@ import { NotFoundPage } from "./pages/NotFoundPage.js";
 export const App: React.FC = () => {
   const [user, setUser] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
+  const [profileModalStudentId, setProfileModalStudentId] = useState<string | null>(null);
 
   const checkAuth = async () => {
     try {
@@ -63,24 +65,29 @@ export const App: React.FC = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex flex-col items-center justify-center bg-[#07090B] text-campus-secondary">
-        <div className="w-9 h-9 border-2 border-campus-gold/30 border-t-campus-gold rounded-full animate-spin mb-4"></div>
-        <div className="text-xs font-mono uppercase tracking-widest text-campus-gold">
-          CampusDesk OS
+      <div className="min-h-screen flex flex-col items-center justify-center bg-campus-bg text-campus-secondary">
+        <div className="w-10 h-10 border-2 border-campus-accent/30 border-t-campus-accent rounded-full animate-spin mb-4"></div>
+        <div className="text-xs font-mono uppercase tracking-widest text-campus-accent">
+          CampusDesk
         </div>
-        <div className="text-[11px] text-campus-muted mt-1">Initializing secure kernel session...</div>
+        <div className="text-[11px] text-campus-muted mt-1">Initializing secure campus session...</div>
       </div>
     );
   }
 
   return (
     <BrowserRouter>
-      <div className="min-h-screen flex flex-col bg-[#07090B] text-[#F3F4F6] selection:bg-[#D6A84F]/20 selection:text-[#F0C86A]">
+      <div className="min-h-screen flex flex-col bg-campus-bg text-campus-text selection:bg-campus-peach selection:text-campus-text">
         <OfflineBanner />
-        <Navbar user={user} onLogout={handleLogout} />
+        <Navbar
+          user={user}
+          onLogout={handleLogout}
+          onOpenDigitalId={user ? () => setProfileModalStudentId(user.id) : undefined}
+        />
 
-        <div className={`flex-1 flex flex-col transition-all duration-200 ${user ? "lg:pl-60" : ""}`}>
-          <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6">
+
+        <div className="flex-1 flex flex-col">
+          <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8 page-fade-in">
             <Routes>
               <Route
                 path="/"
@@ -209,6 +216,15 @@ export const App: React.FC = () => {
 
           <Footer />
         </div>
+
+        {/* Global Student Digital Dossier Modal */}
+        {profileModalStudentId && (
+          <StudentProfileModal
+            studentId={profileModalStudentId}
+            onClose={() => setProfileModalStudentId(null)}
+            currentUserRole={user?.role}
+          />
+        )}
       </div>
     </BrowserRouter>
   );

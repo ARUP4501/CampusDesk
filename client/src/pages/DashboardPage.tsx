@@ -6,16 +6,16 @@ import {
   CalendarDays,
   Utensils,
   Megaphone,
-  ArrowRight,
-  CheckCircle2,
   AlertTriangle,
   ArrowRightLeft,
   X,
   QrCode,
-  Clock,
   Plus,
-  IndianRupee,
-  Files
+  ChevronRight,
+  Clock,
+  Sparkles,
+  CheckCircle2,
+  Bell
 } from "lucide-react";
 import { apiRequest, UserProfile } from "../api/client.js";
 
@@ -24,6 +24,7 @@ export const DashboardPage: React.FC<{ user: UserProfile | null }> = ({ user }) 
   const [staffStats, setStaffStats] = useState<any>(null);
   const [loading, setLoading] = useState<boolean>(true);
   const [recentNotices, setRecentNotices] = useState<any[]>([]);
+  const [recentTickets, setRecentTickets] = useState<any[]>([]);
   const [showTransferModal, setShowTransferModal] = useState<boolean>(false);
   const [showIdModal, setShowIdModal] = useState<boolean>(false);
   const [transferForm, setTransferForm] = useState({
@@ -55,7 +56,8 @@ export const DashboardPage: React.FC<{ user: UserProfile | null }> = ({ user }) 
             unreadNotices: notices.notices.filter((n) => !n.isRead).length,
             latestPass: passes.passes[0] || null
           });
-          setRecentNotices(notices.notices.slice(0, 2));
+          setRecentNotices(notices.notices.slice(0, 3));
+          setRecentTickets(tickets.tickets.slice(0, 3));
         } else if (user?.role === "STAFF") {
           const [tickets, notices] = await Promise.all([
             apiRequest<{ tickets: any[] }>("/api/tickets"),
@@ -68,7 +70,8 @@ export const DashboardPage: React.FC<{ user: UserProfile | null }> = ({ user }) 
             pendingCount: activePending.length,
             totalNotices: notices.notices.length
           });
-          setRecentNotices(notices.notices.slice(0, 2));
+          setRecentNotices(notices.notices.slice(0, 3));
+          setRecentTickets(myAssigned.slice(0, 3));
         }
       } catch (err) {
         console.error(err);
@@ -102,18 +105,18 @@ export const DashboardPage: React.FC<{ user: UserProfile | null }> = ({ user }) 
   if (!user) return null;
 
   return (
-    <div className="max-w-5xl mx-auto space-y-6">
-      {/* 1. Verification Alert (Only when pending) */}
+    <div className="max-w-6xl mx-auto space-y-8 pb-12">
+      {/* 1. Verification Alert (When not ACTIVE) */}
       {user.role === "STUDENT" && user.verificationStatus !== "ACTIVE" && (
-        <div className="bg-amber-500/10 border border-amber-500/30 rounded p-4 flex items-start space-x-3 text-xs text-amber-200">
-          <AlertTriangle className="w-5 h-5 text-amber-400 shrink-0 mt-0.5" />
+        <div className="status-badge-warning rounded-2xl p-4 flex items-start space-x-3 text-xs shadow-xs animate-fadeIn">
+          <AlertTriangle className="w-5 h-5 text-campus-accent shrink-0 mt-0.5" />
           <div>
-            <div className="font-semibold text-campus-text">
+            <div className="font-bold text-campus-text">
               {user.verificationStatus === "PENDING_WARDEN_VERIFICATION" && "Pending Warden Verification"}
               {user.verificationStatus === "PENDING_ADMIN_APPROVAL" && "Warden Approved — Pending Admin Activation"}
               {(user.verificationStatus === "REJECTED_BY_WARDEN" || user.verificationStatus === "REJECTED_BY_ADMIN") && "Registration Application Rejected"}
             </div>
-            <p className="text-campus-muted mt-0.5">
+            <p className="text-campus-muted mt-0.5 leading-relaxed">
               {user.verificationStatus === "PENDING_WARDEN_VERIFICATION" && "Your hostel room allocation is currently being verified by your Warden."}
               {user.verificationStatus === "PENDING_ADMIN_APPROVAL" && "Warden verified. Awaiting central registry confirmation."}
               {user.rejectionReason && `Note: ${user.rejectionReason}`}
@@ -122,17 +125,19 @@ export const DashboardPage: React.FC<{ user: UserProfile | null }> = ({ user }) 
         </div>
       )}
 
-      {/* 2. Small, Clean Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 border-b border-white/[0.08] pb-4">
+      {/* 2. Top Greeting & Context Header */}
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pb-4 border-b border-campus-border">
         <div>
-          <h1 className="text-xl font-bold text-campus-text">
+          <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-campus-text">
             Welcome back, {user.fullName.split(" ")[0]}
           </h1>
-          <p className="text-xs text-campus-muted mt-0.5">
+          <p className="text-xs sm:text-sm text-campus-secondary mt-1">
             {user.role === "STUDENT" ? (
-              <span>Roll: {user.rollNumber || "2024CS101"} • {user.hostelBlock || "Hostel"} {user.roomNumber ? `(Rm ${user.roomNumber})` : ""} • {user.branch || "CSE"}</span>
+              <span>
+                Roll: <strong className="text-campus-accent font-mono font-semibold">{user.rollNumber || "2024CS101"}</strong> • {user.hostelBlock || "Hostel"} {user.roomNumber ? `(Room ${user.roomNumber})` : ""} • {user.course || "B.Tech"} {user.branch || "CSE"}
+              </span>
             ) : (
-              <span>{user.role} Workspace • {user.department || "Operations"}</span>
+              <span>{user.role} Workspace • {user.department || "Campus Operations"}</span>
             )}
           </p>
         </div>
@@ -142,16 +147,16 @@ export const DashboardPage: React.FC<{ user: UserProfile | null }> = ({ user }) 
             <>
               <button
                 onClick={() => setShowIdModal(true)}
-                className="px-3 py-1.5 text-xs font-medium rounded border border-white/[0.08] bg-campus-surface hover:bg-white/5 text-campus-secondary hover:text-campus-text transition-colors flex items-center space-x-1.5"
+                className="btn-secondary px-3.5 py-2 text-xs font-semibold rounded-xl flex items-center space-x-1.5 shadow-sm group"
               >
-                <QrCode className="w-3.5 h-3.5 text-campus-gold" />
+                <QrCode className="w-3.5 h-3.5 text-campus-accent group-hover:scale-105 transition-transform" />
                 <span>Digital ID</span>
               </button>
               <button
                 onClick={() => setShowTransferModal(true)}
-                className="px-3 py-1.5 text-xs font-medium rounded border border-white/[0.08] bg-campus-surface hover:bg-white/5 text-campus-secondary hover:text-campus-text transition-colors flex items-center space-x-1.5"
+                className="btn-secondary px-3.5 py-2 text-xs font-semibold rounded-xl flex items-center space-x-1.5 shadow-sm group"
               >
-                <ArrowRightLeft className="w-3.5 h-3.5" />
+                <ArrowRightLeft className="w-3.5 h-3.5 text-campus-accent group-hover:rotate-180 transition-transform duration-300" />
                 <span>Hostel Transfer</span>
               </button>
             </>
@@ -159,221 +164,312 @@ export const DashboardPage: React.FC<{ user: UserProfile | null }> = ({ user }) 
         </div>
       </div>
 
-      {/* 3. Key Summary Stats (Simple 3–4 items) */}
+      {/* 3. Primary Metrics / Status Bar (Visual Card Hierarchy) */}
       {user.role === "STUDENT" ? (
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3.5 sm:gap-4">
           <Link
             to="/tickets"
-            className="p-3.5 rounded bg-campus-card border border-white/[0.08] hover:border-campus-gold/40 transition-colors group"
+            className="p-5 rounded-2xl card-stat flex flex-col justify-between group hover:border-campus-accent/30 transition-all"
           >
-            <span className="text-[11px] text-campus-muted block">Open Complaints</span>
-            <span className="text-2xl font-bold text-campus-gold mt-1 block">
-              {studentStats?.openTickets ?? 0}
-            </span>
-            <span className="text-[10px] text-campus-secondary group-hover:text-campus-text mt-1 flex items-center space-x-1">
-              <span>View queue</span>
-              <ArrowRight className="w-3 h-3 text-campus-gold" />
-            </span>
+            <div className="flex items-center justify-between">
+              <span className="text-xs font-medium text-campus-muted">Open Complaints</span>
+              <div className="p-2 rounded-xl bg-white/60 text-campus-accent border border-campus-border shadow-xs group-hover:scale-105 transition-transform">
+                <Wrench className="w-4 h-4" />
+              </div>
+            </div>
+            <div className="mt-4">
+              <span className="text-3xl font-bold text-campus-accent font-mono block">
+                {studentStats?.openTickets ?? 0}
+              </span>
+              <span className="text-[11px] text-campus-muted group-hover:text-campus-accent transition-colors flex items-center space-x-1 mt-1 font-medium">
+                <span>View complaint tickets</span>
+                <ChevronRight className="w-3.5 h-3.5 text-campus-accent group-hover:translate-x-0.5 transition-transform" />
+              </span>
+            </div>
           </Link>
 
           <Link
             to="/gatepass"
-            className="p-3.5 rounded bg-campus-card border border-white/[0.08] hover:border-campus-gold/40 transition-colors group"
+            className="p-5 rounded-2xl card-stat flex flex-col justify-between group hover:border-campus-accent/30 transition-all"
           >
-            <span className="text-[11px] text-campus-muted block">Active Passes</span>
-            <span className="text-2xl font-bold text-campus-text mt-1 block">
-              {studentStats?.activePasses ?? 0}
-            </span>
-            <span className="text-[10px] text-campus-secondary group-hover:text-campus-text mt-1 flex items-center space-x-1">
-              <span>View passes</span>
-              <ArrowRight className="w-3 h-3 text-campus-gold" />
-            </span>
+            <div className="flex items-center justify-between">
+              <span className="text-xs font-medium text-campus-muted">Active Gate Passes</span>
+              <div className="p-2 rounded-xl bg-white/60 text-campus-accent border border-campus-border shadow-xs group-hover:scale-105 transition-transform">
+                <DoorOpen className="w-4 h-4" />
+              </div>
+            </div>
+            <div className="mt-4">
+              <span className="text-3xl font-bold text-campus-text font-mono block">
+                {studentStats?.activePasses ?? 0}
+              </span>
+              <span className="text-[11px] text-campus-muted group-hover:text-campus-accent transition-colors flex items-center space-x-1 mt-1 font-medium">
+                <span>Manage leave passes</span>
+                <ChevronRight className="w-3.5 h-3.5 text-campus-accent group-hover:translate-x-0.5 transition-transform" />
+              </span>
+            </div>
           </Link>
 
           <Link
             to="/notices"
-            className="p-3.5 rounded bg-campus-card border border-white/[0.08] hover:border-campus-gold/40 transition-colors group"
+            className="p-5 rounded-2xl card-stat flex flex-col justify-between group hover:border-campus-accent/30 transition-all"
           >
-            <span className="text-[11px] text-campus-muted block">New Notices</span>
-            <span className="text-2xl font-bold text-campus-text mt-1 block">
-              {studentStats?.unreadNotices ?? 0}
-            </span>
-            <span className="text-[10px] text-campus-secondary group-hover:text-campus-text mt-1 flex items-center space-x-1">
-              <span>Read notices</span>
-              <ArrowRight className="w-3 h-3 text-campus-gold" />
-            </span>
+            <div className="flex items-center justify-between">
+              <span className="text-xs font-medium text-campus-muted">New Notices</span>
+              <div className="p-2 rounded-xl bg-white/60 text-campus-accent border border-campus-border shadow-xs group-hover:scale-105 transition-transform">
+                <Megaphone className="w-4 h-4" />
+              </div>
+            </div>
+            <div className="mt-4">
+              <span className="text-3xl font-bold text-campus-accent font-mono block">
+                {studentStats?.unreadNotices ?? 0}
+              </span>
+              <span className="text-[11px] text-campus-muted group-hover:text-campus-accent transition-colors flex items-center space-x-1 mt-1 font-medium">
+                <span>Read official circulars</span>
+                <ChevronRight className="w-3.5 h-3.5 text-campus-accent group-hover:translate-x-0.5 transition-transform" />
+              </span>
+            </div>
           </Link>
 
           <Link
             to="/academics"
-            className="p-3.5 rounded bg-campus-card border border-white/[0.08] hover:border-campus-gold/40 transition-colors group"
+            className="p-5 rounded-2xl card-featured flex flex-col justify-between group"
           >
-            <span className="text-[11px] text-campus-muted block">Classes Today</span>
-            <span className="text-2xl font-bold text-campus-success mt-1 block">
-              Active
-            </span>
-            <span className="text-[10px] text-campus-secondary group-hover:text-campus-text mt-1 flex items-center space-x-1">
-              <span>Timetable</span>
-              <ArrowRight className="w-3 h-3 text-campus-gold" />
-            </span>
+            <div className="flex items-center justify-between">
+              <span className="text-xs font-bold text-campus-text">Today's Schedule</span>
+              <div className="p-2 rounded-xl bg-white/70 text-campus-accent border border-campus-accent/20 shadow-xs group-hover:scale-105 transition-transform">
+                <CalendarDays className="w-4 h-4" />
+              </div>
+            </div>
+            <div className="mt-4">
+              <span className="text-2xl font-bold text-campus-text font-mono block">
+                Active
+              </span>
+              <span className="text-[11px] text-campus-secondary group-hover:text-campus-accent transition-colors flex items-center space-x-1 mt-1 font-semibold">
+                <span>View timetable</span>
+                <ChevronRight className="w-3.5 h-3.5 text-campus-accent group-hover:translate-x-0.5 transition-transform" />
+              </span>
+            </div>
           </Link>
         </div>
       ) : (
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
           <Link
             to="/tickets"
-            className="p-3.5 rounded bg-campus-card border border-white/[0.08] hover:border-campus-gold/40 transition-colors"
+            className="p-5 rounded-2xl card-stat group hover:border-campus-accent/30 transition-all"
           >
-            <span className="text-[11px] text-campus-muted block">Assigned Work Orders</span>
-            <span className="text-2xl font-bold text-campus-gold mt-1 block">{staffStats?.assignedCount ?? 0}</span>
-            <span className="text-[10px] text-campus-secondary mt-1 block">Open maintenance tasks &rarr;</span>
+            <span className="text-xs font-medium text-campus-muted block">Assigned Work Orders</span>
+            <span className="text-3xl font-bold text-campus-accent font-mono mt-3 block">{staffStats?.assignedCount ?? 0}</span>
+            <span className="text-xs text-campus-muted group-hover:text-campus-accent transition-colors mt-2 flex items-center space-x-1 font-medium">
+              <span>Open tasks</span>
+              <ChevronRight className="w-3 h-3 text-campus-accent group-hover:translate-x-0.5 transition-transform" />
+            </span>
           </Link>
 
           <Link
             to="/tickets"
-            className="p-3.5 rounded bg-campus-card border border-white/[0.08] hover:border-campus-gold/40 transition-colors"
+            className="p-5 rounded-2xl card-stat group hover:border-campus-accent/30 transition-all"
           >
-            <span className="text-[11px] text-campus-muted block">Pending Resolution</span>
-            <span className="text-2xl font-bold text-campus-warning mt-1 block">{staffStats?.pendingCount ?? 0}</span>
-            <span className="text-[10px] text-campus-secondary mt-1 block">Requires completion proof &rarr;</span>
+            <span className="text-xs font-medium text-campus-muted block">Pending Resolution Proof</span>
+            <span className="text-3xl font-bold text-campus-text font-mono mt-3 block">{staffStats?.pendingCount ?? 0}</span>
+            <span className="text-xs text-campus-muted group-hover:text-campus-accent transition-colors mt-2 flex items-center space-x-1 font-medium">
+              <span>Action required</span>
+              <ChevronRight className="w-3 h-3 text-campus-accent group-hover:translate-x-0.5 transition-transform" />
+            </span>
           </Link>
 
           <Link
             to="/notices"
-            className="p-3.5 rounded bg-campus-card border border-white/[0.08] hover:border-campus-gold/40 transition-colors"
+            className="p-5 rounded-2xl card-stat group hover:border-campus-accent/30 transition-all"
           >
-            <span className="text-[11px] text-campus-muted block">Published Circulars</span>
-            <span className="text-2xl font-bold text-campus-text mt-1 block">{staffStats?.totalNotices ?? 0}</span>
-            <span className="text-[10px] text-campus-secondary mt-1 block">Official college notices &rarr;</span>
+            <span className="text-xs font-medium text-campus-muted block">Institutional Circulars</span>
+            <span className="text-3xl font-bold text-campus-accent font-mono mt-3 block">{staffStats?.totalNotices ?? 0}</span>
+            <span className="text-xs text-campus-muted group-hover:text-campus-accent transition-colors mt-2 flex items-center space-x-1 font-medium">
+              <span>View announcements</span>
+              <ChevronRight className="w-3 h-3 text-campus-accent group-hover:translate-x-0.5 transition-transform" />
+            </span>
           </Link>
         </div>
       )}
 
-      {/* 4. Quick Actions Launcher (4 clean, distinct actions) */}
-      <div className="space-y-2">
-        <h2 className="text-xs font-semibold text-campus-muted uppercase tracking-wider">
-          Quick Actions
-        </h2>
+      {/* 4. Quick Actions Launchpad (Interactive Action Cards) */}
+      <div className="space-y-3">
+        <div className="flex items-center justify-between">
+          <h2 className="text-xs font-mono uppercase tracking-widest text-campus-accent font-bold">
+            Quick Actions
+          </h2>
+          <span className="text-[11px] text-campus-muted font-mono">1-Click Launchpad</span>
+        </div>
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
           <Link
             to="/tickets/new"
-            className="p-3 rounded bg-campus-surface border border-white/[0.08] hover:border-campus-gold/40 hover:bg-white/5 transition-colors flex items-center space-x-2.5"
+            className="p-4 rounded-2xl btn-primary text-xs font-bold flex items-center space-x-3 group"
           >
-            <div className="w-7 h-7 rounded bg-campus-card border border-white/[0.08] flex items-center justify-center text-campus-gold shrink-0">
-              <Plus className="w-4 h-4" />
+            <div className="w-8 h-8 rounded-xl bg-white/40 flex items-center justify-center shrink-0 group-hover:scale-110 transition-transform">
+              <Plus className="w-4 h-4 text-campus-text" />
             </div>
-            <span className="text-xs font-medium text-campus-text">New Complaint</span>
+            <span>Report Complaint</span>
           </Link>
 
           <Link
             to="/gatepass"
-            className="p-3 rounded bg-campus-surface border border-white/[0.08] hover:border-campus-gold/40 hover:bg-white/5 transition-colors flex items-center space-x-2.5"
+            className="p-4 rounded-2xl card-action flex items-center space-x-3 text-xs font-semibold text-campus-text group"
           >
-            <div className="w-7 h-7 rounded bg-campus-card border border-white/[0.08] flex items-center justify-center text-campus-gold shrink-0">
+            <div className="w-8 h-8 rounded-xl bg-white/60 flex items-center justify-center text-campus-accent shrink-0 border border-campus-border group-hover:scale-110 transition-transform">
               <DoorOpen className="w-4 h-4" />
             </div>
-            <span className="text-xs font-medium text-campus-text">Apply Gate Pass</span>
+            <span>Apply Gate Pass</span>
           </Link>
 
           <Link
             to="/mess"
-            className="p-3 rounded bg-campus-surface border border-white/[0.08] hover:border-campus-gold/40 hover:bg-white/5 transition-colors flex items-center space-x-2.5"
+            className="p-4 rounded-2xl card-action flex items-center space-x-3 text-xs font-semibold text-campus-text group"
           >
-            <div className="w-7 h-7 rounded bg-campus-card border border-white/[0.08] flex items-center justify-center text-campus-gold shrink-0">
+            <div className="w-8 h-8 rounded-xl bg-white/60 flex items-center justify-center text-campus-accent shrink-0 border border-campus-border group-hover:scale-110 transition-transform">
               <Utensils className="w-4 h-4" />
             </div>
-            <span className="text-xs font-medium text-campus-text">Today's Mess Menu</span>
+            <span>Today's Menu</span>
           </Link>
 
           <Link
-            to="/notices"
-            className="p-3 rounded bg-campus-surface border border-white/[0.08] hover:border-campus-gold/40 hover:bg-white/5 transition-colors flex items-center space-x-2.5"
+            to="/academics"
+            className="p-4 rounded-2xl card-action flex items-center space-x-3 text-xs font-semibold text-campus-text group"
           >
-            <div className="w-7 h-7 rounded bg-campus-card border border-white/[0.08] flex items-center justify-center text-campus-gold shrink-0">
-              <Megaphone className="w-4 h-4" />
+            <div className="w-8 h-8 rounded-xl bg-white/60 flex items-center justify-center text-campus-accent shrink-0 border border-campus-border group-hover:scale-110 transition-transform">
+              <CalendarDays className="w-4 h-4" />
             </div>
-            <span className="text-xs font-medium text-campus-text">View Notices</span>
+            <span>View Timetable</span>
           </Link>
         </div>
       </div>
 
-      {/* 5. What's Happening (Recent Updates & Notices) */}
-      <div className="space-y-3">
-        <div className="flex items-center justify-between">
-          <h2 className="text-xs font-semibold text-campus-muted uppercase tracking-wider">
-            What's Happening on Campus
-          </h2>
-          <Link to="/notices" className="text-xs text-campus-gold hover:underline">
-            View all circulars &rarr;
-          </Link>
-        </div>
-
-        {recentNotices.length === 0 ? (
-          <div className="p-6 text-center text-xs text-campus-muted bg-campus-card border border-white/[0.08] rounded">
-            No active campus alerts or circulars at this time.
+      {/* 5. Main Activity Grid: Recent Notices & Active Complaints */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* Left Column: Official Notices */}
+        <div className="space-y-3">
+          <div className="flex items-center justify-between">
+            <h2 className="text-xs font-mono uppercase tracking-widest text-campus-accent font-bold">
+              Official Campus Notices
+            </h2>
+            <Link to="/notices" className="text-xs text-campus-accent hover:text-campus-text transition-colors font-semibold flex items-center space-x-1">
+              <span>View all</span>
+              <ChevronRight className="w-3.5 h-3.5" />
+            </Link>
           </div>
-        ) : (
-          <div className="space-y-2">
-            {recentNotices.map((n) => (
-              <Link
-                key={n.id}
-                to={`/notices/${n.id}`}
-                className="p-3.5 rounded bg-campus-card border border-white/[0.08] hover:border-white/20 transition-colors flex items-start justify-between gap-3 block"
-              >
-                <div className="space-y-1">
-                  <div className="flex items-center space-x-2">
-                    <span className="px-1.5 py-0.5 rounded text-[10px] font-mono bg-campus-gold/10 text-campus-goldLight border border-campus-gold/20">
-                      {n.category || "NOTICE"}
-                    </span>
-                    <h3 className="font-semibold text-xs text-campus-text hover:text-campus-gold transition-colors">
-                      {n.title}
-                    </h3>
+
+          {recentNotices.length === 0 ? (
+            <div className="p-8 text-center text-xs text-campus-muted glass-card rounded-2xl border border-campus-border">
+              No recent campus circulars posted.
+            </div>
+          ) : (
+            <div className="space-y-3">
+              {recentNotices.map((n) => (
+                <Link
+                  key={n.id}
+                  to={`/notices/${n.id}`}
+                  className="p-4 sm:p-4.5 rounded-2xl glass-card flex items-start justify-between gap-3.5 block group min-w-0"
+                >
+                  <div className="space-y-1.5 min-w-0 flex-1">
+                    <div className="flex items-center space-x-2 flex-wrap gap-y-1 min-w-0">
+                      <span className="px-2.5 py-0.5 rounded-full text-[10px] font-mono font-bold bg-white/70 text-campus-accent border border-campus-border shrink-0">
+                        {n.category || "NOTICE"}
+                      </span>
+                      <h3 className="font-bold text-xs sm:text-[13px] text-campus-text group-hover:text-campus-accent transition-colors leading-snug break-words min-w-0">
+                        {n.title}
+                      </h3>
+                    </div>
+                    <p className="text-xs text-campus-secondary line-clamp-2 leading-[1.55] break-words">{n.content}</p>
                   </div>
-                  <p className="text-xs text-campus-muted line-clamp-1">{n.content}</p>
-                </div>
-                <span className="text-[11px] text-campus-muted font-mono shrink-0">
-                  {new Date(n.publishedAt || n.createdAt).toLocaleDateString()}
-                </span>
-              </Link>
-            ))}
+                  <span className="text-[11px] text-campus-muted font-mono shrink-0 pt-0.5 whitespace-nowrap">
+                    {new Date(n.publishedAt || n.createdAt).toLocaleDateString()}
+                  </span>
+                </Link>
+              ))}
+            </div>
+          )}
+        </div>
+
+        {/* Right Column: Recent Complaints/Tickets */}
+        <div className="space-y-3">
+          <div className="flex items-center justify-between">
+            <h2 className="text-xs font-mono uppercase tracking-widest text-campus-accent font-bold">
+              Recent Maintenance Requests
+            </h2>
+            <Link to="/tickets" className="text-xs text-campus-accent hover:text-campus-text transition-colors font-semibold flex items-center space-x-1">
+              <span>View queue</span>
+              <ChevronRight className="w-3.5 h-3.5" />
+            </Link>
           </div>
-        )}
+
+          {recentTickets.length === 0 ? (
+            <div className="p-8 text-center text-xs text-campus-muted glass-card rounded-2xl border border-campus-border">
+              No recent complaint tickets logged.
+            </div>
+          ) : (
+            <div className="space-y-3">
+              {recentTickets.map((t) => (
+                <Link
+                  key={t.id}
+                  to={`/tickets/${t.id}`}
+                  className="p-4 sm:p-4.5 rounded-2xl glass-card flex items-center justify-between gap-3.5 block group min-w-0"
+                >
+                  <div className="space-y-1 min-w-0 flex-1">
+                    <div className="flex items-center space-x-2 min-w-0">
+                      <span className="font-bold font-mono text-xs text-campus-accent shrink-0">
+                        #{t.ticketNumber}
+                      </span>
+                      <h3 className="font-semibold text-xs sm:text-[13px] text-campus-text group-hover:text-campus-accent transition-colors truncate min-w-0">
+                        {t.title}
+                      </h3>
+                    </div>
+                    <p className="text-xs text-campus-muted leading-normal truncate">
+                      {t.category} • {t.hostelBlock} (Rm {t.roomNumber})
+                    </p>
+                  </div>
+
+                  <span className="px-2.5 py-1 text-[11px] font-mono font-semibold rounded-full bg-white/70 border border-campus-border text-campus-secondary shrink-0">
+                    {t.status}
+                  </span>
+                </Link>
+              ))}
+            </div>
+          )}
+        </div>
       </div>
 
-      {/* Digital ID Modal for Students */}
+      {/* Student Digital ID Modal */}
       {showIdModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4">
-          <div className="bg-campus-card border border-white/[0.1] rounded-lg max-w-sm w-full p-5 space-y-4 shadow-2xl">
-            <div className="flex items-center justify-between border-b border-white/[0.08] pb-2.5">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-md p-4 animate-fadeIn">
+          <div className="glass-modal rounded-3xl max-w-sm w-full p-6 space-y-5 shadow-elevated">
+            <div className="flex items-center justify-between border-b border-campus-border pb-3">
               <div className="flex items-center space-x-2">
-                <span className="w-5 h-5 rounded bg-campus-gold text-campus-bg font-bold flex items-center justify-center text-[10px]">CD</span>
-                <h3 className="text-xs font-semibold text-campus-text">Student Digital ID</h3>
+                <span className="w-6 h-6 rounded-lg bg-campus-btnPrimary text-campus-text font-extrabold flex items-center justify-center text-xs shadow-sm">CD</span>
+                <h3 className="text-sm font-bold text-campus-text">Student Digital ID</h3>
               </div>
-              <button onClick={() => setShowIdModal(false)} className="text-campus-muted hover:text-campus-text">
-                <X className="w-4 h-4" />
+              <button onClick={() => setShowIdModal(false)} className="text-campus-muted hover:text-campus-text p-1">
+                <X className="w-5 h-5" />
               </button>
             </div>
 
             <div className="text-center space-y-2">
-              <div className="w-16 h-16 rounded bg-campus-elevated border border-white/[0.08] mx-auto flex items-center justify-center text-lg font-bold text-campus-gold font-mono">
+              <div className="w-16 h-16 rounded-full bg-campus-btnPrimary text-campus-text border border-campus-accent/20 mx-auto flex items-center justify-center text-lg font-bold font-mono shadow-sm">
                 {user.fullName.split(" ").map((n) => n[0]).slice(0, 2).join("")}
               </div>
               <div>
-                <p className="font-bold text-sm text-campus-text">{user.fullName}</p>
-                <p className="text-xs text-campus-gold font-mono">Roll: {user.rollNumber || "2024CS101"}</p>
-                <p className="text-xs text-campus-muted">{user.course || "B.Tech"} • {user.branch || "CSE"}</p>
-                <p className="text-xs text-campus-secondary mt-1 font-medium">
+                <p className="font-bold text-base text-campus-text">{user.fullName}</p>
+                <p className="text-xs text-campus-accent font-mono font-bold">Roll: {user.rollNumber || "2024CS101"}</p>
+                <p className="text-xs text-campus-secondary mt-0.5">{user.course || "B.Tech"} • {user.branch || "CSE"}</p>
+                <p className="text-xs text-campus-muted mt-1">
                   {user.hostelBlock || "Hostel"} • Room {user.roomNumber || "N/A"}
                 </p>
               </div>
             </div>
 
-            <div className="p-3 bg-white rounded flex items-center justify-center">
-              <QrCode className="w-28 h-28 text-black" />
+            <div className="p-4 bg-white rounded-2xl flex items-center justify-center shadow-inner border border-campus-border">
+              <QrCode className="w-32 h-32 text-[#4D2A00]" />
             </div>
 
-            <p className="text-[10px] text-center text-campus-muted font-mono">
-              Emergency: {user.fatherPhone || user.phone}
+            <p className="text-[11px] text-center text-campus-muted font-mono">
+              Emergency Contact: {user.fatherPhone || user.phone}
             </p>
           </div>
         </div>
@@ -381,35 +477,35 @@ export const DashboardPage: React.FC<{ user: UserProfile | null }> = ({ user }) 
 
       {/* Hostel Transfer Modal */}
       {showTransferModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4">
-          <div className="bg-campus-card border border-white/[0.1] rounded-lg max-w-md w-full p-5 space-y-4 shadow-2xl text-xs">
-            <div className="flex items-center justify-between border-b border-white/[0.08] pb-2.5">
-              <h3 className="text-sm font-semibold text-campus-text">Request Hostel Transfer</h3>
-              <button onClick={() => setShowTransferModal(false)} className="text-campus-muted hover:text-campus-text">
-                <X className="w-4 h-4" />
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-md p-4 animate-fadeIn">
+          <div className="glass-modal rounded-3xl max-w-md w-full p-6 space-y-4 text-xs shadow-elevated">
+            <div className="flex items-center justify-between border-b border-campus-border pb-3">
+              <h3 className="text-base font-bold text-campus-text">Request Hostel Transfer</h3>
+              <button onClick={() => setShowTransferModal(false)} className="text-campus-muted hover:text-campus-text p-1">
+                <X className="w-5 h-5" />
               </button>
             </div>
 
             {transferSuccess && (
-              <div className="p-2.5 bg-campus-success/10 border border-campus-success/30 rounded text-campus-success">
+              <div className="status-badge-success p-3 rounded-xl font-medium">
                 {transferSuccess}
               </div>
             )}
 
             {transferError && (
-              <div className="p-2.5 bg-campus-error/10 border border-campus-error/30 rounded text-campus-error">
+              <div className="status-badge-error p-3 rounded-xl font-medium">
                 {transferError}
               </div>
             )}
 
-            <form onSubmit={handleTransferSubmit} className="space-y-3">
+            <form onSubmit={handleTransferSubmit} className="space-y-4">
               <div>
-                <label className="block text-campus-secondary mb-1">Target Hostel Block *</label>
+                <label className="block text-campus-text mb-1.5 font-semibold">Target Hostel Block *</label>
                 <select
                   required
                   value={transferForm.toHostel}
                   onChange={(e) => setTransferForm({ ...transferForm, toHostel: e.target.value })}
-                  className="w-full px-3 py-2 border border-white/[0.08] rounded bg-campus-bg text-campus-text focus:outline-none focus:border-campus-gold"
+                  className="w-full px-3.5 py-2.5 border border-campus-border rounded-xl bg-white/70 text-campus-text focus:outline-none focus:border-campus-accent"
                 >
                   <option value="Hostel-A">Hostel-A (Boys Senior)</option>
                   <option value="Hostel-B">Hostel-B (Boys Junior)</option>
@@ -418,30 +514,30 @@ export const DashboardPage: React.FC<{ user: UserProfile | null }> = ({ user }) 
               </div>
 
               <div>
-                <label className="block text-campus-secondary mb-1">Reason for Transfer *</label>
+                <label className="block text-campus-text mb-1.5 font-semibold">Reason for Transfer *</label>
                 <textarea
                   required
-                  rows={3}
+                  rows={4}
                   value={transferForm.reason}
                   onChange={(e) => setTransferForm({ ...transferForm, reason: e.target.value })}
                   placeholder="Explain why you are requesting a hostel transfer..."
-                  className="w-full px-3 py-2 border border-white/[0.08] rounded bg-campus-bg text-campus-text focus:outline-none focus:border-campus-gold resize-none"
+                  className="w-full px-3.5 py-2.5 border border-campus-border rounded-xl bg-white/70 text-campus-text focus:outline-none focus:border-campus-accent resize-none"
                 />
               </div>
 
-              <div className="flex justify-end space-x-2 pt-2 border-t border-white/[0.08]">
+              <div className="flex justify-end space-x-2.5 pt-3 border-t border-campus-border">
                 <button
                   type="button"
                   onClick={() => setShowTransferModal(false)}
-                  className="px-3 py-1.5 border border-white/[0.08] rounded text-campus-secondary hover:text-campus-text"
+                  className="btn-secondary px-4 py-2 rounded-xl text-xs font-semibold"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
-                  className="px-4 py-1.5 bg-campus-gold hover:bg-campus-goldLight text-campus-bg font-semibold rounded"
+                  className="btn-primary px-5 py-2 rounded-xl text-xs font-bold"
                 >
-                  Submit
+                  Submit Request
                 </button>
               </div>
             </form>
@@ -451,3 +547,6 @@ export const DashboardPage: React.FC<{ user: UserProfile | null }> = ({ user }) 
     </div>
   );
 };
+
+export default DashboardPage;
+

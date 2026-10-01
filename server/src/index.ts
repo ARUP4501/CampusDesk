@@ -81,14 +81,25 @@ app.use("/api/hostels", hostelRouter);
 app.use("/api/notifications", notificationRouter);
 app.use("/api/import", importRouter);
 
-// Serve static frontend assets in production
+// Serve static frontend assets strictly in production mode
 const clientDistPath = path.resolve(__dirname, "../../client/dist");
-if (fs.existsSync(clientDistPath)) {
+if (config.NODE_ENV === "production" && fs.existsSync(clientDistPath)) {
   app.use(express.static(clientDistPath));
   app.get("*", (req: Request, res: Response) => {
     if (!req.path.startsWith("/api/")) {
       res.sendFile(path.join(clientDistPath, "index.html"));
     }
+  });
+} else {
+  // In development, port 5000 is exclusively for API routes.
+  app.get("/", (_req: Request, res: Response) => {
+    res.json({
+      status: "online",
+      service: "CampusDesk Backend API",
+      environment: config.NODE_ENV,
+      message: "API service is active. For the frontend web application, use Vite development server at http://localhost:5173",
+      frontendUrl: config.APP_URL
+    });
   });
 }
 

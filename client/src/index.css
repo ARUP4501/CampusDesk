@@ -3,105 +3,303 @@
 @tailwind utilities;
 
 :root {
-  --bg-main: #07090B;
-  --bg-surface: #0D1013;
-  --bg-card: #14181C;
-  --bg-elevated: #181D22;
-  --border-color: rgba(255, 255, 255, 0.08);
-  --border-hover: rgba(255, 255, 255, 0.15);
-  --primary-color: #D6A84F;
-  --primary-hover: #F0C86A;
-  --danger-color: #EF4444;
-  --warning-color: #F59E0B;
-  --success-color: #10B981;
-  --info-color: #3B82F6;
-  --text-main: #F3F4F6;
-  --text-secondary: #A7ADB5;
-  --text-muted: #6F7781;
+  --bg-primary: #F9E6A8;
+  --bg-secondary: #FFF6D6;
+  --color-primary: #4D2A00;
+  --color-accent: #CC6F00;
+  --color-button: #FDB773;
+  --border-glass: rgba(77, 42, 0, 0.08);
+  --border-hover: rgba(204, 111, 0, 0.30);
 }
 
 body {
-  background-color: #07090B;
-  color: #F3F4F6;
-  font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  background-color: #F9E6A8;
+  background-image: 
+    radial-gradient(circle at 12% 12%, rgba(255, 255, 255, 0.45) 0%, transparent 40%),
+    radial-gradient(circle at 88% 75%, rgba(253, 183, 115, 0.18) 0%, transparent 45%),
+    radial-gradient(circle at 50% 30%, rgba(204, 111, 0, 0.03) 0%, transparent 60%);
+  background-attachment: fixed;
+  color: #4D2A00;
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "SF Pro Display", "Inter", "Segoe UI", Roboto, sans-serif;
   font-size: 14px;
   line-height: 1.5;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  min-height: 100vh;
 }
 
-/* Frosted Glass System (Campus OS) */
+/* ==========================================================================
+   1. iOS Glassmorphism Layered Surface System
+   ========================================================================== */
+
+/* Main Panels */
 .glass-panel {
-  background: rgba(20, 24, 28, 0.65);
+  background: rgba(255, 250, 225, 0.58);
+  backdrop-filter: blur(18px) saturate(135%);
+  -webkit-backdrop-filter: blur(18px) saturate(135%);
+  border: 1px solid rgba(77, 42, 0, 0.08);
+  box-shadow: 0 10px 30px -4px rgba(77, 42, 0, 0.06);
+}
+
+/* Standard Lightweight Cards */
+.glass-card {
+  background: rgba(255, 252, 240, 0.52);
+  backdrop-filter: blur(14px) saturate(125%);
+  -webkit-backdrop-filter: blur(14px) saturate(125%);
+  border: 1px solid rgba(77, 42, 0, 0.08);
+  box-shadow: 0 4px 18px rgba(77, 42, 0, 0.04);
+  transition: all 220ms cubic-bezier(0.22, 1, 0.36, 1);
+  min-width: 0;
+  overflow-wrap: anywhere;
+  word-break: normal;
+}
+.glass-card:hover {
+  background: rgba(255, 255, 255, 0.82);
+  border-color: rgba(204, 111, 0, 0.28);
+  transform: translateY(-2px);
+  box-shadow: 0 12px 28px -4px rgba(77, 42, 0, 0.08);
+}
+
+/* Primary Feature Card */
+.card-featured {
+  background: rgba(255, 250, 228, 0.68);
+  backdrop-filter: blur(20px) saturate(140%);
+  -webkit-backdrop-filter: blur(20px) saturate(140%);
+  border: 1px solid rgba(204, 111, 0, 0.22);
+  box-shadow: 0 12px 34px -4px rgba(77, 42, 0, 0.08);
+  min-width: 0;
+  overflow-wrap: anywhere;
+  word-break: normal;
+}
+
+/* Metric / Stat Card */
+.card-stat {
+  background: rgba(255, 252, 240, 0.62);
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(77, 42, 0, 0.07);
+  box-shadow: 0 2px 12px rgba(77, 42, 0, 0.03);
+  min-width: 0;
+  overflow-wrap: anywhere;
+  word-break: normal;
 }
 
-.glass-panel-hover {
-  transition: all 180ms ease-in-out;
+/* Interactive Action Card */
+.card-action {
+  background: rgba(255, 255, 255, 0.55);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  border: 1px solid rgba(77, 42, 0, 0.08);
+  transition: all 200ms cubic-bezier(0.22, 1, 0.36, 1);
+  min-width: 0;
+  overflow-wrap: anywhere;
+  word-break: normal;
 }
-.glass-panel-hover:hover {
-  background: rgba(26, 31, 36, 0.8);
-  border-color: rgba(255, 255, 255, 0.14);
+.card-action:hover {
+  background: rgba(255, 255, 255, 0.9);
+  border-color: rgba(204, 111, 0, 0.35);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(77, 42, 0, 0.08);
 }
 
+/* ==========================================================================
+   2. Floating iOS Glass Navbar (Translucent White Frosted Glass)
+   ========================================================================== */
+
+.glass-navbar {
+  background: rgba(255, 255, 255, 0.16);
+  backdrop-filter: blur(32px) saturate(175%);
+  -webkit-backdrop-filter: blur(32px) saturate(175%);
+  border: 1px solid rgba(255, 255, 255, 0.42);
+  box-shadow: 
+    0 14px 42px rgba(77, 42, 0, 0.08),
+    inset 0 1px 0 rgba(255, 255, 255, 0.50);
+  transition: background-color 280ms cubic-bezier(0.22, 1, 0.36, 1), 
+              box-shadow 280ms cubic-bezier(0.22, 1, 0.36, 1), 
+              border-color 280ms cubic-bezier(0.22, 1, 0.36, 1),
+              transform 280ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.glass-navbar-scrolled {
+  background: rgba(255, 255, 255, 0.28);
+  backdrop-filter: blur(36px) saturate(185%);
+  -webkit-backdrop-filter: blur(36px) saturate(185%);
+  border: 1px solid rgba(255, 255, 255, 0.50);
+  box-shadow: 
+    0 16px 48px rgba(77, 42, 0, 0.10),
+    inset 0 1px 0 rgba(255, 255, 255, 0.58);
+}
+
+/* Active Nav Item Pill Highlight - Translucent White Glass */
+.nav-pill-active {
+  background: rgba(255, 255, 255, 0.30);
+  border: 1px solid rgba(255, 255, 255, 0.40);
+  box-shadow: 
+    0 4px 14px rgba(77, 42, 0, 0.06), 
+    inset 0 1px 0 rgba(255, 255, 255, 0.45);
+  color: #4D2A00;
+  font-weight: 600;
+}
+
+.nav-pill-idle {
+  color: #6C420D;
+  background: transparent;
+  border: 1px solid transparent;
+  transition: all 260ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+.nav-pill-idle:hover {
+  background: rgba(255, 255, 255, 0.28);
+  color: #CC6F00;
+  border-color: rgba(255, 255, 255, 0.40);
+}
+
+/* Modals & Dropdowns */
 .glass-modal {
-  background: rgba(15, 18, 22, 0.85);
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.7);
+  background: rgba(255, 251, 235, 0.92);
+  backdrop-filter: blur(28px) saturate(145%);
+  -webkit-backdrop-filter: blur(28px) saturate(145%);
+  border: 1px solid rgba(255, 255, 255, 0.6);
+  box-shadow: 0 24px 64px rgba(77, 42, 0, 0.15);
 }
 
-.glass-nav-rail {
-  background: rgba(13, 16, 19, 0.8);
-  backdrop-filter: blur(14px);
-  -webkit-backdrop-filter: blur(14px);
-  border-right: 1px solid rgba(255, 255, 255, 0.08);
+.glass-dropdown {
+  background: rgba(255, 250, 228, 0.88);
+  backdrop-filter: blur(24px) saturate(140%);
+  -webkit-backdrop-filter: blur(24px) saturate(140%);
+  border: 1px solid rgba(255, 255, 255, 0.5);
+  box-shadow: 0 16px 40px rgba(77, 42, 0, 0.10);
 }
 
-.glass-top-bar {
-  background: rgba(10, 13, 16, 0.75);
-  backdrop-filter: blur(14px);
-  -webkit-backdrop-filter: blur(14px);
-  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+/* ==========================================================================
+   3. Buttons & Action Elements
+   ========================================================================== */
+
+.btn-primary {
+  background-color: #FDB773;
+  color: #4D2A00;
+  font-weight: 600;
+  border: 1px solid rgba(204, 111, 0, 0.22);
+  box-shadow: 0 4px 14px rgba(77, 42, 0, 0.08);
+  transition: all 180ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+.btn-primary:hover {
+  background-color: #FED3A2;
+  border-color: rgba(204, 111, 0, 0.35);
+  transform: translateY(-1px);
+  box-shadow: 0 6px 18px rgba(77, 42, 0, 0.12);
+}
+.btn-primary:active {
+  transform: scale(0.98);
 }
 
-/* Subtle Technical Patterns */
-.bg-grid-technical {
-  background-size: 32px 32px;
-  background-image: 
-    linear-gradient(to right, rgba(255, 255, 255, 0.025) 1px, transparent 1px),
-    linear-gradient(to bottom, rgba(255, 255, 255, 0.025) 1px, transparent 1px);
+.btn-secondary {
+  background: rgba(255, 255, 255, 0.52);
+  border: 1px solid rgba(77, 42, 0, 0.10);
+  color: #4D2A00;
+  font-weight: 500;
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  box-shadow: 0 2px 8px rgba(77, 42, 0, 0.03);
+  transition: all 180ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+.btn-secondary:hover {
+  background: rgba(255, 255, 255, 0.85);
+  border-color: rgba(204, 111, 0, 0.28);
+  color: #CC6F00;
+  transform: translateY(-1px);
+}
+.btn-secondary:active {
+  transform: scale(0.98);
 }
 
-.bg-dots-technical {
-  background-image: radial-gradient(rgba(214, 168, 79, 0.1) 1px, transparent 1px);
-  background-size: 24px 24px;
+.btn-ghost {
+  background: transparent;
+  color: #4D2A00;
+  transition: all 160ms ease;
+}
+.btn-ghost:hover {
+  background: rgba(255, 255, 255, 0.45);
+  color: #CC6F00;
 }
 
-/* Refined Dark Scrollbar */
+/* ==========================================================================
+   4. Status Indicators & Compact Alerts
+   ========================================================================== */
+
+.status-badge-success {
+  background: rgba(46, 125, 50, 0.14);
+  color: #1B5E20;
+  border: 1px solid rgba(46, 125, 50, 0.24);
+}
+
+.status-badge-warning {
+  background: rgba(253, 183, 115, 0.35);
+  color: #4D2A00;
+  border: 1px solid rgba(204, 111, 0, 0.25);
+}
+
+.status-badge-error {
+  background: rgba(198, 40, 40, 0.12);
+  color: #B71C1C;
+  border: 1px solid rgba(198, 40, 40, 0.24);
+}
+
+.status-badge-neutral {
+  background: rgba(255, 255, 255, 0.55);
+  color: #4D2A00;
+  border: 1px solid rgba(77, 42, 0, 0.08);
+}
+
+/* ==========================================================================
+   5. Form Inputs & Tables
+   ========================================================================== */
+
+input, select, textarea {
+  background-color: rgba(255, 255, 255, 0.65) !important;
+  border: 1px solid rgba(77, 42, 0, 0.12) !important;
+  color: #4D2A00 !important;
+  border-radius: 12px;
+  transition: border-color 160ms ease, box-shadow 160ms ease, background-color 160ms ease;
+}
+input::placeholder, textarea::placeholder {
+  color: #8C581E !important;
+  opacity: 0.7;
+}
+input:focus, select:focus, textarea:focus {
+  background-color: rgba(255, 255, 255, 0.95) !important;
+  border-color: #CC6F00 !important;
+  outline: none !important;
+  box-shadow: 0 0 0 3px rgba(204, 111, 0, 0.18) !important;
+}
+
+table {
+  border-collapse: separate;
+  border-spacing: 0;
+}
+th {
+  background-color: rgba(253, 183, 115, 0.30) !important;
+  color: #4D2A00 !important;
+}
+
+/* Custom Scrollbars */
 ::-webkit-scrollbar {
-  width: 5px;
-  height: 5px;
+  width: 6px;
+  height: 6px;
 }
 ::-webkit-scrollbar-track {
-  background: #07090B;
+  background: rgba(77, 42, 0, 0.04);
 }
 ::-webkit-scrollbar-thumb {
-  background: rgba(255, 255, 255, 0.12);
-  border-radius: 3px;
+  background: rgba(204, 111, 0, 0.25);
+  border-radius: 4px;
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: rgba(255, 255, 255, 0.2);
+  background: rgba(204, 111, 0, 0.45);
 }
 
-/* Reduced motion preference */
+/* Accessibility: Reduced Motion */
 @media (prefers-reduced-motion: reduce) {
-  *,
-  ::before,
-  ::after {
+  *, ::before, ::after {
     animation-duration: 0.01ms !important;
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
@@ -109,37 +307,21 @@ body {
   }
 }
 
-/* Refined gold focus ring */
-*:focus-visible {
-  outline: 2px solid #D6A84F;
-  outline-offset: 2px;
+/* Subtle Entrance Animations */
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(6px); }
+  to { opacity: 1; transform: translateY(0); }
 }
 
-/* Inputs, buttons, and surfaces default styling */
-input, select, textarea {
-  background-color: #0D1013;
-  border-color: rgba(255, 255, 255, 0.08);
-  color: #F3F4F6;
-  border-radius: 4px;
-}
-input::placeholder, textarea::placeholder {
-  color: #6F7781;
-}
-input:focus, select:focus, textarea:focus {
-  border-color: #D6A84F;
-  outline: none;
+@keyframes heroScale {
+  from { opacity: 0; transform: scale(0.98) translateY(8px); }
+  to { opacity: 1; transform: scale(1) translateY(0); }
 }
 
-/* Print Styles */
-@media print {
-  body {
-    background: #ffffff !important;
-    color: #000000 !important;
-  }
-  .no-print {
-    display: none !important;
-  }
-  .print-only {
-    display: block !important;
-  }
+.animate-fadeIn {
+  animation: fadeIn 220ms cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+
+.animate-hero {
+  animation: heroScale 320ms cubic-bezier(0.22, 1, 0.36, 1) forwards;
 }

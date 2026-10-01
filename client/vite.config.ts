@@ -7,13 +7,16 @@ export default defineConfig({
     react(),
     VitePWA({
       registerType: "autoUpdate",
+      devOptions: {
+        enabled: false
+      },
       includeAssets: ["favicon.svg", "favicon.ico", "apple-touch-icon.png", "icon-192.png", "icon-512.png"],
       manifest: {
         name: "CampusDesk Portal",
         short_name: "CampusDesk",
         description: "Unified campus complaints, gate passes, notices and academic services portal",
-        theme_color: "#0f4c3a",
-        background_color: "#fbfaf7",
+        theme_color: "#F9E6A8",
+        background_color: "#F9E6A8",
         display: "standalone",
         orientation: "portrait",
         start_url: "/",

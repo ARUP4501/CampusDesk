@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { Utensils, Edit3, CheckCircle, BarChart3, X, Save, AlertCircle, Trash2, Star } from "lucide-react";
+import { Utensils, Edit3, CheckCircle2, BarChart3, X, Save, AlertCircle, Star, Sparkles } from "lucide-react";
 import { apiRequest, UserProfile } from "../api/client.js";
 
 interface MessMenuItem {
@@ -106,8 +106,8 @@ export const MessPage: React.FC<{ user: UserProfile | null }> = ({ user }) => {
       setEditSnacks("");
       setEditDinner("");
     }
-    setEditSuccess(null);
     setEditError(null);
+    setEditSuccess(null);
     setIsEditingMenu(true);
   };
 
@@ -116,12 +116,12 @@ export const MessPage: React.FC<{ user: UserProfile | null }> = ({ user }) => {
     if (!isAdminOrWarden) return;
 
     setEditSubmitting(true);
-    setEditSuccess(null);
     setEditError(null);
+    setEditSuccess(null);
 
     try {
       await apiRequest("/api/mess/menu", {
-        method: "POST",
+        method: "PUT",
         body: JSON.stringify({
           hostelBlock,
           dayOfWeek: editDayOfWeek,
@@ -132,27 +132,13 @@ export const MessPage: React.FC<{ user: UserProfile | null }> = ({ user }) => {
         })
       });
 
-      setEditSuccess(`Menu items updated successfully for ${daysMap[editDayOfWeek - 1]}.`);
-      await fetchData();
-    } catch (err: any) {
-      setEditError(err.message || "Failed to update menu items.");
-    } finally {
-      setEditSubmitting(false);
-    }
-  };
-
-  const handleDeleteDayMenu = async (dayNum: number) => {
-    if (!isAdminOrWarden) return;
-    if (!confirm(`Are you sure you want to reset the menu for ${daysMap[dayNum - 1]}?`)) return;
-
-    try {
-      await apiRequest(`/api/mess/menu?hostelBlock=${hostelBlock}&dayOfWeek=${dayNum}`, {
-        method: "DELETE"
-      });
-      setEditSuccess(`Menu reset for ${daysMap[dayNum - 1]}.`);
+      setEditSuccess("Weekly mess menu schedule updated successfully.");
+      setIsEditingMenu(false);
       fetchData();
     } catch (err: any) {
-      alert("Failed to reset menu: " + err.message);
+      setEditError(err.message || "Failed to update mess menu.");
+    } finally {
+      setEditSubmitting(false);
     }
   };
 
@@ -162,290 +148,161 @@ export const MessPage: React.FC<{ user: UserProfile | null }> = ({ user }) => {
     setFeedbackSuccess(null);
 
     try {
-      await apiRequest("/api/mess/feedback", {
-        method: "POST",
-        body: JSON.stringify({
-          hostelBlock,
-          mealType: feedbackMeal,
-          rating: feedbackRating,
-          comments: feedbackComments || undefined
-        })
-      });
-      setFeedbackSuccess("Your feedback has been recorded. Thank you for rating today's meal.");
+      await apiRequest(
+        "/api/mess/feedback",
+        {
+          method: "POST",
+          body: JSON.stringify({
+            hostelBlock,
+            mealType: feedbackMeal,
+            rating: feedbackRating,
+            comments: feedbackComments || undefined
+          })
+        },
+        {
+          label: `Mess Rating: ${feedbackMeal}`,
+          data: { hostelBlock, mealType: feedbackMeal, rating: feedbackRating }
+        }
+      );
+
+      setFeedbackSuccess("Your meal feedback and rating have been recorded.");
       setFeedbackComments("");
       if (isStaffOrManagement) fetchData();
     } catch (err: any) {
-      alert("Feedback failed: " + err.message);
+      alert("Failed to submit feedback: " + err.message);
     } finally {
       setFeedbackSubmitting(false);
     }
   };
 
-  const daysMap = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
+  const dayNames = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
+  const currentDayNum = new Date().getDay();
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-8">
       {/* Top Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 bg-[#14181C] border border-[#252B31] p-5 rounded-[6px] shadow-subtle">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 glass-panel p-6 rounded-3xl border border-[rgba(77,42,0,0.1)] shadow-glass">
         <div>
-          <div className="flex items-center space-x-2 text-[#D6A84F] text-[11px] font-mono uppercase mb-1">
+          <div className="flex items-center space-x-2 text-[#CC6F00] text-[11px] font-bold uppercase mb-1">
             <Utensils className="w-3.5 h-3.5" />
-            <span>Hostel Dining Operations</span>
+            <span>Hostel Dining & Catering</span>
           </div>
-          <h1 className="text-xl font-bold text-[#F3F4F6]">Hostel Mess Menu & Feedback</h1>
-          <p className="text-xs text-[#A7ADB5] mt-0.5">
-            Weekly 7-day dining schedule and student meal satisfaction telemetry
+          <h1 className="text-2xl font-bold text-[#4D2A00]">Hostel Mess Menu & Ratings</h1>
+          <p className="text-xs text-[#4D2A00]/70 mt-1">
+            4-meal daily menu schedules, dietary inspection records, and student meal ratings
           </p>
         </div>
 
-        <div className="flex flex-wrap items-center gap-3 text-xs">
-          <div className="flex items-center space-x-2">
-            <span className="font-medium text-[#A7ADB5]">Hostel Block:</span>
-            <select
-              value={hostelBlock}
-              onChange={(e) => setHostelBlock(e.target.value)}
-              className="border border-[#252B31] rounded-[4px] px-2.5 py-1.5 bg-[#101316] text-[#F3F4F6] focus:outline-none focus:border-[#D6A84F]"
-            >
-              <option value="Hostel-A">Hostel-A (Boys Senior)</option>
-              <option value="Hostel-B">Hostel-B (Boys Junior)</option>
-              <option value="Hostel-C">Hostel-C (Girls Campus)</option>
-            </select>
-          </div>
-
-          {isAdminOrWarden && (
-            <button
-              onClick={() => {
-                setEditSuccess(null);
-                setEditError(null);
-                setIsEditingMenu(!isEditingMenu);
-              }}
-              className="px-3.5 py-1.5 bg-[#D6A84F] hover:bg-[#F0C86A] text-[#090B0D] font-bold rounded-[4px] flex items-center space-x-1.5 transition-colors shadow-xs"
-            >
-              <Edit3 className="w-3.5 h-3.5" />
-              <span>{isEditingMenu ? "Close Editor" : "Manage Menu Items"}</span>
-            </button>
-          )}
+        {/* Hostel Block Switcher */}
+        <div className="flex items-center space-x-2">
+          <span className="text-xs font-semibold text-[#4D2A00]/80">Select Block:</span>
+          <select
+            value={hostelBlock}
+            onChange={(e) => setHostelBlock(e.target.value)}
+            className="px-3.5 py-2 bg-white/60 border border-[rgba(77,42,0,0.12)] rounded-xl text-[#4D2A00] text-xs focus:outline-none focus:border-[#CC6F00]"
+          >
+            <option value="Hostel-A">Hostel-A (Boys Senior)</option>
+            <option value="Hostel-B">Hostel-B (Boys Junior)</option>
+            <option value="Hostel-C">Hostel-C (Girls Campus)</option>
+          </select>
         </div>
       </div>
 
-      {/* Menu Editor Panel (Strictly ADMIN and WARDEN) */}
-      {isAdminOrWarden && isEditingMenu && (
-        <div className="bg-[#14181C] border border-[#D6A84F]/40 rounded-[6px] p-5 shadow-elevated space-y-4">
-          <div className="flex items-center justify-between border-b border-[#252B31] pb-3">
-            <div className="flex items-center space-x-2">
-              <Edit3 className="w-4 h-4 text-[#D6A84F]" />
-              <h2 className="text-sm font-bold text-[#F3F4F6] uppercase tracking-wide">
-                Manage Mess Menu Items ({hostelBlock})
-              </h2>
-            </div>
-            <button
-              onClick={() => setIsEditingMenu(false)}
-              className="text-[#6F7781] hover:text-[#F3F4F6]"
-            >
-              <X className="w-4 h-4" />
-            </button>
-          </div>
-
-          {editSuccess && (
-            <div className="p-3 text-xs bg-emerald-500/10 text-emerald-200 border border-emerald-500/30 rounded-[4px] font-medium flex items-center space-x-2">
-              <CheckCircle className="w-4 h-4 text-emerald-400 flex-shrink-0" />
-              <span>{editSuccess}</span>
-            </div>
-          )}
-
-          {editError && (
-            <div className="p-3 text-xs bg-red-500/10 text-red-200 border border-red-500/30 rounded-[4px] font-medium flex items-center space-x-2">
-              <AlertCircle className="w-4 h-4 text-red-400 flex-shrink-0" />
-              <span>{editError}</span>
-            </div>
-          )}
-
-          <form onSubmit={handleSaveMenu} className="space-y-4 text-xs">
-            <div>
-              <label className="block font-semibold text-[#A7ADB5] mb-1.5">Select Day of Week</label>
-              <div className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-7 gap-2">
-                {daysMap.map((dayName, idx) => {
-                  const dayNum = idx + 1;
-                  const isSelected = editDayOfWeek === dayNum;
-                  return (
-                    <button
-                      key={dayName}
-                      type="button"
-                      onClick={() => setEditDayOfWeek(dayNum)}
-                      className={`px-2.5 py-1.5 text-center font-medium rounded-[4px] border transition-colors ${
-                        isSelected
-                          ? "bg-[#D6A84F] text-[#090B0D] border-[#D6A84F] font-bold"
-                          : "bg-[#101316] text-[#A7ADB5] border-[#252B31] hover:bg-[#181D22] hover:text-[#F3F4F6]"
-                      }`}
-                    >
-                      {dayName}
-                    </button>
-                  );
-                })}
-              </div>
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <label className="block font-semibold text-[#A7ADB5] mb-1">
-                  Breakfast Items ({daysMap[editDayOfWeek - 1]}) *
-                </label>
-                <textarea
-                  rows={2}
-                  value={editBreakfast}
-                  onChange={(e) => setEditBreakfast(e.target.value)}
-                  placeholder="e.g. Masala Dosa, Sambar, Coconut Chutney, Tea, Coffee"
-                  required
-                  className="w-full p-2.5 border border-[#252B31] rounded-[4px] bg-[#101316] text-[#F3F4F6] focus:outline-none focus:border-[#D6A84F]"
-                />
-              </div>
-
-              <div>
-                <label className="block font-semibold text-[#A7ADB5] mb-1">
-                  Lunch Items ({daysMap[editDayOfWeek - 1]}) *
-                </label>
-                <textarea
-                  rows={2}
-                  value={editLunch}
-                  onChange={(e) => setEditLunch(e.target.value)}
-                  placeholder="e.g. Steamed Rice, Dal Tadka, Paneer Butter Masala, Roti, Curd, Salad"
-                  required
-                  className="w-full p-2.5 border border-[#252B31] rounded-[4px] bg-[#101316] text-[#F3F4F6] focus:outline-none focus:border-[#D6A84F]"
-                />
-              </div>
-
-              <div>
-                <label className="block font-semibold text-[#A7ADB5] mb-1">
-                  Evening Snacks ({daysMap[editDayOfWeek - 1]}) *
-                </label>
-                <textarea
-                  rows={2}
-                  value={editSnacks}
-                  onChange={(e) => setEditSnacks(e.target.value)}
-                  placeholder="e.g. Veg Samosa, Green Mint Chutney, Hot Ginger Tea"
-                  required
-                  className="w-full p-2.5 border border-[#252B31] rounded-[4px] bg-[#101316] text-[#F3F4F6] focus:outline-none focus:border-[#D6A84F]"
-                />
-              </div>
-
-              <div>
-                <label className="block font-semibold text-[#A7ADB5] mb-1">
-                  Dinner Items ({daysMap[editDayOfWeek - 1]}) *
-                </label>
-                <textarea
-                  rows={2}
-                  value={editDinner}
-                  onChange={(e) => setEditDinner(e.target.value)}
-                  placeholder="e.g. Chapati, Mixed Veg Curry, Jeera Rice, Dal Fry, Sweet Gulab Jamun"
-                  required
-                  className="w-full p-2.5 border border-[#252B31] rounded-[4px] bg-[#101316] text-[#F3F4F6] focus:outline-none focus:border-[#D6A84F]"
-                />
-              </div>
-            </div>
-
-            <div className="flex items-center justify-between pt-2 border-t border-[#252B31]">
-              <button
-                type="button"
-                onClick={() => handleDeleteDayMenu(editDayOfWeek)}
-                className="px-3 py-2 border border-red-500/30 bg-red-500/10 text-red-300 font-medium rounded-[4px] hover:bg-red-500/20 flex items-center space-x-1 transition-colors"
-              >
-                <Trash2 className="w-3.5 h-3.5" />
-                <span>Reset {daysMap[editDayOfWeek - 1]} Menu</span>
-              </button>
-
-              <div className="flex items-center space-x-3">
-                <button
-                  type="button"
-                  onClick={() => setIsEditingMenu(false)}
-                  className="px-4 py-2 border border-[#252B31] bg-[#101316] text-[#A7ADB5] hover:text-[#F3F4F6] font-medium rounded-[4px] hover:bg-[#181D22] transition-colors"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  disabled={editSubmitting}
-                  className="px-5 py-2 bg-[#D6A84F] hover:bg-[#F0C86A] text-[#090B0D] font-bold rounded-[4px] disabled:opacity-50 flex items-center space-x-1.5 transition-colors shadow-xs"
-                >
-                  <Save className="w-4 h-4" />
-                  <span>{editSubmitting ? "Saving..." : `Save ${daysMap[editDayOfWeek - 1]} Menu`}</span>
-                </button>
-              </div>
-            </div>
-          </form>
+      {editSuccess && (
+        <div className="p-4 bg-emerald-500/20 text-emerald-950 border border-emerald-500/30 rounded-2xl text-xs font-medium flex items-center space-x-2">
+          <CheckCircle2 className="w-4 h-4 text-emerald-700 shrink-0" />
+          <span>{editSuccess}</span>
         </div>
       )}
 
-      {/* Weekly Menu Grid */}
-      <div className="bg-[#14181C] border border-[#252B31] rounded-[6px] p-5 shadow-subtle">
-        <div className="flex items-center justify-between border-b border-[#252B31] pb-2 mb-4">
-          <h2 className="text-xs font-mono font-bold text-[#D6A84F] uppercase tracking-wider flex items-center space-x-2">
-            <Utensils className="w-4 h-4" />
-            <span>Weekly Dining Schedule ({hostelBlock})</span>
+      {/* 7-Day Menu Schedule Grid */}
+      <div className="space-y-4">
+        <div className="flex items-center justify-between">
+          <h2 className="text-xs font-bold uppercase tracking-wider text-[#CC6F00]">
+            Weekly 4-Meal Menu ({hostelBlock})
           </h2>
-          {isAdminOrWarden && !isEditingMenu && (
-            <button
-              onClick={() => setIsEditingMenu(true)}
-              className="text-xs text-[#D6A84F] hover:text-[#F0C86A] font-semibold flex items-center space-x-1 transition-colors"
-            >
-              <Edit3 className="w-3 h-3" />
-              <span>Update Schedule</span>
-            </button>
+          {isAdminOrWarden && (
+            <span className="text-xs text-[#4D2A00]/60">Click edit icon to modify recipes</span>
           )}
         </div>
 
         {loading ? (
-          <div className="p-12 text-center text-xs text-[#A7ADB5] font-mono">Querying mess menu schedules...</div>
-        ) : menu.length === 0 ? (
-          <div className="p-12 text-center text-xs text-[#6F7781]">
-            No dining schedule published yet for {hostelBlock}.
+          <div className="p-14 text-center text-xs text-[#4D2A00]/60 glass-panel rounded-3xl border border-[rgba(77,42,0,0.1)]">
+            Loading mess menu schedule...
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-            {daysMap.map((dayName, idx) => {
-              const dayNum = idx + 1;
-              const dayMenu = menu.find((m) => m.dayOfWeek === dayNum);
+            {[1, 2, 3, 4, 5, 6, 0].map((dayNum) => {
+              const dayItem = menu.find((m) => m.dayOfWeek === dayNum);
+              const isToday = currentDayNum === dayNum;
 
               return (
-                <div key={dayName} className="bg-[#101316] border border-[#252B31] rounded-[4px] p-3.5 text-xs flex flex-col justify-between">
+                <div
+                  key={dayNum}
+                  className={`p-5 rounded-3xl border transition-all ${
+                    isToday
+                      ? "bg-[#FDB773]/30 border-[#CC6F00]/50 shadow-glass"
+                      : "glass-card border-[rgba(77,42,0,0.08)]"
+                  } flex flex-col justify-between space-y-4`}
+                >
                   <div>
-                    <div className="flex items-center justify-between border-b border-[#252B31] pb-2 mb-2.5">
-                      <span className="font-bold text-[#F3F4F6] uppercase tracking-wider text-[11px] font-mono">
-                        {dayName}
-                      </span>
+                    <div className="flex items-center justify-between pb-2 border-b border-[rgba(77,42,0,0.08)]">
+                      <div className="flex items-center space-x-2">
+                        <span className="font-bold text-sm text-[#4D2A00]">{dayNames[dayNum]}</span>
+                        {isToday && (
+                          <span className="px-2 py-0.5 text-[9px] font-bold bg-[#FDB773] text-[#4D2A00] border border-[#CC6F00]/30 rounded-md">
+                            TODAY
+                          </span>
+                        )}
+                      </div>
                       {isAdminOrWarden && (
                         <button
                           onClick={() => handleOpenEditForDay(dayNum)}
-                          title={`Edit ${dayName} Menu`}
-                          className="text-[10px] text-[#D6A84F] font-medium hover:underline flex items-center space-x-0.5"
+                          className="p-1.5 rounded-lg text-[#4D2A00]/60 hover:text-[#CC6F00] hover:bg-white/60 transition-colors"
+                          title="Edit Menu"
                         >
-                          <Edit3 className="w-3 h-3" />
-                          <span>Edit</span>
+                          <Edit3 className="w-3.5 h-3.5" />
                         </button>
                       )}
                     </div>
 
-                    {dayMenu ? (
-                      <div className="space-y-2.5">
-                        <div>
-                          <span className="font-mono text-[10px] uppercase text-[#D6A84F] block">Breakfast:</span>
-                          <span className="text-[#F3F4F6] text-[11px] leading-relaxed">{dayMenu.breakfast}</span>
-                        </div>
-                        <div>
-                          <span className="font-mono text-[10px] uppercase text-[#D6A84F] block">Lunch:</span>
-                          <span className="text-[#F3F4F6] text-[11px] leading-relaxed">{dayMenu.lunch}</span>
-                        </div>
-                        <div>
-                          <span className="font-mono text-[10px] uppercase text-[#D6A84F] block">Evening Snacks:</span>
-                          <span className="text-[#F3F4F6] text-[11px] leading-relaxed">{dayMenu.snacks}</span>
-                        </div>
-                        <div>
-                          <span className="font-mono text-[10px] uppercase text-[#D6A84F] block">Dinner:</span>
-                          <span className="text-[#F3F4F6] text-[11px] leading-relaxed">{dayMenu.dinner}</span>
-                        </div>
+                    <div className="space-y-2.5 pt-3 text-xs">
+                      <div>
+                        <span className="text-[10px] text-[#CC6F00] uppercase font-bold block">
+                          Breakfast (07:30 - 09:30)
+                        </span>
+                        <p className="text-[#4D2A00] mt-0.5 leading-snug">
+                          {dayItem?.breakfast || "Standard Continental / Indian Breakfast"}
+                        </p>
                       </div>
-                    ) : (
-                      <div className="text-[#6F7781] italic py-4 text-center">No menu recorded</div>
-                    )}
+
+                      <div>
+                        <span className="text-[10px] text-[#CC6F00] uppercase font-bold block">
+                          Lunch (12:30 - 14:30)
+                        </span>
+                        <p className="text-[#4D2A00] mt-0.5 leading-snug">
+                          {dayItem?.lunch || "Full Meal Rice, Dal, Veg & Curd"}
+                        </p>
+                      </div>
+
+                      <div>
+                        <span className="text-[10px] text-[#CC6F00] uppercase font-bold block">
+                          Snacks (17:00 - 18:00)
+                        </span>
+                        <p className="text-[#4D2A00] mt-0.5 leading-snug">
+                          {dayItem?.snacks || "Tea / Coffee with Evening Snack"}
+                        </p>
+                      </div>
+
+                      <div>
+                        <span className="text-[10px] text-[#CC6F00] uppercase font-bold block">
+                          Dinner (20:00 - 22:00)
+                        </span>
+                        <p className="text-[#4D2A00] mt-0.5 leading-snug">
+                          {dayItem?.dinner || "Roti, Sabzi, Rice & Sweet/Dessert"}
+                        </p>
+                      </div>
+                    </div>
                   </div>
                 </div>
               );
@@ -454,28 +311,33 @@ export const MessPage: React.FC<{ user: UserProfile | null }> = ({ user }) => {
         )}
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Student Feedback Form */}
-        <div className="bg-[#14181C] border border-[#252B31] rounded-[6px] p-5 space-y-4 shadow-subtle">
-          <h2 className="text-xs font-mono font-bold text-[#D6A84F] uppercase tracking-wider border-b border-[#252B31] pb-2">
-            Submit Daily Meal Feedback
-          </h2>
+      {/* Student Meal Feedback & Rating Box */}
+      {user?.role === "STUDENT" && (
+        <div className="glass-panel rounded-3xl p-6 sm:p-8 space-y-4 max-w-2xl border border-[rgba(77,42,0,0.1)] shadow-glass">
+          <div>
+            <h2 className="text-xs font-bold uppercase tracking-wider text-[#CC6F00]">
+              Today&apos;s Meal Rating & Feedback
+            </h2>
+            <p className="text-xs text-[#4D2A00]/70 mt-0.5">
+              Your feedback is aggregated and directly reviewed by hostel wardens and catering contractors.
+            </p>
+          </div>
 
           {feedbackSuccess && (
-            <div className="p-3 text-xs bg-emerald-500/10 text-emerald-200 border border-emerald-500/30 rounded-[4px] font-medium flex items-center space-x-2">
-              <CheckCircle className="w-4 h-4 text-emerald-400 flex-shrink-0" />
+            <div className="p-4 bg-emerald-500/20 border border-emerald-500/30 rounded-2xl text-xs text-emerald-950 font-medium flex items-center space-x-2">
+              <CheckCircle2 className="w-4 h-4 text-emerald-700 shrink-0" />
               <span>{feedbackSuccess}</span>
             </div>
           )}
 
-          <form onSubmit={handleFeedbackSubmit} className="space-y-3.5 text-xs">
-            <div className="grid grid-cols-2 gap-3">
+          <form onSubmit={handleFeedbackSubmit} className="space-y-4 text-xs">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
-                <label className="block font-semibold text-[#A7ADB5] mb-1">Meal Service</label>
+                <label className="block font-semibold text-[#4D2A00] mb-1">Meal Period *</label>
                 <select
                   value={feedbackMeal}
                   onChange={(e) => setFeedbackMeal(e.target.value)}
-                  className="w-full px-2.5 py-1.5 border border-[#252B31] rounded-[4px] bg-[#101316] text-[#F3F4F6] focus:outline-none focus:border-[#D6A84F]"
+                  className="w-full px-3.5 py-2.5 bg-white/60 border border-[rgba(77,42,0,0.12)] rounded-xl text-[#4D2A00] focus:outline-none focus:border-[#CC6F00]"
                 >
                   <option value="BREAKFAST">Breakfast</option>
                   <option value="LUNCH">Lunch</option>
@@ -485,89 +347,183 @@ export const MessPage: React.FC<{ user: UserProfile | null }> = ({ user }) => {
               </div>
 
               <div>
-                <label className="block font-semibold text-[#A7ADB5] mb-1">Rating (1 to 5 Stars)</label>
-                <select
-                  value={feedbackRating}
-                  onChange={(e) => setFeedbackRating(parseInt(e.target.value, 10))}
-                  className="w-full px-2.5 py-1.5 border border-[#252B31] rounded-[4px] bg-[#101316] text-[#F3F4F6] focus:outline-none focus:border-[#D6A84F]"
-                >
-                  <option value={5}>5 Stars - Excellent</option>
-                  <option value={4}>4 Stars - Good</option>
-                  <option value={3}>3 Stars - Average</option>
-                  <option value={2}>2 Stars - Substandard</option>
-                  <option value={1}>1 Star - Unsatisfactory</option>
-                </select>
+                <label className="block font-semibold text-[#4D2A00] mb-1">Star Rating (1 - 5) *</label>
+                <div className="flex items-center space-x-2 pt-1.5">
+                  {[1, 2, 3, 4, 5].map((star) => (
+                    <button
+                      key={star}
+                      type="button"
+                      onClick={() => setFeedbackRating(star)}
+                      className="p-1 text-[#CC6F00] hover:scale-125 transition-transform"
+                    >
+                      <Star
+                        className={`w-6 h-6 ${
+                          star <= feedbackRating ? "fill-[#CC6F00] text-[#CC6F00]" : "text-[#4D2A00]/30"
+                        }`}
+                      />
+                    </button>
+                  ))}
+                  <span className="font-mono text-[#CC6F00] font-bold ml-2 text-sm">{feedbackRating}/5</span>
+                </div>
               </div>
             </div>
 
             <div>
-              <label className="block font-semibold text-[#A7ADB5] mb-1">
-                Comments or Suggestions (Optional)
-              </label>
-              <textarea
-                rows={3}
+              <label className="block font-semibold text-[#4D2A00] mb-1">Optional Comments / Taste Feedback</label>
+              <input
+                type="text"
                 value={feedbackComments}
                 onChange={(e) => setFeedbackComments(e.target.value)}
-                placeholder="Mention specific items, taste, cleanliness, or portion feedback..."
-                className="w-full p-2.5 border border-[#252B31] rounded-[4px] bg-[#101316] text-[#F3F4F6] focus:outline-none focus:border-[#D6A84F]"
+                placeholder="Mention taste, hygiene, food temperature, or portion quality..."
+                className="w-full px-3.5 py-2.5 bg-white/60 border border-[rgba(77,42,0,0.12)] rounded-xl text-[#4D2A00] placeholder-[#4D2A00]/40 focus:outline-none focus:border-[#CC6F00]"
               />
             </div>
 
             <button
               type="submit"
               disabled={feedbackSubmitting}
-              className="px-4 py-2 bg-[#D6A84F] hover:bg-[#F0C86A] text-[#090B0D] font-bold rounded-[4px] disabled:opacity-50 transition-colors shadow-xs"
+              className="btn-primary px-6 py-2.5 text-xs font-bold disabled:opacity-50 shadow-sm"
             >
-              {feedbackSubmitting ? "Submitting..." : "Submit Mess Rating"}
+              {feedbackSubmitting ? "Submitting..." : "Submit Meal Rating"}
             </button>
           </form>
         </div>
+      )}
 
-        {/* Staff/Warden/Admin Feedback Summary */}
-        {isStaffOrManagement && summary && (
-          <div className="bg-[#14181C] border border-[#252B31] rounded-[6px] p-5 space-y-4 shadow-subtle text-xs">
-            <h2 className="text-xs font-mono font-bold text-[#D6A84F] uppercase tracking-wider border-b border-[#252B31] pb-2 flex items-center space-x-2">
-              <BarChart3 className="w-4 h-4 text-[#D6A84F]" />
-              <span>Mess Satisfaction Index ({hostelBlock})</span>
+      {/* Admin / Warden Feedback Analytics */}
+      {isStaffOrManagement && summary && (
+        <div className="glass-panel rounded-3xl p-6 sm:p-8 space-y-6 border border-[rgba(77,42,0,0.1)] shadow-glass">
+          <div>
+            <h2 className="text-xs font-bold uppercase tracking-wider text-[#CC6F00]">
+              Catering Satisfaction Telemetry ({hostelBlock})
             </h2>
+            <p className="text-xs text-[#4D2A00]/70 mt-0.5">
+              Total responses recorded: {summary.totalResponses}
+            </p>
+          </div>
 
-            <div className="grid grid-cols-2 gap-3">
-              {summary.summary.map((stat) => (
-                <div key={stat.mealType} className="bg-[#101316] p-3.5 border border-[#252B31] rounded-[4px]">
-                  <div className="font-mono text-[#A7ADB5] text-[11px]">{stat.mealType}</div>
-                  <div className="mt-1 flex items-baseline justify-between">
-                    <span className="text-xl font-bold text-[#F0C86A] font-mono flex items-center gap-1">
-                      {stat.averageRating} <Star className="w-3.5 h-3.5 fill-[#D6A84F] text-[#D6A84F]" />
-                    </span>
-                    <span className="text-[10px] font-mono text-[#6F7781]">
-                      {stat.responseCount} ratings
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+            {summary.summary.map((s) => (
+              <div key={s.mealType} className="p-4 bg-white/50 border border-[rgba(77,42,0,0.08)] rounded-2xl text-center">
+                <span className="text-[10px] font-mono uppercase text-[#4D2A00]/60 block">{s.mealType}</span>
+                <span className="text-2xl font-extrabold text-[#CC6F00] font-mono block mt-1">
+                  ★ {s.averageRating.toFixed(1)}
+                </span>
+                <span className="text-[10px] text-[#4D2A00]/70 block mt-0.5">{s.responseCount} reviews</span>
+              </div>
+            ))}
+          </div>
+
+          {summary.recentFeedbacks && summary.recentFeedbacks.length > 0 && (
+            <div className="space-y-2 pt-2 border-t border-[rgba(77,42,0,0.08)]">
+              <h3 className="text-xs font-semibold text-[#4D2A00]">Recent Student Feedback Comments</h3>
+              <div className="space-y-2">
+                {summary.recentFeedbacks.map((fb) => (
+                  <div key={fb.id} className="p-3 bg-white/50 rounded-2xl border border-[rgba(77,42,0,0.08)] text-xs flex items-start justify-between gap-3">
+                    <div className="space-y-0.5">
+                      <div className="flex items-center space-x-2">
+                        <span className="font-bold text-[#4D2A00]">{fb.student.fullName}</span>
+                        <span className="text-[10px] font-mono font-bold text-[#CC6F00]">★ {fb.rating}/5 ({fb.mealType})</span>
+                      </div>
+                      <p className="text-[#4D2A00]/80">{fb.comments || "No written remarks."}</p>
+                    </div>
+                    <span className="text-[10px] font-mono text-[#4D2A00]/60 shrink-0">
+                      {new Date(fb.createdAt).toLocaleDateString()}
                     </span>
                   </div>
-                </div>
-              ))}
-            </div>
-
-            <div className="pt-2 border-t border-[#252B31]">
-              <div className="font-mono font-bold text-[#F3F4F6] text-[11px] mb-2">Recent Student Remarks:</div>
-              <div className="max-h-40 overflow-y-auto space-y-2 bg-[#101316] p-2.5 border border-[#252B31] rounded-[4px]">
-                {summary.recentFeedbacks.length === 0 ? (
-                  <div className="text-[#6F7781] text-center py-2">No student remarks recorded yet.</div>
-                ) : (
-                  summary.recentFeedbacks.map((f) => (
-                    <div key={f.id} className="text-[11px] border-b border-[#252B31] pb-2 last:border-none">
-                      <div className="flex justify-between font-medium">
-                        <span className="text-[#F3F4F6]">{f.student.fullName} ({f.mealType})</span>
-                        <span className="text-[#D6A84F] font-mono font-bold">{f.rating}/5</span>
-                      </div>
-                      {f.comments && <p className="text-[#A7ADB5] mt-0.5 leading-relaxed">&quot;{f.comments}&quot;</p>}
-                    </div>
-                  ))
-                )}
+                ))}
               </div>
             </div>
+          )}
+        </div>
+      )}
+
+      {/* Edit Menu Modal */}
+      {isAdminOrWarden && isEditingMenu && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-md p-4 animate-fadeIn">
+          <div className="glass-modal max-w-lg w-full p-6 space-y-4 text-xs rounded-3xl border border-[rgba(77,42,0,0.15)] shadow-glass">
+            <div className="flex items-center justify-between border-b border-[rgba(77,42,0,0.1)] pb-3">
+              <h3 className="text-base font-bold text-[#4D2A00]">
+                Edit {dayNames[editDayOfWeek]} Menu — {hostelBlock}
+              </h3>
+              <button onClick={() => setIsEditingMenu(false)} className="text-[#4D2A00]/60 hover:text-[#4D2A00]">
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            {editError && (
+              <div className="p-3 bg-rose-500/20 border border-rose-500/30 rounded-xl text-rose-900 font-medium">
+                {editError}
+              </div>
+            )}
+
+            <form onSubmit={handleSaveMenu} className="space-y-3.5">
+              <div>
+                <label className="block font-semibold text-[#4D2A00] mb-1">Breakfast Menu</label>
+                <input
+                  type="text"
+                  required
+                  value={editBreakfast}
+                  onChange={(e) => setEditBreakfast(e.target.value)}
+                  className="w-full px-3.5 py-2 bg-white/60 border border-[rgba(77,42,0,0.12)] rounded-xl text-[#4D2A00] focus:outline-none focus:border-[#CC6F00]"
+                />
+              </div>
+
+              <div>
+                <label className="block font-semibold text-[#4D2A00] mb-1">Lunch Menu</label>
+                <input
+                  type="text"
+                  required
+                  value={editLunch}
+                  onChange={(e) => setEditLunch(e.target.value)}
+                  className="w-full px-3.5 py-2 bg-white/60 border border-[rgba(77,42,0,0.12)] rounded-xl text-[#4D2A00] focus:outline-none focus:border-[#CC6F00]"
+                />
+              </div>
+
+              <div>
+                <label className="block font-semibold text-[#4D2A00] mb-1">Evening Snacks</label>
+                <input
+                  type="text"
+                  required
+                  value={editSnacks}
+                  onChange={(e) => setEditSnacks(e.target.value)}
+                  className="w-full px-3.5 py-2 bg-white/60 border border-[rgba(77,42,0,0.12)] rounded-xl text-[#4D2A00] focus:outline-none focus:border-[#CC6F00]"
+                />
+              </div>
+
+              <div>
+                <label className="block font-semibold text-[#4D2A00] mb-1">Dinner Menu</label>
+                <input
+                  type="text"
+                  required
+                  value={editDinner}
+                  onChange={(e) => setEditDinner(e.target.value)}
+                  className="w-full px-3.5 py-2 bg-white/60 border border-[rgba(77,42,0,0.12)] rounded-xl text-[#4D2A00] focus:outline-none focus:border-[#CC6F00]"
+                />
+              </div>
+
+              <div className="flex items-center justify-end space-x-2.5 pt-3 border-t border-[rgba(77,42,0,0.1)]">
+                <button
+                  type="button"
+                  onClick={() => setIsEditingMenu(false)}
+                  className="btn-secondary px-4 py-2"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={editSubmitting}
+                  className="btn-primary px-6 py-2 text-xs font-bold disabled:opacity-50 shadow-sm"
+                >
+                  {editSubmitting ? "Saving..." : "Save Menu Changes"}
+                </button>
+              </div>
+            </form>
           </div>
-        )}
-      </div>
+        </div>
+      )}
     </div>
   );
 };
+
+export default MessPage;

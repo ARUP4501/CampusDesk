@@ -1,12 +1,13 @@
 import React, { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { ArrowLeft, CheckCircle2, Clock, Users, Send, AlertCircle, Megaphone } from "lucide-react";
+import { ArrowLeft, CheckCircle2, Clock, Users, Send, AlertCircle, Megaphone, ChevronRight } from "lucide-react";
 import { apiRequest, UserProfile } from "../api/client.js";
 
 interface NoticeDetail {
   id: string;
   title: string;
   content: string;
+  category: string;
   priority: string;
   targetType: string;
   targetValue?: string;
@@ -99,13 +100,13 @@ export const NoticeDetailPage: React.FC<{ user: UserProfile | null }> = ({ user 
     setRemindLoading(true);
     setRemindSuccess(null);
     try {
-      const data = await apiRequest<{ message: string; sentCount: number }>(`/api/notices/${id}/remind`, {
+      const res = await apiRequest<{ message: string; count: number }>(`/api/notices/${id}/remind`, {
         method: "POST"
       });
-      setRemindSuccess(data.message);
+      setRemindSuccess(`Notification alerts dispatched to ${res.count} pending students.`);
       fetchNoticeDetail();
     } catch (err: any) {
-      alert("Failed to send reminders: " + err.message);
+      alert(err.message || "Failed to send reminders.");
     } finally {
       setRemindLoading(false);
     }
@@ -113,210 +114,150 @@ export const NoticeDetailPage: React.FC<{ user: UserProfile | null }> = ({ user 
 
   if (loading) {
     return (
-      <div className="p-12 text-center text-xs text-[#A7ADB5] font-mono flex flex-col items-center justify-center space-y-2">
-        <div className="w-6 h-6 border-2 border-[#D6A84F] border-t-transparent rounded-full animate-spin"></div>
-        <span>Loading circular details...</span>
+      <div className="p-16 text-center text-xs text-[#4D2A00]/70 flex flex-col items-center justify-center space-y-2">
+        <div className="w-7 h-7 border-2 border-[#CC6F00] border-t-transparent rounded-full animate-spin"></div>
+        <span className="font-medium text-[#4D2A00]/70">Loading circular details...</span>
       </div>
     );
   }
 
-  if (!notice) {
-    return <div className="p-6 text-xs text-red-200 bg-red-500/10 border border-red-500/30 rounded-[4px]">Notice not found.</div>;
-  }
+  if (!notice) return null;
 
   return (
-    <div className="space-y-6">
-      {/* Header */}
-      <div className="flex items-center justify-between bg-[#14181C] border border-[#252B31] p-4 rounded-[6px] shadow-subtle">
-        <div className="flex items-center space-x-3">
+    <div className="max-w-4xl mx-auto space-y-6">
+      {/* Top Navigation */}
+      <div className="flex items-center justify-between">
+        <button
+          onClick={() => navigate("/notices")}
+          className="btn-secondary p-2.5 rounded-xl flex items-center space-x-1.5 text-xs font-semibold"
+        >
+          <ArrowLeft className="w-4 h-4" />
+          <span>Back to All Circulars</span>
+        </button>
+
+        {notice.userStatus && !notice.userStatus.isRead && (
           <button
-            onClick={() => navigate("/notices")}
-            className="p-1.5 bg-[#101316] border border-[#252B31] rounded-[4px] text-[#A7ADB5] hover:text-[#F3F4F6] hover:bg-[#181D22] transition-colors"
-            aria-label="Back to notices"
+            onClick={handleMarkRead}
+            className="btn-primary px-4 py-2 text-xs font-bold shadow-sm"
           >
-            <ArrowLeft className="w-4 h-4" />
+            Mark as Read & Acknowledged
           </button>
-          <div>
-            <div className="flex items-center space-x-2">
-              <span className="text-[10px] font-mono px-2 py-0.5 bg-[#181D22] text-[#D6A84F] font-semibold border border-[#252B31] rounded-[3px]">
-                {notice.priority}
-              </span>
-              <span className="text-xs text-[#A7ADB5] font-mono">
-                Scope: {notice.targetType} {notice.targetValue ? `(${notice.targetValue})` : ""}
-              </span>
-            </div>
-            <h1 className="text-lg font-bold text-[#F3F4F6] mt-1">{notice.title}</h1>
+        )}
+      </div>
+
+      {remindSuccess && (
+        <div className="p-4 bg-emerald-500/20 border border-emerald-500/30 rounded-2xl text-xs text-emerald-950 font-medium flex items-center space-x-2">
+          <CheckCircle2 className="w-4 h-4 text-emerald-700 shrink-0" />
+          <span>{remindSuccess}</span>
+        </div>
+      )}
+
+      {/* Main Notice Body Card */}
+      <div className="glass-panel rounded-3xl p-6 sm:p-8 space-y-6 border border-[rgba(77,42,0,0.1)] shadow-glass">
+        <div className="space-y-2 border-b border-[rgba(77,42,0,0.08)] pb-4">
+          <div className="flex items-center space-x-2.5 flex-wrap gap-y-1">
+            <span className="px-2.5 py-0.5 rounded-md text-[10px] font-mono font-bold bg-[#FDB773]/30 text-[#4D2A00] border border-[#CC6F00]/25">
+              {notice.category}
+            </span>
+            <span className="text-xs text-[#4D2A00]/60 font-mono flex items-center space-x-1">
+              <Clock className="w-3.5 h-3.5 text-[#CC6F00]" />
+              <span>Published {new Date(notice.createdAt).toLocaleString()}</span>
+            </span>
+          </div>
+
+          <h1 className="text-2xl font-bold text-[#4D2A00]">{notice.title}</h1>
+
+          <div className="text-xs text-[#4D2A00]/60 flex items-center space-x-3 pt-1">
+            <span>By: <strong className="text-[#4D2A00]">{notice.publishedBy?.fullName}</strong></span>
+            <span>•</span>
+            <span>Target: <strong className="text-[#CC6F00] font-mono">{notice.targetType} {notice.targetValue ? `(${notice.targetValue})` : ""}</strong></span>
           </div>
         </div>
 
-        <div className="text-right text-xs text-[#6F7781] font-mono">
-          <div>Published: {new Date(notice.createdAt).toLocaleDateString()}</div>
-          <div className="text-[#A7ADB5]">By: {notice.publishedBy?.fullName || "Administration"}</div>
+        {/* Content Body */}
+        <div className="text-sm text-[#4D2A00] leading-relaxed whitespace-pre-line bg-white/50 p-5 rounded-2xl border border-[rgba(77,42,0,0.08)]">
+          {notice.content}
         </div>
-      </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Main Notice Body */}
-        <div className="lg:col-span-2 space-y-6">
-          <div className="bg-[#14181C] border border-[#252B31] rounded-[6px] p-6 space-y-4 shadow-subtle">
-            <h2 className="text-xs font-mono font-bold text-[#D6A84F] uppercase tracking-wider border-b border-[#252B31] pb-2">
-              Official Announcement Content
-            </h2>
-
-            <div className="text-xs text-[#F3F4F6] leading-relaxed whitespace-pre-wrap">
-              {notice.content}
+        {/* Action Required Box */}
+        {notice.requiresAction && (
+          <div className="p-5 bg-[#FDB773]/20 border border-[#CC6F00]/30 rounded-2xl space-y-3 text-xs text-[#4D2A00]">
+            <div className="flex items-center space-x-2">
+              <AlertCircle className="w-4 h-4 text-[#CC6F00] shrink-0" />
+              <span className="font-bold text-[#4D2A00]">Student Action Required: {notice.actionType}</span>
             </div>
 
-            {notice.requiresAction && (
-              <div className="p-3.5 bg-blue-500/10 border border-blue-500/30 rounded-[4px] text-xs text-blue-200 space-y-1">
-                <div className="font-bold flex items-center space-x-1.5 text-blue-300">
-                  <AlertCircle className="w-4 h-4" />
-                  <span>Student Action Required: {notice.actionType}</span>
-                </div>
-                {notice.actionDeadline && (
-                  <div className="font-mono text-[11px] text-[#A7ADB5]">
-                    Compliance Deadline: <strong className="text-[#F3F4F6]">{new Date(notice.actionDeadline).toLocaleString()}</strong>
+            {notice.actionDeadline && (
+              <p className="font-mono text-xs text-[#4D2A00]/80">
+                Deadline: {new Date(notice.actionDeadline).toLocaleString()}
+              </p>
+            )}
+
+            {user?.role === "STUDENT" && (
+              <div className="pt-2 border-t border-[rgba(77,42,0,0.08)] flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
+                {notice.userStatus?.isActionDone ? (
+                  <div className="flex items-center space-x-2 text-emerald-800 font-bold">
+                    <CheckCircle2 className="w-4 h-4 text-emerald-700" />
+                    <span>You completed this action on {new Date(notice.userStatus.actionCompletedAt!).toLocaleDateString()}</span>
                   </div>
+                ) : (
+                  <>
+                    <input
+                      type="text"
+                      value={actionNotesInput}
+                      onChange={(e) => setActionNotesInput(e.target.value)}
+                      placeholder="Optional confirmation note or reference code..."
+                      className="flex-1 px-3.5 py-2 bg-white/60 border border-[rgba(77,42,0,0.12)] rounded-xl text-[#4D2A00] text-xs placeholder-[#4D2A00]/40 focus:outline-none focus:border-[#CC6F00]"
+                    />
+                    <button
+                      onClick={handleCompleteAction}
+                      className="btn-primary px-5 py-2 text-xs font-bold shadow-sm shrink-0"
+                    >
+                      Confirm Action Completed
+                    </button>
+                  </>
                 )}
               </div>
             )}
           </div>
+        )}
 
-          {/* Student Action Box */}
-          {user?.role === "STUDENT" && (
-            <div className="bg-[#14181C] border border-[#252B31] rounded-[6px] p-5 space-y-4 shadow-subtle">
-              <h3 className="text-xs font-mono font-bold text-[#D6A84F] uppercase tracking-wider border-b border-[#252B31] pb-2">
-                Your Response & Compliance Tracking
-              </h3>
-
-              <div className="flex items-center space-x-4 text-xs">
-                <div>
-                  <span className="text-[#6F7781] block font-mono text-[11px]">Read Receipt:</span>
-                  {notice.userStatus?.isRead ? (
-                    <span className="text-emerald-300 font-bold flex items-center space-x-1 mt-0.5 font-mono text-[11px]">
-                      <CheckCircle2 className="w-3.5 h-3.5 text-[#10B981]" />
-                      <span>Read on {new Date(notice.userStatus.readAt!).toLocaleString()}</span>
-                    </span>
-                  ) : (
-                    <button
-                      onClick={handleMarkRead}
-                      className="mt-1 px-3 py-1 bg-[#101316] hover:bg-[#181D22] border border-[#252B31] font-semibold text-[#F3F4F6] rounded-[3px] transition-colors"
-                    >
-                      Acknowledge & Mark Read
-                    </button>
-                  )}
-                </div>
-
-                {notice.requiresAction && (
-                  <div>
-                    <span className="text-[#6F7781] block font-mono text-[11px]">Action Status:</span>
-                    {notice.userStatus?.isActionDone ? (
-                      <span className="text-emerald-300 font-bold flex items-center space-x-1 mt-0.5 font-mono text-[11px]">
-                        <CheckCircle2 className="w-3.5 h-3.5 text-[#10B981]" />
-                        <span>Completed on {new Date(notice.userStatus.actionCompletedAt!).toLocaleString()}</span>
-                      </span>
-                    ) : (
-                      <span className="text-amber-400 font-bold block mt-0.5 font-mono text-[11px]">Pending Action</span>
-                    )}
-                  </div>
-                )}
+        {/* Admin/Warden Recipient Read Rate & Reminder Dispatch */}
+        {isAdminOrWarden && stats && (
+          <div className="pt-4 border-t border-[rgba(77,42,0,0.08)] space-y-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <h3 className="text-sm font-bold text-[#4D2A00]">Audience Delivery & Read Tracking</h3>
+                <p className="text-xs text-[#4D2A00]/60">Live recipient statistics and automated push reminders</p>
               </div>
 
-              {notice.requiresAction && !notice.userStatus?.isActionDone && (
-                <div className="pt-3 border-t border-[#252B31] space-y-2">
-                  <label className="block text-xs font-semibold text-[#A7ADB5]">
-                    Submit Action Confirmation / Reference Notes:
-                  </label>
-                  <textarea
-                    rows={2}
-                    value={actionNotesInput}
-                    onChange={(e) => setActionNotesInput(e.target.value)}
-                    placeholder="e.g. Paid fees via bank transfer ref #TRX9023, or form submitted at desk"
-                    className="w-full text-xs p-2.5 border border-[#252B31] rounded-[4px] bg-[#101316] text-[#F3F4F6] focus:outline-none focus:border-[#D6A84F]"
-                  />
-                  <button
-                    onClick={handleCompleteAction}
-                    className="px-4 py-2 bg-[#D6A84F] hover:bg-[#F0C86A] text-[#090B0D] text-xs font-bold rounded-[4px] transition-colors shadow-xs"
-                  >
-                    Confirm Action Completed
-                  </button>
-                </div>
-              )}
+              <button
+                onClick={handleSendReminder}
+                disabled={remindLoading}
+                className="btn-secondary inline-flex items-center space-x-1.5 px-4 py-2 text-[#CC6F00] text-xs font-bold disabled:opacity-50"
+              >
+                <Send className="w-3.5 h-3.5" />
+                <span>{remindLoading ? "Dispatching..." : "Send Reminder to Unread"}</span>
+              </button>
             </div>
-          )}
-        </div>
 
-        {/* Admin/Warden Stats and Reminder Panel */}
-        {isAdminOrWarden && (
-          <div className="space-y-6">
-            <div className="bg-[#14181C] border border-[#252B31] rounded-[6px] p-5 text-xs space-y-4 shadow-subtle">
-              <div className="flex items-center justify-between border-b border-[#252B31] pb-2">
-                <h3 className="font-mono font-bold text-[#D6A84F] uppercase tracking-wider">
-                  Audience Reach & Analytics
-                </h3>
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-center">
+              <div className="p-3 bg-white/50 rounded-2xl border border-[rgba(77,42,0,0.08)]">
+                <span className="text-[10px] font-mono uppercase text-[#4D2A00]/60">Total Audience</span>
+                <span className="text-lg font-bold text-[#4D2A00] font-mono block mt-1">{stats.totalRecipients}</span>
               </div>
-
-              {stats && (
-                <div className="grid grid-cols-2 gap-3 bg-[#101316] p-3.5 border border-[#252B31] rounded-[4px]">
-                  <div>
-                    <span className="text-[#6F7781] block font-mono text-[11px]">Total Recipients</span>
-                    <span className="text-base font-bold text-[#F3F4F6] font-mono">{stats.totalRecipients}</span>
-                  </div>
-                  <div>
-                    <span className="text-[#6F7781] block font-mono text-[11px]">Read Rate</span>
-                    <span className="text-base font-bold text-emerald-400 font-mono">{stats.readRate}%</span>
-                    <span className="text-[10px] text-[#6F7781] font-mono">({stats.readCount} read)</span>
-                  </div>
-                  {notice.requiresAction && (
-                    <div className="col-span-2 pt-2 border-t border-[#252B31]">
-                      <span className="text-[#6F7781] block font-mono text-[11px]">Action Completed Rate</span>
-                      <span className="text-base font-bold text-[#60A5FA] font-mono">{stats.actionRate}%</span>
-                      <span className="text-[10px] text-[#6F7781] font-mono">({stats.actionDoneCount} completed)</span>
-                    </div>
-                  )}
-                </div>
-              )}
-
-              {remindSuccess && (
-                <div className="p-2.5 bg-emerald-500/10 text-emerald-200 border border-emerald-500/30 rounded-[4px] font-medium">
-                  {remindSuccess}
-                </div>
-              )}
-
-              {notice.requiresAction && pendingActionStudents.length > 0 && (
-                <div>
-                  <button
-                    onClick={handleSendReminder}
-                    disabled={remindLoading}
-                    className="w-full py-2 bg-amber-500/20 hover:bg-amber-500/30 text-amber-200 border border-amber-500/40 font-bold rounded-[4px] flex items-center justify-center space-x-1.5 disabled:opacity-50 transition-colors"
-                  >
-                    <Send className="w-3.5 h-3.5" />
-                    <span>
-                      {remindLoading ? "Dispatching Reminders..." : `Send Reminder (${pendingActionStudents.length} Pending)`}
-                    </span>
-                  </button>
-                  <p className="text-[10px] text-[#6F7781] mt-1.5 font-mono">
-                    Dispatches instant in-app inbox alerts and Web Push notifications to pending students.
-                  </p>
-                </div>
-              )}
-
-              {/* Pending Action Students List */}
-              {pendingActionStudents.length > 0 && (
-                <div className="pt-2 border-t border-[#252B31]">
-                  <div className="font-mono font-bold text-[#F3F4F6] text-[11px] mb-2">
-                    Pending Action Roster ({pendingActionStudents.length})
-                  </div>
-                  <div className="max-h-48 overflow-y-auto space-y-1 divide-y divide-[#252B31] bg-[#101316] p-2 border border-[#252B31] rounded-[4px]">
-                    {pendingActionStudents.map((s) => (
-                      <div key={s.id} className="pt-1.5 pb-1 text-[11px] flex justify-between">
-                        <span className="font-medium text-[#F3F4F6]">{s.fullName}</span>
-                        <span className="text-[#6F7781] font-mono">{s.rollNumber}</span>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
+              <div className="p-3 bg-white/50 rounded-2xl border border-[rgba(77,42,0,0.08)]">
+                <span className="text-[10px] font-mono uppercase text-[#4D2A00]/60">Read Count</span>
+                <span className="text-lg font-bold text-[#CC6F00] font-mono block mt-1">{stats.readCount} ({stats.readRate}%)</span>
+              </div>
+              <div className="p-3 bg-white/50 rounded-2xl border border-[rgba(77,42,0,0.08)]">
+                <span className="text-[10px] font-mono uppercase text-[#4D2A00]/60">Actions Done</span>
+                <span className="text-lg font-bold text-emerald-800 font-mono block mt-1">{stats.actionDoneCount} ({stats.actionRate}%)</span>
+              </div>
+              <div className="p-3 bg-white/50 rounded-2xl border border-[rgba(77,42,0,0.08)]">
+                <span className="text-[10px] font-mono uppercase text-[#4D2A00]/60">Pending Delivery</span>
+                <span className="text-lg font-bold text-[#4D2A00]/70 font-mono block mt-1">{stats.totalRecipients - stats.readCount}</span>
+              </div>
             </div>
           </div>
         )}
@@ -324,3 +265,5 @@ export const NoticeDetailPage: React.FC<{ user: UserProfile | null }> = ({ user 
     </div>
   );
 };
+
+export default NoticeDetailPage;

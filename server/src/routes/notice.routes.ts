@@ -72,8 +72,7 @@ noticeRouter.post(
             studentId: s.id,
             isDelivered: true,
             deliveredAt: new Date()
-          })),
-          skipDuplicates: true
+          }))
         });
 
         // Dispatch in-app and push notifications

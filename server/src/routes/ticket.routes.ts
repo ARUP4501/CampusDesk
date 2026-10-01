@@ -167,6 +167,7 @@ ticketRouter.get("/", requireAuth, async (req: Request, res: Response): Promise<
     }
 
     if (search) {
+      const searchStr = String(search);
       whereClause.OR = [
         { ticketNumber: { contains: searchStr } },
         { title: { contains: searchStr } },

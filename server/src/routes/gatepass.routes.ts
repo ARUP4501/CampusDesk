@@ -229,7 +229,7 @@ gatePassRouter.post(
       const gatePass = await prisma.gatePass.findFirst({
         where: {
           OR: [
-            { passNumber: { equals: passNumber, mode: "insensitive" } },
+            { passNumber: passNumber },
             { id: passNumber }
           ]
         },
@@ -241,6 +241,8 @@ gatePassRouter.post(
         return;
       }
 
+      const studentName = (gatePass as any).student?.fullName || "Student";
+      const studentRoll = (gatePass as any).student?.rollNumber || "";
       const now = new Date();
 
       if (action === "EXIT") {
@@ -262,7 +264,7 @@ gatePassRouter.post(
         });
 
         res.json({
-          message: `Exit recorded for ${gatePass.student.fullName} (${gatePass.student.rollNumber}).`,
+          message: `Exit recorded for ${studentName} (${studentRoll}).`,
           gatePass: updated
         });
         return;
@@ -290,7 +292,7 @@ gatePassRouter.post(
         });
 
         res.json({
-          message: `Entry recorded for ${gatePass.student.fullName}.${isLate ? " (Flagged as Late Return)" : ""}`,
+          message: `Entry recorded for ${studentName}.${isLate ? " (Flagged as Late Return)" : ""}`,
           gatePass: updated,
           isLate
         });

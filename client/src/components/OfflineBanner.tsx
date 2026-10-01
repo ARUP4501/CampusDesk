@@ -56,15 +56,15 @@ export const OfflineBanner: React.FC = () => {
       aria-live="polite"
       className={`px-4 py-2 border-b text-xs font-medium flex items-center justify-between transition-colors ${
         !isOnline
-          ? "bg-[#78350F]/20 border-amber-500/30 text-amber-200"
-          : "bg-[#064E3B]/20 border-emerald-500/30 text-emerald-200"
+          ? "bg-[#FDB773]/40 border-amber-600/30 text-[#4D2A00]"
+          : "bg-white/60 border-emerald-600/20 text-[#2E7D32]"
       }`}
     >
       <div className="flex items-center space-x-2.5">
         {!isOnline ? (
-          <WifiOff className="w-4 h-4 text-[#F59E0B] shrink-0" aria-hidden="true" />
+          <WifiOff className="w-4 h-4 text-[#CC6F00] shrink-0" aria-hidden="true" />
         ) : (
-          <CheckCircle2 className="w-4 h-4 text-[#10B981] shrink-0" aria-hidden="true" />
+          <CheckCircle2 className="w-4 h-4 text-[#2E7D32] shrink-0" aria-hidden="true" />
         )}
         <span>
           {!isOnline
@@ -75,14 +75,14 @@ export const OfflineBanner: React.FC = () => {
 
       {queueCount > 0 && (
         <div className="flex items-center space-x-2">
-          <span className="bg-[#14181C] px-2 py-0.5 border border-[#252B31] text-[11px] font-mono text-[#F3F4F6] rounded-[3px]">
+          <span className="glass-panel px-2.5 py-0.5 text-[11px] font-mono text-campus-text font-bold rounded-lg border border-campus-border">
             {t("common.waitingToSend", "Queue")}: {queueCount}
           </span>
           {isOnline && (
             <button
               onClick={triggerSync}
               disabled={isSyncing}
-              className="bg-[#D6A84F] hover:bg-[#F0C86A] text-[#090B0D] text-[11px] font-bold px-2.5 py-1 rounded-[3px] disabled:opacity-50 flex items-center space-x-1 transition-colors"
+              className="btn-primary text-[11px] font-bold px-3 py-1 rounded-lg disabled:opacity-50 flex items-center space-x-1.5 shadow-sm"
             >
               <RefreshCw className={`w-3 h-3 ${isSyncing ? "animate-spin" : ""}`} />
               <span>{isSyncing ? "Syncing..." : "Sync Now"}</span>
@@ -93,3 +93,5 @@ export const OfflineBanner: React.FC = () => {
     </div>
   );
 };
+
+

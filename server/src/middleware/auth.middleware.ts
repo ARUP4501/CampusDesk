@@ -52,7 +52,7 @@ export async function requireAuth(req: Request, res: Response, next: NextFunctio
       id: user.id,
       email: user.email,
       fullName: user.fullName,
-      role: user.role,
+      role: user.role as "STUDENT" | "WARDEN" | "STAFF" | "ADMIN",
       rollNumber: user.rollNumber,
       hostelBlock: user.hostelBlock,
       roomNumber: user.roomNumber,

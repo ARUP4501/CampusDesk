@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { HelpCircle, Send, CheckCircle2, Building, ShieldCheck, CornerDownRight, Sparkles } from "lucide-react";
+import { HelpCircle, Send, CheckCircle2, Building, ShieldCheck, CornerDownRight, Sparkles, CircleHelp } from "lucide-react";
 import { apiRequest, UserProfile } from "../api/client.js";
 
 interface FaqMessage {
@@ -84,26 +84,28 @@ export const FaqAssistantPage: React.FC<{ user: UserProfile | null }> = ({ user 
   return (
     <div className="max-w-3xl mx-auto space-y-6">
       {/* Top Header */}
-      <div className="bg-campus-card border border-campus-border p-5 rounded-lg">
-        <div className="flex items-center space-x-2.5">
-          <div className="w-8 h-8 rounded bg-campus-elevated border border-campus-border flex items-center justify-center text-campus-gold">
-            <HelpCircle className="w-4 h-4" />
+      <div className="glass-panel p-6 rounded-3xl border border-[rgba(77,42,0,0.1)] shadow-glass flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div className="flex items-center space-x-3">
+          <div className="w-11 h-11 rounded-2xl bg-[#FDB773]/40 border border-[#CC6F00]/25 flex items-center justify-center text-[#4D2A00]">
+            <CircleHelp className="w-5 h-5 text-[#4D2A00]" />
           </div>
-          <h1 className="text-lg font-semibold text-campus-text">Database Assistant & Knowledge Base</h1>
+          <div>
+            <h1 className="text-2xl font-bold text-[#4D2A00]">Campus Database Assistant</h1>
+            <p className="text-xs text-[#4D2A00]/70 mt-0.5">
+              Deterministic answers grounded strictly in verified college database tables with zero hallucinated data
+            </p>
+          </div>
         </div>
-        <p className="text-xs text-campus-muted mt-1.5 ml-10">
-          Deterministic answers grounded strictly in verified college database tables with zero hallucinated data
-        </p>
       </div>
 
       {/* Suggested Query Buttons */}
       <div className="flex items-center space-x-2 overflow-x-auto pb-1 text-xs">
-        <span className="text-campus-muted text-[11px] font-mono whitespace-nowrap">Suggested:</span>
+        <span className="text-[#4D2A00]/60 text-[11px] font-mono whitespace-nowrap">Suggested:</span>
         {sampleQueries.map((sq) => (
           <button
             key={sq}
             onClick={() => handleAsk(sq)}
-            className="whitespace-nowrap bg-campus-card hover:bg-campus-elevated border border-campus-border hover:border-campus-gold/40 text-campus-secondary hover:text-campus-text px-3 py-1.5 rounded text-xs transition-colors"
+            className="whitespace-nowrap glass-card text-[#4D2A00]/80 hover:text-[#4D2A00] px-3.5 py-1.5 rounded-full text-xs font-medium border border-[rgba(77,42,0,0.08)] hover:bg-white/80 transition-all"
           >
             {sq}
           </button>
@@ -111,7 +113,7 @@ export const FaqAssistantPage: React.FC<{ user: UserProfile | null }> = ({ user 
       </div>
 
       {/* Chat Area */}
-      <div className="bg-campus-card border border-campus-border rounded-lg shadow-xl flex flex-col h-[520px] overflow-hidden">
+      <div className="glass-panel rounded-3xl flex flex-col h-[520px] overflow-hidden border border-[rgba(77,42,0,0.1)] shadow-glass">
         <div className="flex-1 p-5 overflow-y-auto space-y-4">
           {messages.map((m) => (
             <div
@@ -119,30 +121,30 @@ export const FaqAssistantPage: React.FC<{ user: UserProfile | null }> = ({ user 
               className={`flex ${m.sender === "user" ? "justify-end" : "justify-start"}`}
             >
               <div
-                className={`max-w-[85%] rounded-lg p-4 text-xs ${
+                className={`max-w-[85%] rounded-3xl p-4 text-xs ${
                   m.sender === "user"
-                    ? "bg-campus-gold text-campus-bg font-medium"
-                    : "bg-campus-elevated/70 border border-campus-border text-campus-text"
+                    ? "bg-[#FDB773] text-[#4D2A00] font-semibold shadow-sm"
+                    : "bg-white/60 border border-[rgba(77,42,0,0.1)] text-[#4D2A00]"
                 }`}
               >
                 <p className="whitespace-pre-wrap leading-relaxed">{m.text}</p>
 
                 {m.source && (
-                  <div className="mt-2.5 pt-2.5 border-t border-campus-border/60 text-[10px] text-campus-muted font-mono flex items-center space-x-1.5">
-                    <ShieldCheck className="w-3.5 h-3.5 text-campus-success" />
+                  <div className="mt-2.5 pt-2.5 border-t border-[rgba(77,42,0,0.08)] text-[10px] text-[#4D2A00]/60 font-mono flex items-center space-x-1.5">
+                    <ShieldCheck className="w-3.5 h-3.5 text-[#CC6F00]" />
                     <span>Verified Source: {m.source}</span>
                   </div>
                 )}
 
                 {m.contactOffice && (
-                  <div className="mt-1.5 text-[11px] text-campus-gold font-medium">
+                  <div className="mt-1.5 text-[11px] text-[#CC6F00] font-bold">
                     Office Contact: {m.contactOffice}
                   </div>
                 )}
 
                 <div
                   className={`mt-2 text-[10px] font-mono ${
-                    m.sender === "user" ? "text-campus-bg/70 text-right" : "text-campus-muted"
+                    m.sender === "user" ? "text-[#4D2A00]/60 text-right" : "text-[#4D2A00]/50"
                   }`}
                 >
                   {m.timestamp}
@@ -153,8 +155,8 @@ export const FaqAssistantPage: React.FC<{ user: UserProfile | null }> = ({ user 
 
           {loading && (
             <div className="flex justify-start">
-              <div className="bg-campus-elevated/70 border border-campus-border rounded-lg p-3.5 text-xs text-campus-muted flex items-center space-x-2">
-                <div className="w-3.5 h-3.5 border-2 border-campus-gold border-t-transparent rounded-full animate-spin" />
+              <div className="bg-white/60 border border-[rgba(77,42,0,0.1)] rounded-2xl p-4 text-xs text-[#4D2A00]/70 flex items-center space-x-2">
+                <div className="w-4 h-4 border-2 border-[#CC6F00] border-t-transparent rounded-full animate-spin" />
                 <span>Querying college database records...</span>
               </div>
             </div>
@@ -167,21 +169,21 @@ export const FaqAssistantPage: React.FC<{ user: UserProfile | null }> = ({ user 
             e.preventDefault();
             handleAsk();
           }}
-          className="p-3.5 border-t border-campus-border bg-campus-elevated/40 flex items-center space-x-2"
+          className="p-4 border-t border-[rgba(77,42,0,0.1)] bg-white/40 flex items-center space-x-2.5"
         >
           <input
             type="text"
             value={questionInput}
             onChange={(e) => setQuestionInput(e.target.value)}
             placeholder="Ask about classes, mess food, fee dates, pass status..."
-            className="flex-1 text-xs px-3.5 py-2.5 border border-campus-border rounded bg-campus-bg text-campus-text placeholder-campus-muted focus:outline-none focus:border-campus-gold"
+            className="flex-1 text-xs px-4 py-3 border border-[rgba(77,42,0,0.12)] rounded-xl bg-white/70 text-[#4D2A00] placeholder-[#4D2A00]/40 focus:outline-none focus:border-[#CC6F00]"
           />
           <button
             type="submit"
             disabled={loading || !questionInput.trim()}
-            className="px-4 py-2.5 bg-campus-gold hover:bg-campus-gold-light text-campus-bg text-xs font-semibold rounded flex items-center space-x-1.5 disabled:opacity-40 transition-colors"
+            className="btn-primary px-5 py-3 text-xs font-bold flex items-center space-x-1.5 disabled:opacity-40 shadow-sm"
           >
-            <Send className="w-3.5 h-3.5" />
+            <Send className="w-4 h-4" />
             <span>Ask</span>
           </button>
         </form>
@@ -189,3 +191,5 @@ export const FaqAssistantPage: React.FC<{ user: UserProfile | null }> = ({ user 
     </div>
   );
 };
+
+export default FaqAssistantPage;

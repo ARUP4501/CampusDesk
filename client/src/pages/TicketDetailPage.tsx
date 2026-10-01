@@ -11,7 +11,9 @@ import {
   User,
   Image as ImageIcon,
   Wrench,
-  Layers
+  Layers,
+  Sparkles,
+  ChevronRight
 } from "lucide-react";
 import { apiRequest, UserProfile } from "../api/client.js";
 
@@ -98,336 +100,320 @@ export const TicketDetailPage: React.FC<{ user: UserProfile | null }> = ({ user 
       setStatusInput(data.ticket.status);
       setAssignedStaffInput(data.ticket.assignedStaff?.id || "");
     } catch (err: any) {
-      setError(err.message || "Failed to load ticket.");
+      setError(err.message || "Failed to load ticket details.");
     } finally {
       setLoading(false);
     }
   };
 
-  const fetchStaffList = async () => {
-    if (isStaffOrAdmin) {
-      try {
-        const data = await apiRequest<{ staff: StaffMember[] }>("/api/auth/staff-list");
-        setStaffList(data.staff || []);
-      } catch {
-        // Ignore
-      }
+  const fetchStaffMembers = async () => {
+    if (!isStaffOrAdmin) return;
+    try {
+      const data = await apiRequest<{ staff: StaffMember[] }>("/api/tickets/meta/staff");
+      setStaffList(data.staff || []);
+    } catch (err) {
+      console.error("Failed to load staff list:", err);
     }
   };
 
   useEffect(() => {
     fetchTicket();
-    fetchStaffList();
+    fetchStaffMembers();
   }, [id]);
 
-  const handleStatusUpdate = async (e: React.FormEvent) => {
+  const handleUpdateSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!auditNoteInput.trim()) {
-      alert("A mandatory audit note is required for every status change.");
-      return;
-    }
+    if (!ticket) return;
 
     setUpdateLoading(true);
     setUpdateSuccess(null);
+    setError(null);
+
     try {
-      await apiRequest(`/api/tickets/${id}/status`, {
+      const payload: any = {
+        status: statusInput,
+        note: auditNoteInput || `Status updated to ${statusInput}`
+      };
+
+      if (assignedStaffInput !== (ticket.assignedStaff?.id || "")) {
+        payload.assignedStaffId = assignedStaffInput || null;
+      }
+
+      if (categoryCorrectionInput && categoryCorrectionInput !== ticket.category) {
+        payload.categoryCorrection = categoryCorrectionInput;
+      }
+
+      const response = await apiRequest<{ ticket: TicketDetail }>(`/api/tickets/${ticket.id}/status`, {
         method: "PATCH",
-        body: JSON.stringify({
-          status: statusInput,
-          assignedStaffId: assignedStaffInput || undefined,
-          correctedCategory: categoryCorrectionInput || undefined,
-          note: auditNoteInput
-        })
+        body: JSON.stringify(payload)
       });
-      setUpdateSuccess("Ticket status updated and logged to immutable audit trail.");
+
+      setTicket(response.ticket);
+      setUpdateSuccess("Ticket status and audit record updated successfully.");
       setAuditNoteInput("");
-      setCategoryCorrectionInput("");
-      fetchTicket();
     } catch (err: any) {
-      alert("Update failed: " + err.message);
+      setError(err.message || "Failed to update ticket.");
     } finally {
       setUpdateLoading(false);
     }
   };
 
   const handlePrintSlip = () => {
-    window.open(`/api/tickets/${id}/slip`, "_blank");
+    window.print();
   };
 
   if (loading) {
     return (
-      <div className="p-12 text-center text-xs text-[#A7ADB5] flex flex-col items-center justify-center space-y-2">
-        <div className="w-6 h-6 border-2 border-[#D6A84F] border-t-transparent rounded-full animate-spin"></div>
-        <span className="font-mono">Loading ticket record from database...</span>
+      <div className="p-16 text-center text-xs text-[#4D2A00]/70 flex flex-col items-center justify-center space-y-2">
+        <div className="w-7 h-7 border-2 border-[#CC6F00] border-t-transparent rounded-full animate-spin"></div>
+        <span className="font-medium text-[#4D2A00]/70">Loading ticket details...</span>
       </div>
     );
   }
 
   if (error || !ticket) {
     return (
-      <div className="p-6 bg-red-500/10 border border-red-500/30 text-red-200 rounded-[4px] text-xs">
-        {error || "Ticket record not found."}
+      <div className="max-w-xl mx-auto my-12 p-6 glass-panel rounded-3xl text-center space-y-4 border border-[rgba(77,42,0,0.1)] shadow-glass">
+        <AlertCircle className="w-8 h-8 text-rose-500 mx-auto" />
+        <h2 className="text-lg font-bold text-[#4D2A00]">Error Loading Ticket</h2>
+        <p className="text-xs text-[#4D2A00]/70">{error || "Ticket not found."}</p>
+        <button
+          onClick={() => navigate("/tickets")}
+          className="btn-secondary px-4 py-2 text-xs font-semibold"
+        >
+          Back to Tickets Queue
+        </button>
       </div>
     );
   }
 
   return (
-    <div className="space-y-6">
-      {/* Top Bar */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 bg-[#14181C] border border-[#252B31] p-4 rounded-[6px] shadow-subtle">
+    <div className="max-w-5xl mx-auto space-y-6">
+      {/* Top Header & Navigation */}
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 glass-panel p-5 rounded-3xl border border-[rgba(77,42,0,0.1)] shadow-glass no-print">
         <div className="flex items-center space-x-3">
           <button
             onClick={() => navigate("/tickets")}
-            className="p-1.5 bg-[#101316] border border-[#252B31] rounded-[4px] text-[#A7ADB5] hover:text-[#F3F4F6] hover:bg-[#181D22] transition-colors"
+            className="p-2.5 bg-white/60 border border-[rgba(77,42,0,0.1)] rounded-xl text-[#4D2A00]/70 hover:text-[#4D2A00] transition-colors"
             aria-label="Back to tickets list"
           >
             <ArrowLeft className="w-4 h-4" />
           </button>
           <div>
             <div className="flex items-center space-x-2">
-              <span className="font-mono font-bold text-sm text-[#D6A84F]">
-                #{ticket.ticketNumber}
-              </span>
-              <span className="px-2 py-0.5 text-[10px] font-mono font-semibold bg-[#181D22] text-[#F3F4F6] border border-[#252B31] rounded-[3px]">
-                {ticket.status}
-              </span>
-              {ticket.escalationLevel > 0 && (
-                <span className="px-2 py-0.5 text-[10px] font-mono font-bold bg-amber-500/10 text-amber-300 border border-amber-500/30 rounded-[3px]">
-                  ESCALATED L{ticket.escalationLevel}
-                </span>
-              )}
+              <span className="font-bold font-mono text-[#CC6F00] text-base">#{ticket.ticketNumber}</span>
+              <span className="text-xs font-semibold uppercase text-[#4D2A00]/60">• {ticket.category}</span>
             </div>
-            <h1 className="text-base font-bold text-[#F3F4F6] mt-0.5">{ticket.title}</h1>
+            <h1 className="text-lg font-bold text-[#4D2A00] leading-tight">{ticket.title}</h1>
           </div>
         </div>
 
-        <div className="flex items-center space-x-2">
-          <button
-            onClick={handlePrintSlip}
-            className="inline-flex items-center space-x-1.5 bg-[#101316] hover:bg-[#181D22] text-[#F3F4F6] border border-[#252B31] hover:border-[#363E48] text-xs font-medium px-3 py-1.5 rounded-[4px] transition-colors"
-          >
-            <Printer className="w-3.5 h-3.5 text-[#D6A84F]" />
-            <span>Print Physical Slip</span>
-          </button>
-        </div>
+        <button
+          onClick={handlePrintSlip}
+          className="btn-secondary inline-flex items-center space-x-2 text-xs font-semibold px-4 py-2 shrink-0"
+        >
+          <Printer className="w-4 h-4 text-[#CC6F00]" />
+          <span>Print Work Order Slip</span>
+        </button>
       </div>
 
-      {/* Recurring Issue Alert Banner */}
-      {ticket.isRecurring && (
-        <div className="p-3 bg-amber-500/10 border border-amber-500/30 rounded-[4px] flex items-start space-x-2.5 text-xs text-amber-200">
-          <AlertCircle className="w-4 h-4 text-amber-400 flex-shrink-0 mt-0.5" />
+      {/* SLA Escalation Warning Banner */}
+      {ticket.escalationLevel > 0 && (
+        <div className={`p-4 rounded-2xl text-xs flex items-start space-x-3 ${
+          ticket.escalationLevel === 2
+            ? "bg-rose-500/20 border border-rose-500/30 text-rose-900"
+            : "bg-[#FDB773]/30 border border-[#CC6F00]/30 text-[#4D2A00]"
+        }`}>
+          <ShieldAlert className="w-5 h-5 shrink-0 mt-0.5 text-[#CC6F00]" />
           <div>
-            <span className="font-bold text-amber-300">Recurring Issue Detected:</span> {ticket.recurringCount} similar complaints in category <strong className="text-[#F3F4F6]">{ticket.category}</strong> were registered for <strong className="text-[#F3F4F6]">{ticket.hostelBlock} {ticket.roomNumber}</strong> within the past 14 days. Staff should inspect for underlying structural defects.
+            <span className="font-bold">
+              {ticket.escalationLevel === 2 ? "Central Administration SLA Escalation Alert" : "Warden Escalation Alert"}
+            </span>
+            <p className="mt-0.5 text-[#4D2A00]/80 leading-relaxed">
+              {ticket.escalationLevel === 2
+                ? "This ticket has exceeded the 48-hour resolution window and is under active Dean review."
+                : "This ticket has remained unaddressed past the 24-hour first response window."}
+            </p>
           </div>
         </div>
       )}
 
-      {/* Main Details Grid */}
+      {/* Main Grid: Details + Staff Operations */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        {/* Left Column: Details & Audit Trail */}
         <div className="lg:col-span-2 space-y-6">
-          {/* Issue Overview Card */}
-          <div className="bg-[#14181C] border border-[#252B31] rounded-[6px] p-5 space-y-4 shadow-subtle">
-            <h2 className="text-xs font-mono font-bold text-[#D6A84F] uppercase tracking-wider border-b border-[#252B31] pb-2">
-              Complaint Description & Location Context
-            </h2>
-
-            <p className="text-xs text-[#F3F4F6] whitespace-pre-wrap leading-relaxed">
-              {ticket.description}
-            </p>
+          {/* Main Ticket Card */}
+          <div className="glass-panel rounded-3xl p-6 space-y-5 border border-[rgba(77,42,0,0.1)] shadow-glass">
+            <div>
+              <h2 className="text-xs font-bold uppercase tracking-wider text-[#CC6F00] mb-1">
+                Description & Reported Defect
+              </h2>
+              <p className="text-sm text-[#4D2A00] leading-relaxed whitespace-pre-line bg-white/50 p-4 rounded-2xl border border-[rgba(77,42,0,0.08)]">
+                {ticket.description}
+              </p>
+            </div>
 
             {ticket.hasPhoto && (
-              <div className="pt-3 border-t border-[#252B31]">
-                <div className="text-xs font-semibold text-[#A7ADB5] mb-2 flex items-center space-x-1.5">
-                  <ImageIcon className="w-4 h-4 text-[#D6A84F]" />
-                  <span>Attached Evidence Photo (Stored in Database Bytea):</span>
+              <div>
+                <h2 className="text-xs font-bold uppercase tracking-wider text-[#CC6F00] mb-2 flex items-center space-x-1.5">
+                  <ImageIcon className="w-3.5 h-3.5 text-[#CC6F00]" />
+                  <span>Attached Photo Evidence</span>
+                </h2>
+                <div className="bg-white/50 border border-[rgba(77,42,0,0.1)] p-2 rounded-2xl inline-block max-w-sm">
+                  <img
+                    src={`/api/tickets/${ticket.id}/photo`}
+                    alt="Ticket defect"
+                    className="rounded-xl object-contain max-h-64 w-auto"
+                  />
                 </div>
-                <img
-                  src={`/api/tickets/${ticket.id}/photo`}
-                  alt="Complaint evidence"
-                  className="max-h-72 max-w-full rounded-[4px] border border-[#252B31] object-contain bg-[#101316]"
-                />
               </div>
             )}
 
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 pt-3 border-t border-[#252B31] text-xs">
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs pt-2 border-t border-[rgba(77,42,0,0.08)]">
               <div>
-                <span className="text-[#6F7781] block font-mono text-[11px]">Hostel Block</span>
-                <span className="font-semibold text-[#F3F4F6]">{ticket.hostelBlock}</span>
+                <span className="text-[#4D2A00]/60 block text-[11px]">Location</span>
+                <span className="font-bold text-[#4D2A00] font-mono mt-0.5 block">
+                  {ticket.hostelBlock} - {ticket.roomNumber}
+                </span>
               </div>
               <div>
-                <span className="text-[#6F7781] block font-mono text-[11px]">Room / Location</span>
-                <span className="font-semibold text-[#F3F4F6]">{ticket.roomNumber}</span>
+                <span className="text-[#4D2A00]/60 block text-[11px]">Status</span>
+                <span className="font-bold text-[#CC6F00] mt-0.5 block">{ticket.status}</span>
               </div>
               <div>
-                <span className="text-[#6F7781] block font-mono text-[11px]">Priority Level</span>
-                <span className="font-semibold text-[#F3F4F6]">{ticket.priority}</span>
+                <span className="text-[#4D2A00]/60 block text-[11px]">Reported By</span>
+                <span className="font-medium text-[#4D2A00] mt-0.5 block">
+                  {ticket.student?.fullName || "Student"}
+                </span>
               </div>
               <div>
-                <span className="text-[#6F7781] block font-mono text-[11px]">Queue Age</span>
-                <span className="font-semibold text-[#D6A84F] font-mono">{ticket.ageHours} hours</span>
+                <span className="text-[#4D2A00]/60 block text-[11px]">Waiting Age</span>
+                <span className="font-mono text-[#4D2A00]/80 mt-0.5 block">{ticket.ageHours} hours</span>
               </div>
             </div>
           </div>
 
-          {/* Immutable Audit Trail */}
-          <div className="bg-[#14181C] border border-[#252B31] rounded-[6px] p-5 shadow-subtle">
-            <div className="flex items-center justify-between border-b border-[#252B31] pb-2 mb-4">
-              <h2 className="text-xs font-mono font-bold text-[#D6A84F] uppercase tracking-wider flex items-center space-x-1.5">
-                <ShieldAlert className="w-4 h-4 text-[#10B981]" />
-                <span>Immutable Audit Log ({ticket.auditLogs.length} Events)</span>
-              </h2>
-              <span className="text-[10px] font-mono text-[#6F7781]">Cryptographically Logged</span>
-            </div>
+          {/* Timeline & Audit Logs */}
+          <div className="glass-panel rounded-3xl p-6 space-y-4 border border-[rgba(77,42,0,0.1)] shadow-glass">
+            <h2 className="text-xs font-bold uppercase tracking-wider text-[#CC6F00] flex items-center space-x-1.5">
+              <Clock className="w-3.5 h-3.5" />
+              <span>Immutable Status Audit Trail</span>
+            </h2>
 
-            <div className="relative pl-6 space-y-4 before:absolute before:left-2 before:top-2 before:bottom-2 before:w-0.5 before:bg-[#252B31]">
-              {ticket.auditLogs.map((log) => (
-                <div key={log.id} className="relative text-xs">
-                  <div className="absolute -left-6 top-1 w-2.5 h-2.5 rounded-full bg-[#D6A84F] border-2 border-[#14181C]" />
-                  <div className="flex items-center space-x-2 flex-wrap">
-                    <span className="font-semibold text-[#F3F4F6]">{log.action.replace(/_/g, " ")}</span>
-                    <span className="text-[#6F7781]">&bull;</span>
-                    <span className="text-[#A7ADB5] font-mono text-[11px]">
-                      By {log.changedBy.fullName} ({log.changedBy.role})
-                    </span>
-                    <span className="text-[#6F7781]">&bull;</span>
-                    <span className="text-[10px] font-mono text-[#6F7781]">
-                      {new Date(log.createdAt).toLocaleString()}
-                    </span>
+            <div className="space-y-3 pt-2">
+              {ticket.auditLogs && ticket.auditLogs.map((log, index) => (
+                <div key={log.id || index} className="flex items-start space-x-3 text-xs p-3.5 rounded-2xl bg-white/50 border border-[rgba(77,42,0,0.08)]">
+                  <div className="w-6 h-6 rounded-full bg-[#FDB773]/40 text-[#4D2A00] flex items-center justify-center font-bold text-[10px] shrink-0 mt-0.5">
+                    {index + 1}
                   </div>
-                  <p className="text-[#A7ADB5] mt-1 bg-[#101316] p-2.5 border border-[#252B31] rounded-[4px] leading-relaxed">
-                    {log.note}
-                  </p>
+                  <div className="flex-1 space-y-1">
+                    <div className="flex items-center justify-between">
+                      <span className="font-bold text-[#4D2A00]">{log.action.replace(/_/g, " ")}</span>
+                      <span className="text-[10px] font-mono text-[#4D2A00]/60">
+                        {new Date(log.createdAt).toLocaleString()}
+                      </span>
+                    </div>
+                    <p className="text-[#4D2A00]/80">{log.note}</p>
+                    <div className="text-[10px] font-mono text-[#4D2A00]/60">
+                      Actor: {log.changedBy?.fullName} ({log.changedBy?.role})
+                    </div>
+                  </div>
                 </div>
               ))}
             </div>
           </div>
         </div>
 
-        {/* Right Sidebar: Student Info & Staff Update Panel */}
+        {/* Right Column: Staff Controls or Student Summary */}
         <div className="space-y-6">
-          {/* Student Info Card */}
-          <div className="bg-[#14181C] border border-[#252B31] rounded-[6px] p-4 text-xs space-y-3 shadow-subtle">
-            <h3 className="font-mono font-bold text-[#D6A84F] uppercase tracking-wider border-b border-[#252B31] pb-2 flex items-center space-x-1.5">
-              <User className="w-3.5 h-3.5 text-[#D6A84F]" />
-              <span>Reported By</span>
-            </h3>
-            <div>
-              <div className="font-bold text-[#F3F4F6] text-sm">{ticket.student.fullName}</div>
-              <div className="text-[#D6A84F] font-mono">Roll: {ticket.student.rollNumber || "N/A"}</div>
-              <div className="text-[#A7ADB5] font-mono">Phone: {ticket.student.phone}</div>
-              <div className="text-[#6F7781] text-[11px] mt-1">
-                Resident: {ticket.student.hostelBlock}, Room {ticket.student.roomNumber}
-              </div>
-            </div>
-
-            <div className="pt-2 border-t border-[#252B31]">
-              <div className="text-[#6F7781] font-mono text-[10px] uppercase">Department Routing:</div>
-              <div className="font-semibold text-[#F3F4F6] mt-0.5">{ticket.category}</div>
-              {ticket.predictedCategory && (
-                <div className="text-[10px] font-mono text-[#D6A84F] mt-0.5">
-                  Initial AI Prediction: {ticket.predictedCategory}
-                </div>
-              )}
-            </div>
-          </div>
-
-          {/* Staff Update Action Box */}
-          {isStaffOrAdmin && (
-            <div className="bg-[#14181C] border border-[#252B31] rounded-[6px] p-4 text-xs space-y-4 shadow-subtle">
-              <h3 className="font-mono font-bold text-[#D6A84F] uppercase tracking-wider border-b border-[#252B31] pb-2 flex items-center space-x-1.5">
-                <Wrench className="w-3.5 h-3.5 text-[#D6A84F]" />
-                <span>Staff Work Order Controls</span>
-              </h3>
+          {isStaffOrAdmin ? (
+            <div className="glass-panel rounded-3xl p-6 space-y-4 border border-[rgba(77,42,0,0.1)] shadow-glass no-print">
+              <h2 className="text-xs font-bold uppercase tracking-wider text-[#CC6F00] flex items-center space-x-1.5">
+                <Wrench className="w-3.5 h-3.5" />
+                <span>Department Staff Controls</span>
+              </h2>
 
               {updateSuccess && (
-                <div className="p-2.5 bg-emerald-500/10 text-emerald-200 border border-emerald-500/30 rounded-[4px] font-medium">
+                <div className="p-3 bg-emerald-500/20 border border-emerald-500/30 rounded-xl text-xs text-emerald-950 font-medium">
                   {updateSuccess}
                 </div>
               )}
 
-              <form onSubmit={handleStatusUpdate} className="space-y-3">
+              <form onSubmit={handleUpdateSubmit} className="space-y-4 text-xs">
                 <div>
-                  <label htmlFor="statusInput" className="block font-semibold text-[#A7ADB5] mb-1">
-                    Update Status *
+                  <label className="block font-semibold text-[#4D2A00] mb-1">
+                    Update Resolution Status
                   </label>
                   <select
-                    id="statusInput"
                     value={statusInput}
                     onChange={(e) => setStatusInput(e.target.value)}
-                    className="w-full text-xs px-2.5 py-1.5 border border-[#252B31] rounded-[4px] bg-[#101316] text-[#F3F4F6] focus:outline-none focus:border-[#D6A84F]"
+                    className="w-full px-3 py-2 bg-white/60 border border-[rgba(77,42,0,0.12)] rounded-xl text-[#4D2A00] focus:outline-none focus:border-[#CC6F00]"
                   >
-                    <option value="SUBMITTED">Submitted</option>
-                    <option value="ASSIGNED">Assigned</option>
-                    <option value="IN_PROGRESS">In Progress</option>
-                    <option value="RESOLVED">Resolved</option>
-                    <option value="CLOSED">Closed</option>
+                    <option value="SUBMITTED">SUBMITTED</option>
+                    <option value="ASSIGNED">ASSIGNED</option>
+                    <option value="IN_PROGRESS">IN_PROGRESS</option>
+                    <option value="RESOLVED">RESOLVED</option>
+                    <option value="CLOSED">CLOSED</option>
                   </select>
                 </div>
 
                 <div>
-                  <label htmlFor="assignedStaffInput" className="block font-semibold text-[#A7ADB5] mb-1">
-                    Assign Staff Member
+                  <label className="block font-semibold text-[#4D2A00] mb-1">
+                    Assign Technician / Staff
                   </label>
                   <select
-                    id="assignedStaffInput"
                     value={assignedStaffInput}
                     onChange={(e) => setAssignedStaffInput(e.target.value)}
-                    className="w-full text-xs px-2.5 py-1.5 border border-[#252B31] rounded-[4px] bg-[#101316] text-[#F3F4F6] focus:outline-none focus:border-[#D6A84F]"
+                    className="w-full px-3 py-2 bg-white/60 border border-[rgba(77,42,0,0.12)] rounded-xl text-[#4D2A00] focus:outline-none focus:border-[#CC6F00]"
                   >
-                    <option value="">Unassigned (Queue)</option>
+                    <option value="">Unassigned</option>
                     {staffList.map((s) => (
                       <option key={s.id} value={s.id}>
-                        {s.fullName} ({s.department || s.role})
+                        {s.fullName} ({s.department || "Operations"})
                       </option>
                     ))}
                   </select>
                 </div>
 
                 <div>
-                  <label htmlFor="categoryCorrectionInput" className="block font-semibold text-[#A7ADB5] mb-1">
-                    Correct Category (if misclassified)
-                  </label>
-                  <select
-                    id="categoryCorrectionInput"
-                    value={categoryCorrectionInput}
-                    onChange={(e) => setCategoryCorrectionInput(e.target.value)}
-                    className="w-full text-xs px-2.5 py-1.5 border border-[#252B31] rounded-[4px] bg-[#101316] text-[#F3F4F6] focus:outline-none focus:border-[#D6A84F]"
-                  >
-                    <option value="">Keep current ({ticket.category})</option>
-                    <option value="PLUMBING">Plumbing</option>
-                    <option value="ELECTRICAL">Electrical</option>
-                    <option value="CARPENTRY">Carpentry</option>
-                    <option value="MASONRY">Masonry</option>
-                    <option value="NETWORK_WIFI">Network/Wi-Fi</option>
-                    <option value="HOUSEKEEPING">Housekeeping</option>
-                    <option value="SECURITY">Security</option>
-                    <option value="OTHER">Other</option>
-                  </select>
-                </div>
-
-                <div>
-                  <label htmlFor="auditNoteInput" className="block font-semibold text-[#A7ADB5] mb-1">
-                    Audit Note (Mandatory) *
+                  <label className="block font-semibold text-[#4D2A00] mb-1">
+                    Resolution Note / Audit Log *
                   </label>
                   <textarea
-                    id="auditNoteInput"
-                    required
                     rows={3}
+                    required
                     value={auditNoteInput}
                     onChange={(e) => setAuditNoteInput(e.target.value)}
-                    placeholder="Describe action taken, inspection findings or parts replaced..."
-                    className="w-full text-xs px-2.5 py-1.5 border border-[#252B31] rounded-[4px] bg-[#101316] text-[#F3F4F6] focus:outline-none focus:border-[#D6A84F]"
+                    placeholder="Document action taken, parts replaced, or completion notes..."
+                    className="w-full px-3 py-2 bg-white/60 border border-[rgba(77,42,0,0.12)] rounded-xl text-[#4D2A00] placeholder-[#4D2A00]/40 focus:outline-none focus:border-[#CC6F00] resize-none"
                   />
                 </div>
 
                 <button
                   type="submit"
                   disabled={updateLoading}
-                  className="w-full bg-[#D6A84F] hover:bg-[#F0C86A] text-[#090B0D] font-bold py-2 px-3 text-xs rounded-[4px] disabled:opacity-50 transition-colors shadow-xs"
+                  className="btn-primary w-full py-2.5 px-4 text-xs font-bold disabled:opacity-50 shadow-sm"
                 >
-                  {updateLoading ? "Saving Audit Entry..." : "Save Audit Status"}
+                  {updateLoading ? "Recording update..." : "Save Status Update"}
                 </button>
               </form>
+            </div>
+          ) : (
+            <div className="glass-panel rounded-3xl p-6 space-y-4 border border-[rgba(77,42,0,0.1)] shadow-glass">
+              <h2 className="text-xs font-bold uppercase tracking-wider text-[#CC6F00]">
+                Assigned Technician
+              </h2>
+              {ticket.assignedStaff ? (
+                <div className="p-4 rounded-2xl bg-white/50 border border-[rgba(77,42,0,0.08)] space-y-1 text-xs">
+                  <p className="font-bold text-[#4D2A00]">{ticket.assignedStaff.fullName}</p>
+                  <p className="text-[#CC6F00] font-semibold text-[11px]">{ticket.assignedStaff.department} Department</p>
+                  <p className="text-[#4D2A00]/60">{ticket.assignedStaff.email}</p>
+                </div>
+              ) : (
+                <div className="p-4 rounded-2xl bg-white/50 border border-[rgba(77,42,0,0.08)] text-xs text-[#4D2A00]/60">
+                  Awaiting technician assignment from department queue.
+                </div>
+              )}
             </div>
           )}
         </div>
@@ -435,3 +421,5 @@ export const TicketDetailPage: React.FC<{ user: UserProfile | null }> = ({ user 
     </div>
   );
 };
+
+export default TicketDetailPage;

@@ -95,26 +95,26 @@ export const CommandConsolePage: React.FC<{ user: UserProfile | null }> = ({ use
   return (
     <div className="max-w-4xl mx-auto space-y-6">
       {/* Top Header */}
-      <div className="bg-campus-card border border-campus-border p-5 rounded-lg">
-        <div className="flex items-center space-x-2.5">
-          <div className="w-8 h-8 rounded bg-campus-elevated border border-campus-border flex items-center justify-center text-campus-gold">
-            <Terminal className="w-4 h-4" />
-          </div>
-          <h1 className="text-lg font-semibold text-campus-text">Hostel Office Terminal & Slip Kiosk</h1>
+      <div className="glass-panel p-6 rounded-3xl border border-[rgba(77,42,0,0.1)] shadow-glass flex items-center space-x-3">
+        <div className="w-11 h-11 rounded-2xl bg-[#FDB773]/40 border border-[#CC6F00]/25 flex items-center justify-center text-[#4D2A00]">
+          <Terminal className="w-5 h-5 text-[#4D2A00]" />
         </div>
-        <p className="text-xs text-campus-muted mt-1.5 ml-10">
-          Low-bandwidth CLI console for front-desk staff. Execute rapid keyboard commands and generate printed receipts.
-        </p>
+        <div>
+          <h1 className="text-xl font-bold text-[#4D2A00]">Hostel Office Terminal & Slip Kiosk</h1>
+          <p className="text-xs text-[#4D2A00]/70 mt-0.5">
+            Low-bandwidth CLI console for front-desk staff. Execute rapid keyboard commands and generate printed receipts.
+          </p>
+        </div>
       </div>
 
       {/* Operator Assistant Bar */}
-      <div className="bg-campus-card border border-campus-border rounded-lg p-4 text-xs space-y-3">
-        <div className="font-mono text-campus-gold text-[11px] uppercase tracking-wider font-semibold">
+      <div className="glass-panel rounded-3xl p-5 text-xs space-y-3 border border-[rgba(77,42,0,0.1)] shadow-glass">
+        <div className="font-mono text-[#CC6F00] text-[11px] uppercase tracking-wider font-bold">
           Active Student Context (for requests filed on student&apos;s behalf)
         </div>
         <div className="flex flex-col sm:flex-row items-center gap-3">
           <div className="w-full sm:w-64">
-            <label htmlFor="studentRoll" className="block text-[11px] text-campus-muted mb-1 font-mono">
+            <label htmlFor="studentRoll" className="block text-[11px] text-[#4D2A00] mb-1 font-semibold">
               Student Roll Number
             </label>
             <input
@@ -123,11 +123,11 @@ export const CommandConsolePage: React.FC<{ user: UserProfile | null }> = ({ use
               value={studentRoll}
               onChange={(e) => setStudentRoll(e.target.value.toUpperCase())}
               placeholder="e.g. 2024CS101"
-              className="w-full px-3 py-1.5 border border-campus-border rounded font-mono bg-campus-bg text-campus-text uppercase focus:outline-none focus:border-campus-gold"
+              className="w-full px-3.5 py-2 border border-[rgba(77,42,0,0.12)] rounded-xl font-mono bg-white/60 text-[#4D2A00] uppercase focus:outline-none focus:border-[#CC6F00]"
             />
           </div>
 
-          <div className="flex-1 text-[11px] text-campus-secondary leading-relaxed">
+          <div className="flex-1 text-[11px] text-[#4D2A00]/70 leading-relaxed">
             When a student visits the hostel office in person, enter their roll number above and execute shorthand commands. Physical thermal slips can be generated on demand.
           </div>
         </div>
@@ -135,34 +135,34 @@ export const CommandConsolePage: React.FC<{ user: UserProfile | null }> = ({ use
 
       {/* Quick Command Buttons */}
       <div className="flex items-center space-x-2 overflow-x-auto pb-1 text-xs">
-        <span className="text-campus-muted text-[11px] font-mono whitespace-nowrap">Quick Commands:</span>
+        <span className="text-[#4D2A00]/60 text-[11px] font-mono whitespace-nowrap">Quick Commands:</span>
         <button
           onClick={() => handleExecute("STATUS CD-1001")}
-          className="whitespace-nowrap bg-campus-card hover:bg-campus-elevated border border-campus-border text-campus-secondary hover:text-campus-gold px-2.5 py-1 rounded font-mono text-[11px] transition-colors"
+          className="whitespace-nowrap glass-card text-[#4D2A00]/80 hover:text-[#4D2A00] px-3 py-1 rounded-xl font-mono text-[11px] border border-[rgba(77,42,0,0.08)] hover:bg-white/80 transition-all"
         >
           STATUS CD-1001
         </button>
         <button
           onClick={() => handleExecute("COMPLAIN washbasin tap leaking water")}
-          className="whitespace-nowrap bg-campus-card hover:bg-campus-elevated border border-campus-border text-campus-secondary hover:text-campus-gold px-2.5 py-1 rounded font-mono text-[11px] transition-colors"
+          className="whitespace-nowrap glass-card text-[#4D2A00]/80 hover:text-[#4D2A00] px-3 py-1 rounded-xl font-mono text-[11px] border border-[rgba(77,42,0,0.08)] hover:bg-white/80 transition-all"
         >
           COMPLAIN tap leaking
         </button>
         <button
           onClick={() => handleExecute("MESS TODAY")}
-          className="whitespace-nowrap bg-campus-card hover:bg-campus-elevated border border-campus-border text-campus-secondary hover:text-campus-gold px-2.5 py-1 rounded font-mono text-[11px] transition-colors"
+          className="whitespace-nowrap glass-card text-[#4D2A00]/80 hover:text-[#4D2A00] px-3 py-1 rounded-xl font-mono text-[11px] border border-[rgba(77,42,0,0.08)] hover:bg-white/80 transition-all"
         >
           MESS TODAY
         </button>
         <button
           onClick={() => handleExecute("CANCEL")}
-          className="whitespace-nowrap bg-campus-card hover:bg-campus-elevated border border-campus-border text-campus-secondary hover:text-campus-gold px-2.5 py-1 rounded font-mono text-[11px] transition-colors"
+          className="whitespace-nowrap glass-card text-[#4D2A00]/80 hover:text-[#4D2A00] px-3 py-1 rounded-xl font-mono text-[11px] border border-[rgba(77,42,0,0.08)] hover:bg-white/80 transition-all"
         >
           CANCEL
         </button>
         <button
           onClick={() => handleExecute("FEES")}
-          className="whitespace-nowrap bg-campus-card hover:bg-campus-elevated border border-campus-border text-campus-secondary hover:text-campus-gold px-2.5 py-1 rounded font-mono text-[11px] transition-colors"
+          className="whitespace-nowrap glass-card text-[#4D2A00]/80 hover:text-[#4D2A00] px-3 py-1 rounded-xl font-mono text-[11px] border border-[rgba(77,42,0,0.08)] hover:bg-white/80 transition-all"
         >
           FEES
         </button>
@@ -174,9 +174,9 @@ export const CommandConsolePage: React.FC<{ user: UserProfile | null }> = ({ use
           e.preventDefault();
           handleExecute();
         }}
-        className="bg-campus-card border border-campus-border rounded-lg p-2.5 shadow-xl flex items-center space-x-2"
+        className="glass-panel rounded-3xl p-2.5 flex items-center space-x-2 border border-[rgba(77,42,0,0.1)] shadow-glass"
       >
-        <div className="font-mono text-campus-gold font-bold text-sm pl-2 select-none flex items-center">
+        <div className="font-mono text-[#CC6F00] font-bold text-sm pl-2 select-none flex items-center">
           <ChevronRight className="w-4 h-4" />
         </div>
         <input
@@ -184,13 +184,13 @@ export const CommandConsolePage: React.FC<{ user: UserProfile | null }> = ({ use
           value={commandInput}
           onChange={(e) => setCommandInput(e.target.value)}
           placeholder="Enter command (e.g. COMPLAIN tube light flickering A-204, or STATUS CD-1001)..."
-          className="flex-1 text-xs font-mono px-3 py-2 bg-campus-bg border border-campus-border rounded text-campus-text placeholder-campus-muted focus:outline-none focus:border-campus-gold"
+          className="flex-1 text-xs font-mono px-3.5 py-2.5 bg-white/60 border border-[rgba(77,42,0,0.12)] rounded-xl text-[#4D2A00] placeholder-[#4D2A00]/40 focus:outline-none focus:border-[#CC6F00]"
           autoFocus
         />
         <button
           type="submit"
           disabled={loading || !commandInput.trim()}
-          className="px-4 py-2 bg-campus-gold hover:bg-campus-gold-light text-campus-bg text-xs font-mono font-bold rounded flex items-center space-x-1.5 disabled:opacity-40 transition-colors"
+          className="btn-primary px-5 py-2.5 text-xs font-mono font-bold flex items-center space-x-1.5 disabled:opacity-40 shadow-sm"
         >
           <Send className="w-3.5 h-3.5" />
           <span>Run</span>
@@ -198,24 +198,24 @@ export const CommandConsolePage: React.FC<{ user: UserProfile | null }> = ({ use
       </form>
 
       {/* Terminal History Logs */}
-      <div className="bg-[#0b0e11] text-campus-text border border-campus-border rounded-lg p-5 font-mono text-xs shadow-2xl min-h-[360px] max-h-[550px] overflow-y-auto space-y-4">
+      <div className="glass-panel rounded-3xl p-5 font-mono text-xs min-h-[360px] max-h-[550px] overflow-y-auto space-y-4 border border-[rgba(77,42,0,0.1)] shadow-glass">
         {logs.map((entry) => (
-          <div key={entry.id} className="border-b border-campus-border/60 pb-3.5 last:border-none">
-            <div className="flex items-center justify-between text-campus-muted text-[11px] mb-1.5">
+          <div key={entry.id} className="border-b border-[rgba(77,42,0,0.08)] pb-3.5 last:border-none">
+            <div className="flex items-center justify-between text-[#4D2A00]/60 text-[11px] mb-1.5">
               <div className="flex items-center space-x-2">
-                <span className="text-campus-gold font-bold">&gt; {entry.command}</span>
+                <span className="text-[#CC6F00] font-bold">&gt; {entry.command}</span>
                 {entry.studentRoll && (
-                  <span className="text-campus-secondary font-mono">[Student: {entry.studentRoll}]</span>
+                  <span className="text-[#4D2A00] font-mono">[Student: {entry.studentRoll}]</span>
                 )}
               </div>
-              <span className="text-campus-muted font-mono">{entry.timestamp}</span>
+              <span className="text-[#4D2A00]/50 font-mono">{entry.timestamp}</span>
             </div>
 
             <div
-              className={`p-3 rounded whitespace-pre-wrap leading-relaxed border ${
+              className={`p-3.5 rounded-2xl whitespace-pre-wrap leading-relaxed border ${
                 entry.response.success
-                  ? "bg-campus-bg text-campus-text border-campus-border font-mono text-[11px]"
-                  : "bg-campus-error/10 text-campus-error border-campus-error/30 font-mono text-[11px]"
+                  ? "bg-white/60 text-[#4D2A00] border-[rgba(77,42,0,0.08)] font-mono text-[11px]"
+                  : "bg-rose-500/10 text-rose-900 border-rose-500/20 font-mono text-[11px]"
               }`}
             >
               {entry.response.message}
@@ -225,7 +225,7 @@ export const CommandConsolePage: React.FC<{ user: UserProfile | null }> = ({ use
               <div className="mt-2.5">
                 <button
                   onClick={() => handlePrintSlip(entry.response.printableTicketId!)}
-                  className="px-3 py-1.5 bg-campus-gold hover:bg-campus-gold-light text-campus-bg text-xs font-semibold rounded inline-flex items-center space-x-1.5 transition-colors"
+                  className="btn-primary px-3 py-1.5 text-xs font-semibold inline-flex items-center space-x-1.5 shadow-sm"
                 >
                   <Printer className="w-3.5 h-3.5" />
                   <span>Print Ticket Slip Receipt</span>
@@ -238,3 +238,5 @@ export const CommandConsolePage: React.FC<{ user: UserProfile | null }> = ({ use
     </div>
   );
 };
+
+export default CommandConsolePage;

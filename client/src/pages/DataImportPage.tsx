@@ -88,36 +88,36 @@ export const DataImportPage: React.FC<{ user: UserProfile | null }> = ({ user })
   return (
     <div className="space-y-6">
       {/* Top Header */}
-      <div className="bg-campus-card border border-campus-border p-5 rounded-lg">
-        <div className="flex items-center space-x-2.5">
-          <div className="w-8 h-8 rounded bg-campus-elevated border border-campus-border flex items-center justify-center text-campus-gold">
-            <Upload className="w-4 h-4" />
-          </div>
-          <h1 className="text-lg font-semibold text-campus-text">Data Migration & CSV Ingestion</h1>
+      <div className="glass-panel p-6 rounded-3xl border border-[rgba(77,42,0,0.1)] shadow-glass flex items-center space-x-3">
+        <div className="w-11 h-11 rounded-2xl bg-[#FDB773]/40 border border-[#CC6F00]/25 flex items-center justify-center text-[#4D2A00]">
+          <Upload className="w-5 h-5 text-[#4D2A00]" />
         </div>
-        <p className="text-xs text-campus-muted mt-1.5 ml-10">
-          Migrate college registers, student rosters, subject timetables, and fee registers with granular schema validation
-        </p>
+        <div>
+          <h1 className="text-2xl font-bold text-[#4D2A00]">Data Migration & CSV Ingestion</h1>
+          <p className="text-xs text-[#4D2A00]/70 mt-0.5">
+            Migrate college registers, student rosters, subject timetables, and fee registers with schema validation
+          </p>
+        </div>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Upload Form Box */}
-        <div className="lg:col-span-2 bg-campus-card border border-campus-border rounded-lg p-6 space-y-5">
-          <h2 className="text-xs font-mono font-semibold text-campus-muted uppercase tracking-wider border-b border-campus-border pb-3 flex items-center space-x-2">
-            <FileSpreadsheet className="w-4 h-4 text-campus-gold" />
+        <div className="lg:col-span-2 glass-panel rounded-3xl p-6 sm:p-8 space-y-5 border border-[rgba(77,42,0,0.1)] shadow-glass">
+          <h2 className="text-xs font-bold text-[#CC6F00] uppercase tracking-wider border-b border-[rgba(77,42,0,0.08)] pb-3 flex items-center space-x-2">
+            <FileSpreadsheet className="w-4 h-4 text-[#CC6F00]" />
             <span>Ingest CSV Dataset</span>
           </h2>
 
           <form onSubmit={handleUpload} className="space-y-4 text-xs">
             <div>
-              <label htmlFor="importDatasetType" className="block font-medium text-campus-secondary mb-1.5">
+              <label htmlFor="importDatasetType" className="block font-semibold text-[#4D2A00] mb-1.5">
                 Select Dataset Category *
               </label>
               <select
                 id="importDatasetType"
                 value={selectedType}
                 onChange={(e) => setSelectedType(e.target.value as any)}
-                className="w-full px-3 py-2.5 border border-campus-border rounded bg-campus-bg text-campus-text focus:outline-none focus:border-campus-gold"
+                className="w-full px-3.5 py-2.5 border border-[rgba(77,42,0,0.12)] rounded-xl bg-white/60 text-[#4D2A00] focus:outline-none focus:border-[#CC6F00]"
               >
                 <option value="students">Student Roster (Students, Hostels & Rooms)</option>
                 <option value="timetable">Academic Timetable & Course Schedule</option>
@@ -127,7 +127,7 @@ export const DataImportPage: React.FC<{ user: UserProfile | null }> = ({ user })
             </div>
 
             <div>
-              <label htmlFor="importCsvFile" className="block font-medium text-campus-secondary mb-1.5">
+              <label htmlFor="importCsvFile" className="block font-semibold text-[#4D2A00] mb-1.5">
                 Upload CSV File *
               </label>
               <input
@@ -136,14 +136,14 @@ export const DataImportPage: React.FC<{ user: UserProfile | null }> = ({ user })
                 accept=".csv"
                 required
                 onChange={handleFileChange}
-                className="w-full text-xs text-campus-muted file:mr-3 file:py-2 file:px-4 file:rounded file:border file:border-campus-border file:text-xs file:font-semibold file:bg-campus-elevated file:text-campus-text hover:file:bg-campus-border/60 transition-colors"
+                className="w-full text-xs text-[#4D2A00]/70 file:mr-3 file:py-2 file:px-4 file:rounded-xl file:border file:border-[rgba(77,42,0,0.1)] file:text-xs file:font-semibold file:bg-white/60 file:text-[#4D2A00] hover:file:bg-white transition-colors"
               />
             </div>
 
             <button
               type="submit"
               disabled={importing || !selectedFile}
-              className="px-5 py-2.5 bg-campus-gold hover:bg-campus-gold-light text-campus-bg font-semibold text-xs rounded flex items-center space-x-2 disabled:opacity-40 transition-colors"
+              className="btn-primary px-6 py-2.5 text-xs font-bold flex items-center space-x-2 disabled:opacity-40 shadow-sm"
             >
               <FileSpreadsheet className="w-4 h-4" />
               <span>{importing ? "Validating & Ingesting..." : "Validate and Ingest Records"}</span>
@@ -152,28 +152,28 @@ export const DataImportPage: React.FC<{ user: UserProfile | null }> = ({ user })
 
           {/* Results Reporting */}
           {errorMsg && (
-            <div className="p-3 bg-campus-error/10 text-campus-error border border-campus-error/30 rounded text-xs font-mono">
+            <div className="p-3 bg-rose-500/20 text-rose-900 border border-rose-500/30 rounded-xl text-xs font-mono">
               {errorMsg}
             </div>
           )}
 
           {result && (
-            <div className="p-4 bg-campus-elevated/40 border border-campus-border rounded space-y-3 text-xs">
-              <div className="flex items-center space-x-2 font-medium text-campus-text">
+            <div className="p-4 bg-white/50 border border-[rgba(77,42,0,0.08)] rounded-2xl space-y-3 text-xs">
+              <div className="flex items-center space-x-2 font-medium text-[#4D2A00]">
                 {result.errors.length === 0 ? (
-                  <CheckCircle2 className="w-4 h-4 text-campus-success" />
+                  <CheckCircle2 className="w-4 h-4 text-emerald-700" />
                 ) : (
-                  <AlertCircle className="w-4 h-4 text-campus-warning" />
+                  <AlertCircle className="w-4 h-4 text-amber-600" />
                 )}
                 <span>
-                  Ingestion Summary: <span className="font-mono text-campus-gold font-bold">{result.importedCount}</span> of <span className="font-mono">{result.totalRows}</span> rows successfully committed to PostgreSQL.
+                  Ingestion Summary: <span className="font-mono text-[#CC6F00] font-bold">{result.importedCount}</span> of <span className="font-mono">{result.totalRows}</span> rows successfully committed.
                 </span>
               </div>
 
               {result.errors.length > 0 && (
-                <div className="pt-2 border-t border-campus-border">
-                  <div className="font-semibold text-campus-error mb-1">Validation Errors Encountered:</div>
-                  <div className="max-h-40 overflow-y-auto space-y-1 bg-campus-bg p-3 border border-campus-error/30 rounded text-[11px] text-campus-error font-mono">
+                <div className="pt-2 border-t border-[rgba(77,42,0,0.08)]">
+                  <div className="font-semibold text-rose-800 mb-1">Validation Errors Encountered:</div>
+                  <div className="max-h-40 overflow-y-auto space-y-1 bg-rose-500/10 p-3 border border-rose-500/20 rounded-xl text-[11px] text-rose-900 font-mono">
                     {result.errors.map((err, i) => (
                       <div key={i}>{err}</div>
                     ))}
@@ -185,29 +185,29 @@ export const DataImportPage: React.FC<{ user: UserProfile | null }> = ({ user })
         </div>
 
         {/* Templates Specs */}
-        <div className="bg-campus-card border border-campus-border rounded-lg p-5 space-y-4 text-xs">
-          <h2 className="font-mono font-semibold text-campus-muted uppercase tracking-wider border-b border-campus-border pb-2.5">
+        <div className="glass-panel rounded-3xl p-5 space-y-4 text-xs border border-[rgba(77,42,0,0.1)] shadow-glass">
+          <h2 className="font-bold text-[#CC6F00] uppercase tracking-wider border-b border-[rgba(77,42,0,0.08)] pb-2.5">
             CSV Schema Specifications
           </h2>
 
           <div className="space-y-3.5">
             {templates.map((tpl) => (
-              <div key={tpl.type} className="bg-campus-elevated/40 p-3 border border-campus-border rounded space-y-1.5">
-                <div className="font-semibold text-campus-text flex items-center justify-between">
+              <div key={tpl.type} className="bg-white/50 p-3.5 border border-[rgba(77,42,0,0.08)] rounded-2xl space-y-1.5">
+                <div className="font-semibold text-[#4D2A00] flex items-center justify-between">
                   <span>{tpl.title}</span>
-                  <span className="text-[10px] font-mono bg-campus-card px-1.5 py-0.5 rounded border border-campus-border text-campus-gold">
+                  <span className="text-[10px] font-mono bg-[#FDB773]/30 px-2 py-0.5 rounded border border-[#CC6F00]/25 text-[#4D2A00] font-bold">
                     {tpl.type}.csv
                   </span>
                 </div>
                 <div>
-                  <span className="text-[10px] font-mono text-campus-muted uppercase block mb-0.5">Required Headers:</span>
-                  <code className="text-[10px] text-campus-secondary font-mono block bg-campus-bg p-1.5 rounded border border-campus-border/60">
+                  <span className="text-[10px] font-mono text-[#4D2A00]/60 uppercase block mb-0.5">Required Headers:</span>
+                  <code className="text-[10px] text-[#4D2A00] font-mono block bg-white/70 p-1.5 rounded-lg border border-[rgba(77,42,0,0.08)]">
                     {tpl.columns}
                   </code>
                 </div>
                 <div>
-                  <span className="text-[10px] font-mono text-campus-muted uppercase block mb-0.5">Example Payload:</span>
-                  <code className="text-[10px] text-campus-muted font-mono block bg-campus-bg p-1.5 rounded border border-campus-border/60 truncate">
+                  <span className="text-[10px] font-mono text-[#4D2A00]/60 uppercase block mb-0.5">Example Payload:</span>
+                  <code className="text-[10px] text-[#4D2A00]/70 font-mono block bg-white/70 p-1.5 rounded-lg border border-[rgba(77,42,0,0.08)] truncate">
                     {tpl.example}
                   </code>
                 </div>
@@ -219,3 +219,5 @@ export const DataImportPage: React.FC<{ user: UserProfile | null }> = ({ user })
     </div>
   );
 };
+
+export default DataImportPage;

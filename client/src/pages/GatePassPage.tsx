@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useTranslation } from "react-i18next";
-import { QrCode, Plus, CheckCircle, XCircle, Clock, Shield, ArrowRight, User, X } from "lucide-react";
+import { QrCode, Plus, CheckCircle, XCircle, Clock, Shield, ArrowRight, User, X, ChevronRight, AlertTriangle } from "lucide-react";
 import { apiRequest, UserProfile } from "../api/client.js";
 
 interface GatePassItem {
@@ -123,33 +123,33 @@ export const GatePassPage: React.FC<{ user: UserProfile | null }> = ({ user }) =
   const getStatusBadge = (status: string) => {
     switch (status) {
       case "APPROVED":
-        return <span className="px-2 py-0.5 text-[10px] font-mono font-semibold bg-emerald-500/10 text-emerald-300 border border-emerald-500/30 rounded-[3px]">Approved</span>;
+        return <span className="px-2.5 py-1 text-[10px] font-mono font-bold bg-emerald-500/20 text-emerald-950 border border-emerald-500/30 rounded-md">Approved</span>;
       case "PENDING":
-        return <span className="px-2 py-0.5 text-[10px] font-mono font-semibold bg-amber-500/10 text-amber-300 border border-amber-500/30 rounded-[3px]">Pending Review</span>;
+        return <span className="px-2.5 py-1 text-[10px] font-mono font-bold bg-[#FDB773]/30 text-[#4D2A00] border border-[#CC6F00]/25 rounded-md">Pending Review</span>;
       case "EXITED":
-        return <span className="px-2 py-0.5 text-[10px] font-mono font-semibold bg-blue-500/10 text-blue-300 border border-blue-500/30 rounded-[3px]">Outside Campus</span>;
+        return <span className="px-2.5 py-1 text-[10px] font-mono font-bold bg-[#CC6F00]/15 text-[#CC6F00] border border-[#CC6F00]/30 rounded-md">Outside Campus</span>;
       case "RETURNED":
-        return <span className="px-2 py-0.5 text-[10px] font-mono font-semibold bg-[#181D22] text-[#A7ADB5] border border-[#252B31] rounded-[3px]">Returned</span>;
+        return <span className="px-2.5 py-1 text-[10px] font-mono font-bold bg-white/60 text-[#4D2A00]/60 border border-[rgba(77,42,0,0.1)] rounded-md">Returned</span>;
       case "REJECTED":
-        return <span className="px-2 py-0.5 text-[10px] font-mono font-semibold bg-red-500/10 text-red-300 border border-red-500/30 rounded-[3px]">Rejected</span>;
+        return <span className="px-2.5 py-1 text-[10px] font-mono font-bold bg-rose-500/20 text-rose-900 border border-rose-500/30 rounded-md">Rejected</span>;
       default:
-        return <span className="px-2 py-0.5 text-[10px] font-mono font-semibold bg-[#181D22] text-[#F3F4F6] rounded-[3px] border border-[#252B31]">{status}</span>;
+        return <span className="px-2.5 py-1 text-[10px] font-mono font-bold bg-white/60 text-[#4D2A00] rounded-md border border-[rgba(77,42,0,0.1)]">{status}</span>;
     }
   };
 
   return (
     <div className="space-y-6">
       {/* Top Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 bg-[#14181C] border border-[#252B31] p-5 rounded-[6px] shadow-subtle">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 glass-panel p-6 rounded-3xl border border-[rgba(77,42,0,0.1)] shadow-glass">
         <div>
-          <div className="flex items-center space-x-2 text-[#D6A84F] text-[11px] font-mono uppercase mb-1">
+          <div className="flex items-center space-x-2 text-[#CC6F00] text-[11px] font-bold uppercase mb-1">
             <QrCode className="w-3.5 h-3.5" />
-            <span>Digital Gate Passes</span>
+            <span>Campus Security & Access</span>
           </div>
-          <h1 className="text-xl font-bold text-[#F3F4F6]">
+          <h1 className="text-2xl font-bold text-[#4D2A00]">
             {t("gatepass.title", "Gate Pass & Leave Management")}
           </h1>
-          <p className="text-xs text-[#A7ADB5] mt-0.5">
+          <p className="text-xs text-[#4D2A00]/70 mt-1">
             Digital gate pass authorization, cryptographic QR verification for campus security and departure logging
           </p>
         </div>
@@ -157,7 +157,7 @@ export const GatePassPage: React.FC<{ user: UserProfile | null }> = ({ user }) =
         {user?.role === "STUDENT" && (
           <button
             onClick={() => setShowModal(true)}
-            className="inline-flex items-center space-x-2 bg-[#D6A84F] hover:bg-[#F0C86A] text-[#090B0D] text-xs font-bold px-4 py-2.5 rounded-[4px] shadow-xs transition-colors"
+            className="btn-primary inline-flex items-center space-x-2 text-xs font-bold px-5 py-2.5 shadow-sm"
           >
             <Plus className="w-4 h-4" />
             <span>{t("gatepass.newPass", "Apply for Gate Pass")}</span>
@@ -166,59 +166,59 @@ export const GatePassPage: React.FC<{ user: UserProfile | null }> = ({ user }) =
       </div>
 
       {/* Gate Pass Table */}
-      <div className="bg-[#14181C] border border-[#252B31] rounded-[6px] overflow-hidden shadow-subtle">
+      <div className="glass-panel rounded-3xl overflow-hidden border border-[rgba(77,42,0,0.1)] shadow-glass">
         {loading ? (
-          <div className="p-12 text-center text-xs text-[#A7ADB5] flex flex-col items-center justify-center space-y-2">
-            <div className="w-6 h-6 border-2 border-[#D6A84F] border-t-transparent rounded-full animate-spin"></div>
-            <span className="font-mono">Loading gate pass records...</span>
+          <div className="p-14 text-center text-xs text-[#4D2A00]/70 flex flex-col items-center justify-center space-y-2">
+            <div className="w-7 h-7 border-2 border-[#CC6F00] border-t-transparent rounded-full animate-spin"></div>
+            <span className="font-medium text-[#4D2A00]/70">Loading gate pass records...</span>
           </div>
         ) : passes.length === 0 ? (
-          <div className="p-12 text-center text-xs text-[#6F7781]">
+          <div className="p-14 text-center text-xs text-[#4D2A00]/60">
             No gate pass requests found on file.
           </div>
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full text-left text-xs border-collapse">
               <thead>
-                <tr className="bg-[#101316] border-b border-[#252B31] text-[#A7ADB5] font-mono uppercase tracking-wider text-[11px]">
-                  <th className="py-3 px-4">Pass ID</th>
-                  <th className="py-3 px-4">Student</th>
-                  <th className="py-3 px-4">Type</th>
-                  <th className="py-3 px-4">Destination & Purpose</th>
-                  <th className="py-3 px-4">Departure</th>
-                  <th className="py-3 px-4">Expected Return</th>
-                  <th className="py-3 px-4">Status</th>
-                  <th className="py-3 px-4 text-right">Actions</th>
+                <tr className="bg-[#FDB773]/30 border-b border-[rgba(77,42,0,0.1)] text-[#4D2A00] font-bold uppercase tracking-wider text-[10px]">
+                  <th className="py-3.5 px-4 font-bold">Pass ID</th>
+                  <th className="py-3.5 px-4 font-bold">Student</th>
+                  <th className="py-3.5 px-4 font-bold">Type</th>
+                  <th className="py-3.5 px-4 font-bold">Destination & Purpose</th>
+                  <th className="py-3.5 px-4 font-bold">Departure</th>
+                  <th className="py-3.5 px-4 font-bold">Expected Return</th>
+                  <th className="py-3.5 px-4 font-bold">Status</th>
+                  <th className="py-3.5 px-4 font-bold text-right">Actions</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-[#252B31]">
+              <tbody className="divide-y divide-[rgba(77,42,0,0.06)]">
                 {passes.map((p) => (
-                  <tr key={p.id} className="hover:bg-[#181D22] transition-colors">
-                    <td className="py-3 px-4 font-mono font-bold text-[#D6A84F]">
+                  <tr key={p.id} className="hover:bg-white/40 transition-colors">
+                    <td className="py-3.5 px-4 font-mono font-bold text-[#CC6F00]">
                       #{p.passNumber}
                     </td>
-                    <td className="py-3 px-4">
-                      <div className="font-semibold text-[#F3F4F6]">{p.student.fullName}</div>
-                      <div className="text-[11px] text-[#6F7781] font-mono">{p.student.rollNumber}</div>
+                    <td className="py-3.5 px-4">
+                      <div className="font-semibold text-[#4D2A00]">{p.student.fullName}</div>
+                      <div className="text-[11px] text-[#4D2A00]/60 font-mono">{p.student.rollNumber}</div>
                     </td>
-                    <td className="py-3 px-4 font-medium text-[#A7ADB5]">{p.type}</td>
-                    <td className="py-3 px-4">
-                      <div className="font-medium text-[#F3F4F6]">{p.destination}</div>
-                      <div className="text-[11px] text-[#6F7781] truncate max-w-xs mt-0.5">{p.reason}</div>
+                    <td className="py-3.5 px-4 font-semibold text-[#4D2A00]/80">{p.type}</td>
+                    <td className="py-3.5 px-4">
+                      <div className="font-semibold text-[#4D2A00]">{p.destination}</div>
+                      <div className="text-[11px] text-[#4D2A00]/60 truncate max-w-xs mt-0.5">{p.reason}</div>
                     </td>
-                    <td className="py-3 px-4 text-[#A7ADB5] font-mono">
+                    <td className="py-3.5 px-4 text-[#4D2A00]/70 font-mono">
                       {new Date(p.departureDate).toLocaleString([], { dateStyle: "short", timeStyle: "short" })}
                     </td>
-                    <td className="py-3 px-4 text-[#A7ADB5] font-mono">
+                    <td className="py-3.5 px-4 text-[#4D2A00]/70 font-mono">
                       {new Date(p.expectedReturnDate).toLocaleString([], { dateStyle: "short", timeStyle: "short" })}
                     </td>
-                    <td className="py-3 px-4">{getStatusBadge(p.status)}</td>
-                    <td className="py-3 px-4 text-right">
+                    <td className="py-3.5 px-4">{getStatusBadge(p.status)}</td>
+                    <td className="py-3.5 px-4 text-right">
                       <div className="flex items-center justify-end space-x-2">
                         {(p.status === "APPROVED" || p.status === "EXITED") && (
                           <button
                             onClick={() => handleViewQr(p.id)}
-                            className="inline-flex items-center space-x-1.5 px-3 py-1 text-xs font-bold text-[#D6A84F] hover:text-[#090B0D] bg-[#181D22] hover:bg-[#D6A84F] border border-[#D6A84F]/30 rounded-[4px] transition-all shadow-xs"
+                            className="btn-primary inline-flex items-center space-x-1.5 px-3 py-1.5 text-xs font-bold shadow-sm"
                           >
                             <QrCode className="w-3.5 h-3.5" />
                             <span>View QR</span>
@@ -229,13 +229,13 @@ export const GatePassPage: React.FC<{ user: UserProfile | null }> = ({ user }) =
                           <div className="flex items-center space-x-1.5">
                             <button
                               onClick={() => handleReview(p.id, "APPROVED")}
-                              className="px-2.5 py-1 bg-[#10B981] hover:bg-emerald-400 text-[#090B0D] font-bold rounded-[3px] text-[11px] transition-colors"
+                              className="btn-primary px-3 py-1 text-xs font-bold"
                             >
                               Approve
                             </button>
                             <button
                               onClick={() => handleReview(p.id, "REJECTED")}
-                              className="px-2.5 py-1 bg-red-500/20 hover:bg-red-500/40 text-red-300 border border-red-500/30 font-bold rounded-[3px] text-[11px] transition-colors"
+                              className="px-3 py-1 bg-rose-500/20 hover:bg-rose-500/30 text-rose-900 border border-rose-500/30 font-bold rounded-xl text-xs transition-colors"
                             >
                               Reject
                             </button>
@@ -251,161 +251,148 @@ export const GatePassPage: React.FC<{ user: UserProfile | null }> = ({ user }) =
         )}
       </div>
 
-      {/* QR Code Modal for Gate Pass */}
-      {activeQrPass && (
-        <div className="fixed inset-0 bg-black/75 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="bg-[#14181C] border border-[#252B31] rounded-[6px] max-w-sm w-full p-6 text-center space-y-4 shadow-elevated">
-            <div className="flex items-center justify-between border-b border-[#252B31] pb-2">
-              <span className="font-mono font-bold text-sm text-[#D6A84F]">
-                Gate Pass #{activeQrPass.pass.passNumber}
-              </span>
-              <span className="text-[10px] font-mono px-2 py-0.5 bg-emerald-500/10 text-emerald-300 font-bold border border-emerald-500/30 rounded-[3px]">
-                {activeQrPass.pass.status}
-              </span>
-            </div>
-
-            <div className="p-4 bg-white rounded-[6px] inline-block shadow-subtle">
-              <img
-                src={activeQrPass.qrUrl}
-                alt="Gate Pass QR Code"
-                className="w-48 h-48 mx-auto"
-              />
-            </div>
-
-            <div className="text-xs text-left space-y-1.5 bg-[#101316] p-3.5 rounded-[4px] border border-[#252B31]">
-              <div><strong className="text-[#A7ADB5]">Student:</strong> <span className="text-[#F3F4F6] font-medium">{activeQrPass.pass.student.fullName} ({activeQrPass.pass.student.rollNumber})</span></div>
-              <div><strong className="text-[#A7ADB5]">Destination:</strong> <span className="text-[#F3F4F6]">{activeQrPass.pass.destination}</span></div>
-              <div><strong className="text-[#A7ADB5]">Valid Return:</strong> <span className="text-[#F3F4F6] font-mono">{new Date(activeQrPass.pass.expectedReturnDate).toLocaleString()}</span></div>
-              {activeQrPass.pass.wardenComment && (
-                <div><strong className="text-[#A7ADB5]">Warden Remark:</strong> <span className="text-[#F3F4F6]">{activeQrPass.pass.wardenComment}</span></div>
-              )}
-            </div>
-
-            <p className="text-[11px] text-[#6F7781] leading-relaxed">
-              Present this encrypted QR code to the main gate scanner upon physical exit and entry.
-            </p>
-
-            <button
-              onClick={() => setActiveQrPass(null)}
-              className="w-full py-2 bg-[#181D22] hover:bg-[#252B31] text-[#F3F4F6] text-xs font-semibold rounded-[4px] border border-[#252B31] transition-colors"
-            >
-              Close QR Pass
-            </button>
-          </div>
-        </div>
-      )}
-
-      {/* New Gate Pass Request Modal */}
+      {/* Apply Modal */}
       {showModal && (
-        <div className="fixed inset-0 bg-black/75 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="bg-[#14181C] border border-[#252B31] rounded-[6px] max-w-lg w-full p-6 space-y-4 shadow-elevated">
-            <div className="flex items-center justify-between border-b border-[#252B31] pb-2">
-              <h2 className="text-base font-bold text-[#F3F4F6]">New Gate Pass / Leave Application</h2>
-              <button onClick={() => setShowModal(false)} className="text-[#6F7781] hover:text-[#F3F4F6]">
-                <X className="w-4 h-4" />
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-md p-4 animate-fadeIn">
+          <div className="glass-modal max-w-lg w-full p-6 sm:p-8 space-y-5 text-xs rounded-3xl border border-[rgba(77,42,0,0.15)] shadow-glass">
+            <div className="flex items-center justify-between border-b border-[rgba(77,42,0,0.1)] pb-3">
+              <h2 className="text-base font-bold text-[#4D2A00]">Apply for Student Gate Pass</h2>
+              <button onClick={() => setShowModal(false)} className="text-[#4D2A00]/60 hover:text-[#4D2A00]">
+                <X className="w-5 h-5" />
               </button>
             </div>
 
             {error && (
-              <div className="p-2.5 text-xs text-red-200 bg-red-500/10 border border-red-500/30 rounded-[4px]">
+              <div className="p-3 bg-rose-500/20 border border-rose-500/30 rounded-xl text-rose-900 font-medium">
                 {error}
               </div>
             )}
 
-            <form onSubmit={handleCreateSubmit} className="space-y-3.5 text-xs">
+            <form onSubmit={handleCreateSubmit} className="space-y-4">
               <div>
-                <label className="block font-semibold text-[#A7ADB5] mb-1">Pass Classification *</label>
+                <label className="block font-semibold text-[#4D2A00] mb-1">Pass Category *</label>
                 <select
                   value={formData.type}
                   onChange={(e) => setFormData({ ...formData, type: e.target.value })}
-                  className="w-full px-3 py-2 border border-[#252B31] rounded-[4px] bg-[#101316] text-[#F3F4F6] focus:outline-none focus:border-[#D6A84F]"
+                  className="w-full px-3.5 py-2.5 bg-white/60 border border-[rgba(77,42,0,0.12)] rounded-xl text-[#4D2A00] focus:outline-none focus:border-[#CC6F00]"
                 >
-                  <option value="OUTING">Daytime Outing (Return before curfew)</option>
-                  <option value="HOME_LEAVE">Home Leave / Vacation</option>
-                  <option value="EMERGENCY">Emergency Leave</option>
+                  <option value="OUTING">Local City Outing (Return by curfew)</option>
+                  <option value="HOME_LEAVE">Home Leave / Weekend Vacation</option>
+                  <option value="EMERGENCY">Medical / Emergency Outing</option>
                 </select>
               </div>
 
               <div>
-                <label className="block font-semibold text-[#A7ADB5] mb-1">Destination Address *</label>
+                <label className="block font-semibold text-[#4D2A00] mb-1">Destination Address *</label>
                 <input
                   type="text"
                   required
                   value={formData.destination}
                   onChange={(e) => setFormData({ ...formData, destination: e.target.value })}
-                  placeholder="e.g. Bhubaneswar City Center"
-                  className="w-full px-3 py-2 border border-[#252B31] rounded-[4px] bg-[#101316] text-[#F3F4F6] focus:outline-none focus:border-[#D6A84F]"
+                  placeholder="e.g. Cuttack Main City / Home Residence"
+                  className="w-full px-3.5 py-2.5 bg-white/60 border border-[rgba(77,42,0,0.12)] rounded-xl text-[#4D2A00] placeholder-[#4D2A00]/40 focus:outline-none focus:border-[#CC6F00]"
                 />
               </div>
 
-              <div>
-                <label className="block font-semibold text-[#A7ADB5] mb-1">Detailed Reason for Leave *</label>
-                <textarea
-                  required
-                  rows={2}
-                  value={formData.reason}
-                  onChange={(e) => setFormData({ ...formData, reason: e.target.value })}
-                  placeholder="Specify purpose of visit..."
-                  className="w-full px-3 py-2 border border-[#252B31] rounded-[4px] bg-[#101316] text-[#F3F4F6] focus:outline-none focus:border-[#D6A84F]"
-                />
-              </div>
-
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
-                  <label className="block font-semibold text-[#A7ADB5] mb-1">Departure Schedule *</label>
+                  <label className="block font-semibold text-[#4D2A00] mb-1">Departure Date & Time *</label>
                   <input
                     type="datetime-local"
                     required
                     value={formData.departureDate}
                     onChange={(e) => setFormData({ ...formData, departureDate: e.target.value })}
-                    className="w-full px-3 py-2 border border-[#252B31] rounded-[4px] bg-[#101316] text-[#F3F4F6] focus:outline-none focus:border-[#D6A84F]"
+                    className="w-full px-3.5 py-2.5 bg-white/60 border border-[rgba(77,42,0,0.12)] rounded-xl text-[#4D2A00] focus:outline-none focus:border-[#CC6F00]"
                   />
                 </div>
 
                 <div>
-                  <label className="block font-semibold text-[#A7ADB5] mb-1">Expected Return Schedule *</label>
+                  <label className="block font-semibold text-[#4D2A00] mb-1">Expected Return Date & Time *</label>
                   <input
                     type="datetime-local"
                     required
                     value={formData.expectedReturnDate}
                     onChange={(e) => setFormData({ ...formData, expectedReturnDate: e.target.value })}
-                    className="w-full px-3 py-2 border border-[#252B31] rounded-[4px] bg-[#101316] text-[#F3F4F6] focus:outline-none focus:border-[#D6A84F]"
+                    className="w-full px-3.5 py-2.5 bg-white/60 border border-[rgba(77,42,0,0.12)] rounded-xl text-[#4D2A00] focus:outline-none focus:border-[#CC6F00]"
                   />
                 </div>
               </div>
 
               <div>
-                <label className="block font-semibold text-[#A7ADB5] mb-1">Parent / Guardian Verification Phone *</label>
+                <label className="block font-semibold text-[#4D2A00] mb-1">Emergency Parent / Guardian Contact *</label>
                 <input
                   type="tel"
                   required
                   value={formData.parentContact}
                   onChange={(e) => setFormData({ ...formData, parentContact: e.target.value })}
-                  placeholder="e.g. 9876543210"
-                  className="w-full px-3 py-2 border border-[#252B31] rounded-[4px] bg-[#101316] text-[#F3F4F6] focus:outline-none focus:border-[#D6A84F]"
+                  placeholder="Parent phone number for warden verification"
+                  className="w-full px-3.5 py-2.5 bg-white/60 border border-[rgba(77,42,0,0.12)] rounded-xl text-[#4D2A00] placeholder-[#4D2A00]/40 focus:outline-none focus:border-[#CC6F00] font-mono"
                 />
               </div>
 
-              <div className="pt-3 border-t border-[#252B31] flex justify-end space-x-2">
+              <div>
+                <label className="block font-semibold text-[#4D2A00] mb-1">Purpose / Justification *</label>
+                <textarea
+                  required
+                  rows={3}
+                  value={formData.reason}
+                  onChange={(e) => setFormData({ ...formData, reason: e.target.value })}
+                  placeholder="State the reason for campus leave..."
+                  className="w-full px-3.5 py-2.5 bg-white/60 border border-[rgba(77,42,0,0.12)] rounded-xl text-[#4D2A00] placeholder-[#4D2A00]/40 focus:outline-none focus:border-[#CC6F00] resize-none"
+                />
+              </div>
+
+              <div className="flex items-center justify-end space-x-2.5 pt-3 border-t border-[rgba(77,42,0,0.1)]">
                 <button
                   type="button"
                   onClick={() => setShowModal(false)}
-                  className="px-3.5 py-1.5 border border-[#252B31] rounded-[4px] text-[#A7ADB5] hover:text-[#F3F4F6] hover:bg-[#181D22] transition-colors"
+                  className="btn-secondary px-4 py-2"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
                   disabled={submitting}
-                  className="px-4 py-1.5 bg-[#D6A84F] hover:bg-[#F0C86A] text-[#090B0D] font-bold rounded-[4px] disabled:opacity-50 transition-colors shadow-xs"
+                  className="btn-primary px-6 py-2 text-xs font-bold disabled:opacity-50 shadow-sm"
                 >
-                  {submitting ? "Submitting Application..." : "Submit Pass Request"}
+                  {submitting ? "Submitting..." : "Submit Pass Application"}
                 </button>
               </div>
             </form>
           </div>
         </div>
       )}
+
+      {activeQrPass && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-md p-4 animate-fadeIn">
+          <div className="glass-modal max-w-sm w-full p-6 text-center space-y-4 rounded-3xl border border-[rgba(77,42,0,0.15)] shadow-glass">
+            <div className="flex items-center justify-between border-b border-[rgba(77,42,0,0.1)] pb-3">
+              <span className="font-bold text-sm text-[#4D2A00]">Gate Security Pass Token</span>
+              <button onClick={() => setActiveQrPass(null)} className="text-[#4D2A00]/60 hover:text-[#4D2A00]">
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <div className="space-y-1">
+              <p className="font-mono text-base font-bold text-[#CC6F00]">#{activeQrPass.pass.passNumber}</p>
+              <p className="font-bold text-sm text-[#4D2A00]">{activeQrPass.pass.student.fullName}</p>
+              <p className="text-xs text-[#4D2A00]/70">{activeQrPass.pass.student.rollNumber} • {activeQrPass.pass.student.hostelBlock}</p>
+            </div>
+
+            <div className="p-4 bg-white rounded-2xl flex items-center justify-center max-w-[220px] mx-auto shadow-sm border border-[rgba(77,42,0,0.1)]">
+              <img src={activeQrPass.qrUrl} alt="Gate Pass QR" className="w-48 h-48" />
+            </div>
+
+            <div className="text-xs text-[#4D2A00]/80 bg-white/50 p-3.5 rounded-2xl border border-[rgba(77,42,0,0.08)] space-y-1 text-left">
+              <p><strong>Destination:</strong> {activeQrPass.pass.destination}</p>
+              <p><strong>Valid Return:</strong> {new Date(activeQrPass.pass.expectedReturnDate).toLocaleString()}</p>
+              <p className="text-[#CC6F00] font-bold text-[11px] pt-0.5">✓ Cryptographically Signed Token</p>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
+
+export default GatePassPage;

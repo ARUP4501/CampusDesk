@@ -114,38 +114,36 @@ export const RegisterPage: React.FC<RegisterPageProps> = ({ onLoginSuccess }) =>
 
   return (
     <div className="max-w-2xl mx-auto my-8 px-4">
-      <div className="bg-campus-card border border-campus-border rounded-lg p-6 sm:p-8 shadow-2xl relative overflow-hidden">
-        {/* Subtle grid backdrop */}
-        <div className="absolute inset-0 bg-grid-technical opacity-10 pointer-events-none" />
+      <div className="glass-panel rounded-3xl p-6 sm:p-8 relative overflow-hidden shadow-glass border border-[rgba(77,42,0,0.12)]">
+        {/* Subtle warm glow */}
+        <div className="absolute top-0 right-0 w-48 h-48 bg-[#FDB773]/20 rounded-full blur-2xl pointer-events-none" />
 
         <div className="relative text-center mb-6">
-          <div className="w-10 h-10 bg-campus-elevated border border-campus-gold/30 text-campus-gold flex items-center justify-center font-bold text-sm rounded mx-auto mb-3">
-            <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <path d="M4 4h7v7H4zM13 4h7v7h-7zM4 13h7v7H4zM13 13h7v7h-7z" />
-            </svg>
+          <div className="w-12 h-12 bg-[#FDB773]/40 border border-[#CC6F00]/25 text-[#4D2A00] flex items-center justify-center font-bold text-sm rounded-2xl mx-auto mb-3 shadow-sm">
+            <UserCheck className="w-6 h-6 text-[#4D2A00]" />
           </div>
-          <h1 className="text-xl font-semibold text-campus-text">Student Campus Enrollment</h1>
-          <p className="text-xs text-campus-muted mt-1">
+          <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-[#4D2A00]">Student Campus Enrollment</h1>
+          <p className="text-xs text-[#4D2A00]/70 mt-1 max-w-md mx-auto">
             Complete your profile with academic, guardian and hostel preferences. Registration undergoes 2-step verification by your Warden and Administration.
           </p>
         </div>
 
         {/* Multi-Step Indicator */}
-        <div className="relative flex items-center justify-center mb-6 border-b border-campus-border pb-4">
-          <div className="flex items-center space-x-2 sm:space-x-4 text-xs font-mono">
+        <div className="relative flex items-center justify-center mb-6 border-b border-[rgba(77,42,0,0.1)] pb-4">
+          <div className="flex items-center space-x-2 sm:space-x-4 text-xs font-medium">
             <button
               type="button"
               onClick={() => setCurrentStep(1)}
-              className={`flex items-center space-x-1.5 px-3 py-1.5 rounded transition-colors ${
+              className={`flex items-center space-x-1.5 px-3.5 py-1.5 rounded-xl transition-all ${
                 currentStep === 1
-                  ? "bg-campus-gold text-campus-bg font-semibold"
-                  : "bg-campus-elevated text-campus-secondary border border-campus-border hover:text-campus-text"
+                  ? "bg-[#FDB773] text-[#4D2A00] font-bold shadow-sm"
+                  : "bg-white/50 text-[#4D2A00]/70 border border-[rgba(77,42,0,0.08)] hover:text-[#4D2A00]"
               }`}
             >
               <span>1.</span>
               <span>Personal & Academic</span>
             </button>
-            <span className="text-campus-border">/</span>
+            <span className="text-[#4D2A00]/30">/</span>
             <button
               type="button"
               onClick={() => {
@@ -154,16 +152,16 @@ export const RegisterPage: React.FC<RegisterPageProps> = ({ onLoginSuccess }) =>
                   setCurrentStep(2);
                 }
               }}
-              className={`flex items-center space-x-1.5 px-3 py-1.5 rounded transition-colors ${
+              className={`flex items-center space-x-1.5 px-3.5 py-1.5 rounded-xl transition-all ${
                 currentStep === 2
-                  ? "bg-campus-gold text-campus-bg font-semibold"
-                  : "bg-campus-elevated text-campus-secondary border border-campus-border hover:text-campus-text"
+                  ? "bg-[#FDB773] text-[#4D2A00] font-bold shadow-sm"
+                  : "bg-white/50 text-[#4D2A00]/70 border border-[rgba(77,42,0,0.08)] hover:text-[#4D2A00]"
               }`}
             >
               <span>2.</span>
               <span>Parents & Guardian</span>
             </button>
-            <span className="text-campus-border">/</span>
+            <span className="text-[#4D2A00]/30">/</span>
             <button
               type="button"
               onClick={() => {
@@ -172,10 +170,10 @@ export const RegisterPage: React.FC<RegisterPageProps> = ({ onLoginSuccess }) =>
                   setCurrentStep(3);
                 }
               }}
-              className={`flex items-center space-x-1.5 px-3 py-1.5 rounded transition-colors ${
+              className={`flex items-center space-x-1.5 px-3.5 py-1.5 rounded-xl transition-all ${
                 currentStep === 3
-                  ? "bg-campus-gold text-campus-bg font-semibold"
-                  : "bg-campus-elevated text-campus-secondary border border-campus-border hover:text-campus-text"
+                  ? "bg-[#FDB773] text-[#4D2A00] font-bold shadow-sm"
+                  : "bg-white/50 text-[#4D2A00]/70 border border-[rgba(77,42,0,0.08)] hover:text-[#4D2A00]"
               }`}
             >
               <span>3.</span>
@@ -185,13 +183,13 @@ export const RegisterPage: React.FC<RegisterPageProps> = ({ onLoginSuccess }) =>
         </div>
 
         {error && (
-          <div role="alert" className="relative p-3 mb-4 text-xs font-mono text-campus-error bg-campus-error/10 border border-campus-error/30 rounded">
+          <div role="alert" className="relative p-3.5 mb-4 text-xs font-medium text-rose-900 bg-rose-500/15 border border-rose-500/30 rounded-2xl">
             {error}
           </div>
         )}
 
         {successMessage && (
-          <div role="status" className="relative p-3 mb-4 text-xs font-mono text-campus-success bg-campus-success/10 border border-campus-success/30 rounded">
+          <div role="status" className="relative p-3.5 mb-4 text-xs font-medium text-emerald-950 bg-emerald-500/20 border border-emerald-500/30 rounded-2xl">
             {successMessage} Redirecting to your dashboard...
           </div>
         )}
@@ -200,12 +198,12 @@ export const RegisterPage: React.FC<RegisterPageProps> = ({ onLoginSuccess }) =>
           {/* STEP 1: Personal & Academic Details */}
           {currentStep === 1 && (
             <div className="space-y-4">
-              <h2 className="text-xs font-mono font-semibold text-campus-muted uppercase tracking-wider border-b border-campus-border pb-1.5">
+              <h2 className="text-xs font-bold text-[#CC6F00] uppercase tracking-wider border-b border-[rgba(77,42,0,0.1)] pb-1.5">
                 1. Personal Details
               </h2>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
-                  <label htmlFor="fullName" className="block text-xs font-medium text-campus-secondary mb-1">
+                  <label htmlFor="fullName" className="block text-xs font-semibold text-[#4D2A00] mb-1">
                     Full Legal Name *
                   </label>
                   <input
@@ -216,12 +214,12 @@ export const RegisterPage: React.FC<RegisterPageProps> = ({ onLoginSuccess }) =>
                     value={formData.fullName}
                     onChange={handleChange}
                     placeholder="e.g. Aarav Sharma"
-                    className="w-full px-3 py-2 bg-campus-bg border border-campus-border rounded text-campus-text text-xs placeholder-campus-muted focus:outline-none focus:border-campus-gold"
+                    className="w-full px-3.5 py-2.5 bg-white/60 border border-[rgba(77,42,0,0.12)] rounded-xl text-[#4D2A00] text-xs placeholder-[#4D2A00]/40 focus:outline-none focus:border-[#CC6F00]"
                   />
                 </div>
 
                 <div>
-                  <label htmlFor="rollNumber" className="block text-xs font-medium text-campus-secondary mb-1">
+                  <label htmlFor="rollNumber" className="block text-xs font-semibold text-[#4D2A00] mb-1">
                     Student Roll / Reg. Number *
                   </label>
                   <input
@@ -232,12 +230,12 @@ export const RegisterPage: React.FC<RegisterPageProps> = ({ onLoginSuccess }) =>
                     value={formData.rollNumber}
                     onChange={handleChange}
                     placeholder="e.g. 2024CS101"
-                    className="w-full px-3 py-2 bg-campus-bg border border-campus-border rounded text-campus-text text-xs placeholder-campus-muted focus:outline-none focus:border-campus-gold font-mono uppercase"
+                    className="w-full px-3.5 py-2.5 bg-white/60 border border-[rgba(77,42,0,0.12)] rounded-xl text-[#4D2A00] text-xs placeholder-[#4D2A00]/40 focus:outline-none focus:border-[#CC6F00] font-mono uppercase"
                   />
                 </div>
 
                 <div>
-                  <label htmlFor="email" className="block text-xs font-medium text-campus-secondary mb-1">
+                  <label htmlFor="email" className="block text-xs font-semibold text-[#4D2A00] mb-1">
                     Official Student Email *
                   </label>
                   <input
@@ -248,12 +246,12 @@ export const RegisterPage: React.FC<RegisterPageProps> = ({ onLoginSuccess }) =>
                     value={formData.email}
                     onChange={handleChange}
                     placeholder="aarav@campusdesk.edu"
-                    className="w-full px-3 py-2 bg-campus-bg border border-campus-border rounded text-campus-text text-xs placeholder-campus-muted focus:outline-none focus:border-campus-gold font-mono"
+                    className="w-full px-3.5 py-2.5 bg-white/60 border border-[rgba(77,42,0,0.12)] rounded-xl text-[#4D2A00] text-xs placeholder-[#4D2A00]/40 focus:outline-none focus:border-[#CC6F00] font-mono"
                   />
                 </div>
 
                 <div>
-                  <label htmlFor="phone" className="block text-xs font-medium text-campus-secondary mb-1">
+                  <label htmlFor="phone" className="block text-xs font-semibold text-[#4D2A00] mb-1">
                     Student Phone Number *
                   </label>
                   <input
@@ -264,12 +262,12 @@ export const RegisterPage: React.FC<RegisterPageProps> = ({ onLoginSuccess }) =>
                     value={formData.phone}
                     onChange={handleChange}
                     placeholder="9876543210"
-                    className="w-full px-3 py-2 bg-campus-bg border border-campus-border rounded text-campus-text text-xs placeholder-campus-muted focus:outline-none focus:border-campus-gold font-mono"
+                    className="w-full px-3.5 py-2.5 bg-white/60 border border-[rgba(77,42,0,0.12)] rounded-xl text-[#4D2A00] text-xs placeholder-[#4D2A00]/40 focus:outline-none focus:border-[#CC6F00] font-mono"
                   />
                 </div>
 
                 <div>
-                  <label htmlFor="dob" className="block text-xs font-medium text-campus-secondary mb-1">
+                  <label htmlFor="dob" className="block text-xs font-semibold text-[#4D2A00] mb-1">
                     Date of Birth *
                   </label>
                   <input
@@ -279,14 +277,14 @@ export const RegisterPage: React.FC<RegisterPageProps> = ({ onLoginSuccess }) =>
                     required
                     value={formData.dob}
                     onChange={handleChange}
-                    className="w-full px-3 py-2 bg-campus-bg border border-campus-border rounded text-campus-text text-xs focus:outline-none focus:border-campus-gold"
+                    className="w-full px-3.5 py-2.5 bg-white/60 border border-[rgba(77,42,0,0.12)] rounded-xl text-[#4D2A00] text-xs focus:outline-none focus:border-[#CC6F00]"
                   />
                 </div>
 
                 <div>
                   <div className="grid grid-cols-2 gap-2">
                     <div>
-                      <label htmlFor="gender" className="block text-xs font-medium text-campus-secondary mb-1">
+                      <label htmlFor="gender" className="block text-xs font-semibold text-[#4D2A00] mb-1">
                         Gender *
                       </label>
                       <select
@@ -294,7 +292,7 @@ export const RegisterPage: React.FC<RegisterPageProps> = ({ onLoginSuccess }) =>
                         name="gender"
                         value={formData.gender}
                         onChange={handleChange}
-                        className="w-full px-3 py-2 bg-campus-bg border border-campus-border rounded text-campus-text text-xs focus:outline-none focus:border-campus-gold"
+                        className="w-full px-3.5 py-2.5 bg-white/60 border border-[rgba(77,42,0,0.12)] rounded-xl text-[#4D2A00] text-xs focus:outline-none focus:border-[#CC6F00]"
                       >
                         <option value="MALE">Male</option>
                         <option value="FEMALE">Female</option>
@@ -303,7 +301,7 @@ export const RegisterPage: React.FC<RegisterPageProps> = ({ onLoginSuccess }) =>
                     </div>
 
                     <div>
-                      <label htmlFor="bloodGroup" className="block text-xs font-medium text-campus-secondary mb-1">
+                      <label htmlFor="bloodGroup" className="block text-xs font-semibold text-[#4D2A00] mb-1">
                         Blood Group
                       </label>
                       <select
@@ -311,7 +309,7 @@ export const RegisterPage: React.FC<RegisterPageProps> = ({ onLoginSuccess }) =>
                         name="bloodGroup"
                         value={formData.bloodGroup}
                         onChange={handleChange}
-                        className="w-full px-3 py-2 bg-campus-bg border border-campus-border rounded text-campus-text text-xs focus:outline-none focus:border-campus-gold"
+                        className="w-full px-3.5 py-2.5 bg-white/60 border border-[rgba(77,42,0,0.12)] rounded-xl text-[#4D2A00] text-xs focus:outline-none focus:border-[#CC6F00]"
                       >
                         <option value="A+">A+</option>
                         <option value="B+">B+</option>
@@ -327,7 +325,7 @@ export const RegisterPage: React.FC<RegisterPageProps> = ({ onLoginSuccess }) =>
                 </div>
 
                 <div>
-                  <label htmlFor="password" className="block text-xs font-medium text-campus-secondary mb-1">
+                  <label htmlFor="password" className="block text-xs font-semibold text-[#4D2A00] mb-1">
                     Create Password (min 8 chars) *
                   </label>
                   <input
@@ -338,12 +336,12 @@ export const RegisterPage: React.FC<RegisterPageProps> = ({ onLoginSuccess }) =>
                     value={formData.password}
                     onChange={handleChange}
                     placeholder="••••••••"
-                    className="w-full px-3 py-2 bg-campus-bg border border-campus-border rounded text-campus-text text-xs placeholder-campus-muted focus:outline-none focus:border-campus-gold"
+                    className="w-full px-3.5 py-2.5 bg-white/60 border border-[rgba(77,42,0,0.12)] rounded-xl text-[#4D2A00] text-xs placeholder-[#4D2A00]/40 focus:outline-none focus:border-[#CC6F00]"
                   />
                 </div>
 
                 <div>
-                  <label htmlFor="confirmPassword" className="block text-xs font-medium text-campus-secondary mb-1">
+                  <label htmlFor="confirmPassword" className="block text-xs font-semibold text-[#4D2A00] mb-1">
                     Confirm Password *
                   </label>
                   <input
@@ -354,17 +352,17 @@ export const RegisterPage: React.FC<RegisterPageProps> = ({ onLoginSuccess }) =>
                     value={formData.confirmPassword}
                     onChange={handleChange}
                     placeholder="••••••••"
-                    className="w-full px-3 py-2 bg-campus-bg border border-campus-border rounded text-campus-text text-xs placeholder-campus-muted focus:outline-none focus:border-campus-gold"
+                    className="w-full px-3.5 py-2.5 bg-white/60 border border-[rgba(77,42,0,0.12)] rounded-xl text-[#4D2A00] text-xs placeholder-[#4D2A00]/40 focus:outline-none focus:border-[#CC6F00]"
                   />
                 </div>
               </div>
 
-              <h2 className="text-xs font-mono font-semibold text-campus-muted uppercase tracking-wider border-b border-campus-border pb-1.5 pt-3">
+              <h2 className="text-xs font-bold text-[#CC6F00] uppercase tracking-wider border-b border-[rgba(77,42,0,0.1)] pb-1.5 pt-3">
                 2. Academic Details
               </h2>
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                 <div>
-                  <label htmlFor="course" className="block text-xs font-medium text-campus-secondary mb-1">
+                  <label htmlFor="course" className="block text-xs font-semibold text-[#4D2A00] mb-1">
                     Course / Degree *
                   </label>
                   <select
@@ -372,7 +370,7 @@ export const RegisterPage: React.FC<RegisterPageProps> = ({ onLoginSuccess }) =>
                     name="course"
                     value={formData.course}
                     onChange={handleChange}
-                    className="w-full px-3 py-2 bg-campus-bg border border-campus-border rounded text-campus-text text-xs focus:outline-none focus:border-campus-gold"
+                    className="w-full px-3.5 py-2.5 bg-white/60 border border-[rgba(77,42,0,0.12)] rounded-xl text-[#4D2A00] text-xs focus:outline-none focus:border-[#CC6F00]"
                   >
                     <option value="B.Tech">B.Tech</option>
                     <option value="M.Tech">M.Tech</option>
@@ -382,7 +380,7 @@ export const RegisterPage: React.FC<RegisterPageProps> = ({ onLoginSuccess }) =>
                 </div>
 
                 <div>
-                  <label htmlFor="branch" className="block text-xs font-medium text-campus-secondary mb-1">
+                  <label htmlFor="branch" className="block text-xs font-semibold text-[#4D2A00] mb-1">
                     Department / Branch *
                   </label>
                   <select
@@ -390,7 +388,7 @@ export const RegisterPage: React.FC<RegisterPageProps> = ({ onLoginSuccess }) =>
                     name="branch"
                     value={formData.branch}
                     onChange={handleChange}
-                    className="w-full px-3 py-2 bg-campus-bg border border-campus-border rounded text-campus-text text-xs focus:outline-none focus:border-campus-gold"
+                    className="w-full px-3.5 py-2.5 bg-white/60 border border-[rgba(77,42,0,0.12)] rounded-xl text-[#4D2A00] text-xs focus:outline-none focus:border-[#CC6F00]"
                   >
                     <option value="CSE">CSE (Computer Science)</option>
                     <option value="ECE">ECE (Electronics)</option>
@@ -403,7 +401,7 @@ export const RegisterPage: React.FC<RegisterPageProps> = ({ onLoginSuccess }) =>
                 <div>
                   <div className="grid grid-cols-2 gap-2">
                     <div>
-                      <label htmlFor="year" className="block text-xs font-medium text-campus-secondary mb-1">
+                      <label htmlFor="year" className="block text-xs font-semibold text-[#4D2A00] mb-1">
                         Year *
                       </label>
                       <select
@@ -411,7 +409,7 @@ export const RegisterPage: React.FC<RegisterPageProps> = ({ onLoginSuccess }) =>
                         name="year"
                         value={formData.year}
                         onChange={handleChange}
-                        className="w-full px-3 py-2 bg-campus-bg border border-campus-border rounded text-campus-text text-xs focus:outline-none focus:border-campus-gold"
+                        className="w-full px-3.5 py-2.5 bg-white/60 border border-[rgba(77,42,0,0.12)] rounded-xl text-[#4D2A00] text-xs focus:outline-none focus:border-[#CC6F00]"
                       >
                         <option value={1}>1st Yr</option>
                         <option value={2}>2nd Yr</option>
@@ -421,7 +419,7 @@ export const RegisterPage: React.FC<RegisterPageProps> = ({ onLoginSuccess }) =>
                     </div>
 
                     <div>
-                      <label htmlFor="semester" className="block text-xs font-medium text-campus-secondary mb-1">
+                      <label htmlFor="semester" className="block text-xs font-semibold text-[#4D2A00] mb-1">
                         Semester
                       </label>
                       <select
@@ -429,7 +427,7 @@ export const RegisterPage: React.FC<RegisterPageProps> = ({ onLoginSuccess }) =>
                         name="semester"
                         value={formData.semester}
                         onChange={handleChange}
-                        className="w-full px-3 py-2 bg-campus-bg border border-campus-border rounded text-campus-text text-xs focus:outline-none focus:border-campus-gold"
+                        className="w-full px-3.5 py-2.5 bg-white/60 border border-[rgba(77,42,0,0.12)] rounded-xl text-[#4D2A00] text-xs focus:outline-none focus:border-[#CC6F00]"
                       >
                         {[1, 2, 3, 4, 5, 6, 7, 8].map((s) => (
                           <option key={s} value={s}>
@@ -451,7 +449,7 @@ export const RegisterPage: React.FC<RegisterPageProps> = ({ onLoginSuccess }) =>
                       setCurrentStep(2);
                     }
                   }}
-                  className="px-5 py-2 bg-campus-gold hover:bg-campus-gold-light text-campus-bg text-xs font-semibold rounded transition-colors"
+                  className="btn-primary px-6 py-2.5 text-xs font-bold shadow-sm"
                 >
                   Next: Parents & Guardian →
                 </button>
@@ -462,12 +460,12 @@ export const RegisterPage: React.FC<RegisterPageProps> = ({ onLoginSuccess }) =>
           {/* STEP 2: Parents & Local Guardian */}
           {currentStep === 2 && (
             <div className="space-y-4">
-              <h2 className="text-xs font-mono font-semibold text-campus-muted uppercase tracking-wider border-b border-campus-border pb-1.5">
+              <h2 className="text-xs font-bold text-[#CC6F00] uppercase tracking-wider border-b border-[rgba(77,42,0,0.1)] pb-1.5">
                 3. Parent Contact Details
               </h2>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
-                  <label htmlFor="fatherName" className="block text-xs font-medium text-campus-secondary mb-1">
+                  <label htmlFor="fatherName" className="block text-xs font-semibold text-[#4D2A00] mb-1">
                     Father's Full Name *
                   </label>
                   <input
@@ -478,12 +476,12 @@ export const RegisterPage: React.FC<RegisterPageProps> = ({ onLoginSuccess }) =>
                     value={formData.fatherName}
                     onChange={handleChange}
                     placeholder="e.g. Rajesh Sharma"
-                    className="w-full px-3 py-2 bg-campus-bg border border-campus-border rounded text-campus-text text-xs placeholder-campus-muted focus:outline-none focus:border-campus-gold"
+                    className="w-full px-3.5 py-2.5 bg-white/60 border border-[rgba(77,42,0,0.12)] rounded-xl text-[#4D2A00] text-xs placeholder-[#4D2A00]/40 focus:outline-none focus:border-[#CC6F00]"
                   />
                 </div>
 
                 <div>
-                  <label htmlFor="fatherPhone" className="block text-xs font-medium text-campus-secondary mb-1">
+                  <label htmlFor="fatherPhone" className="block text-xs font-semibold text-[#4D2A00] mb-1">
                     Father's Phone Number *
                   </label>
                   <input
@@ -494,12 +492,12 @@ export const RegisterPage: React.FC<RegisterPageProps> = ({ onLoginSuccess }) =>
                     value={formData.fatherPhone}
                     onChange={handleChange}
                     placeholder="9876543288"
-                    className="w-full px-3 py-2 bg-campus-bg border border-campus-border rounded text-campus-text text-xs placeholder-campus-muted focus:outline-none focus:border-campus-gold font-mono"
+                    className="w-full px-3.5 py-2.5 bg-white/60 border border-[rgba(77,42,0,0.12)] rounded-xl text-[#4D2A00] text-xs placeholder-[#4D2A00]/40 focus:outline-none focus:border-[#CC6F00] font-mono"
                   />
                 </div>
 
                 <div>
-                  <label htmlFor="motherName" className="block text-xs font-medium text-campus-secondary mb-1">
+                  <label htmlFor="motherName" className="block text-xs font-semibold text-[#4D2A00] mb-1">
                     Mother's Full Name
                   </label>
                   <input
@@ -509,12 +507,12 @@ export const RegisterPage: React.FC<RegisterPageProps> = ({ onLoginSuccess }) =>
                     value={formData.motherName}
                     onChange={handleChange}
                     placeholder="e.g. Sunita Sharma"
-                    className="w-full px-3 py-2 bg-campus-bg border border-campus-border rounded text-campus-text text-xs placeholder-campus-muted focus:outline-none focus:border-campus-gold"
+                    className="w-full px-3.5 py-2.5 bg-white/60 border border-[rgba(77,42,0,0.12)] rounded-xl text-[#4D2A00] text-xs placeholder-[#4D2A00]/40 focus:outline-none focus:border-[#CC6F00]"
                   />
                 </div>
 
                 <div>
-                  <label htmlFor="motherPhone" className="block text-xs font-medium text-campus-secondary mb-1">
+                  <label htmlFor="motherPhone" className="block text-xs font-semibold text-[#4D2A00] mb-1">
                     Mother's Phone Number
                   </label>
                   <input
@@ -524,17 +522,17 @@ export const RegisterPage: React.FC<RegisterPageProps> = ({ onLoginSuccess }) =>
                     value={formData.motherPhone}
                     onChange={handleChange}
                     placeholder="9876543289"
-                    className="w-full px-3 py-2 bg-campus-bg border border-campus-border rounded text-campus-text text-xs placeholder-campus-muted focus:outline-none focus:border-campus-gold font-mono"
+                    className="w-full px-3.5 py-2.5 bg-white/60 border border-[rgba(77,42,0,0.12)] rounded-xl text-[#4D2A00] text-xs placeholder-[#4D2A00]/40 focus:outline-none focus:border-[#CC6F00] font-mono"
                   />
                 </div>
               </div>
 
-              <h2 className="text-xs font-mono font-semibold text-campus-muted uppercase tracking-wider border-b border-campus-border pb-1.5 pt-3">
+              <h2 className="text-xs font-bold text-[#CC6F00] uppercase tracking-wider border-b border-[rgba(77,42,0,0.1)] pb-1.5 pt-3">
                 4. Local Guardian Details
               </h2>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
-                  <label htmlFor="guardianName" className="block text-xs font-medium text-campus-secondary mb-1">
+                  <label htmlFor="guardianName" className="block text-xs font-semibold text-[#4D2A00] mb-1">
                     Local Guardian Name *
                   </label>
                   <input
@@ -545,13 +543,13 @@ export const RegisterPage: React.FC<RegisterPageProps> = ({ onLoginSuccess }) =>
                     value={formData.guardianName}
                     onChange={handleChange}
                     placeholder="e.g. Dr. Alok Mohanty"
-                    className="w-full px-3 py-2 bg-campus-bg border border-campus-border rounded text-campus-text text-xs placeholder-campus-muted focus:outline-none focus:border-campus-gold"
+                    className="w-full px-3.5 py-2.5 bg-white/60 border border-[rgba(77,42,0,0.12)] rounded-xl text-[#4D2A00] text-xs placeholder-[#4D2A00]/40 focus:outline-none focus:border-[#CC6F00]"
                   />
                 </div>
 
                 <div className="grid grid-cols-2 gap-2">
                   <div>
-                    <label htmlFor="guardianRelation" className="block text-xs font-medium text-campus-secondary mb-1">
+                    <label htmlFor="guardianRelation" className="block text-xs font-semibold text-[#4D2A00] mb-1">
                       Relationship *
                     </label>
                     <input
@@ -562,12 +560,12 @@ export const RegisterPage: React.FC<RegisterPageProps> = ({ onLoginSuccess }) =>
                       value={formData.guardianRelation}
                       onChange={handleChange}
                       placeholder="e.g. Uncle / Cousin"
-                      className="w-full px-3 py-2 bg-campus-bg border border-campus-border rounded text-campus-text text-xs placeholder-campus-muted focus:outline-none focus:border-campus-gold"
+                      className="w-full px-3.5 py-2.5 bg-white/60 border border-[rgba(77,42,0,0.12)] rounded-xl text-[#4D2A00] text-xs placeholder-[#4D2A00]/40 focus:outline-none focus:border-[#CC6F00]"
                     />
                   </div>
 
                   <div>
-                    <label htmlFor="guardianPhone" className="block text-xs font-medium text-campus-secondary mb-1">
+                    <label htmlFor="guardianPhone" className="block text-xs font-semibold text-[#4D2A00] mb-1">
                       Guardian Phone *
                     </label>
                     <input
@@ -578,13 +576,13 @@ export const RegisterPage: React.FC<RegisterPageProps> = ({ onLoginSuccess }) =>
                       value={formData.guardianPhone}
                       onChange={handleChange}
                       placeholder="9876543290"
-                      className="w-full px-3 py-2 bg-campus-bg border border-campus-border rounded text-campus-text text-xs placeholder-campus-muted focus:outline-none focus:border-campus-gold font-mono"
+                      className="w-full px-3.5 py-2.5 bg-white/60 border border-[rgba(77,42,0,0.12)] rounded-xl text-[#4D2A00] text-xs placeholder-[#4D2A00]/40 focus:outline-none focus:border-[#CC6F00] font-mono"
                     />
                   </div>
                 </div>
 
                 <div className="sm:col-span-2">
-                  <label htmlFor="guardianAddress" className="block text-xs font-medium text-campus-secondary mb-1">
+                  <label htmlFor="guardianAddress" className="block text-xs font-semibold text-[#4D2A00] mb-1">
                     Guardian Local Address
                   </label>
                   <input
@@ -594,16 +592,16 @@ export const RegisterPage: React.FC<RegisterPageProps> = ({ onLoginSuccess }) =>
                     value={formData.guardianAddress}
                     onChange={handleChange}
                     placeholder="Plot 12, Saheed Nagar, Bhubaneswar"
-                    className="w-full px-3 py-2 bg-campus-bg border border-campus-border rounded text-campus-text text-xs placeholder-campus-muted focus:outline-none focus:border-campus-gold"
+                    className="w-full px-3.5 py-2.5 bg-white/60 border border-[rgba(77,42,0,0.12)] rounded-xl text-[#4D2A00] text-xs placeholder-[#4D2A00]/40 focus:outline-none focus:border-[#CC6F00]"
                   />
                 </div>
               </div>
 
-              <h2 className="text-xs font-mono font-semibold text-campus-muted uppercase tracking-wider border-b border-campus-border pb-1.5 pt-3">
+              <h2 className="text-xs font-bold text-[#CC6F00] uppercase tracking-wider border-b border-[rgba(77,42,0,0.1)] pb-1.5 pt-3">
                 5. Permanent Residential Address
               </h2>
               <div>
-                <label htmlFor="permanentAddress" className="block text-xs font-medium text-campus-secondary mb-1">
+                <label htmlFor="permanentAddress" className="block text-xs font-semibold text-[#4D2A00] mb-1">
                   Permanent Address *
                 </label>
                 <textarea
@@ -614,7 +612,7 @@ export const RegisterPage: React.FC<RegisterPageProps> = ({ onLoginSuccess }) =>
                   value={formData.permanentAddress}
                   onChange={handleChange}
                   placeholder="Full permanent postal address with PIN code"
-                  className="w-full px-3 py-2 bg-campus-bg border border-campus-border rounded text-campus-text text-xs placeholder-campus-muted focus:outline-none focus:border-campus-gold resize-none"
+                  className="w-full px-3.5 py-2.5 bg-white/60 border border-[rgba(77,42,0,0.12)] rounded-xl text-[#4D2A00] text-xs placeholder-[#4D2A00]/40 focus:outline-none focus:border-[#CC6F00] resize-none"
                 />
               </div>
 
@@ -622,7 +620,7 @@ export const RegisterPage: React.FC<RegisterPageProps> = ({ onLoginSuccess }) =>
                 <button
                   type="button"
                   onClick={() => setCurrentStep(1)}
-                  className="px-4 py-2 bg-campus-elevated border border-campus-border hover:bg-campus-border/60 text-campus-secondary hover:text-campus-text text-xs font-medium rounded transition-colors"
+                  className="btn-secondary px-4 py-2 text-xs font-medium"
                 >
                   ← Back
                 </button>
@@ -634,7 +632,7 @@ export const RegisterPage: React.FC<RegisterPageProps> = ({ onLoginSuccess }) =>
                       setCurrentStep(3);
                     }
                   }}
-                  className="px-5 py-2 bg-campus-gold hover:bg-campus-gold-light text-campus-bg text-xs font-semibold rounded transition-colors"
+                  className="btn-primary px-6 py-2.5 text-xs font-bold shadow-sm"
                 >
                   Next: Hostel Preference →
                 </button>
@@ -645,12 +643,12 @@ export const RegisterPage: React.FC<RegisterPageProps> = ({ onLoginSuccess }) =>
           {/* STEP 3: Hostel Preference & Consent */}
           {currentStep === 3 && (
             <div className="space-y-4">
-              <h2 className="text-xs font-mono font-semibold text-campus-muted uppercase tracking-wider border-b border-campus-border pb-1.5">
+              <h2 className="text-xs font-bold text-[#CC6F00] uppercase tracking-wider border-b border-[rgba(77,42,0,0.1)] pb-1.5">
                 6. Hostel Admission Preference
               </h2>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
-                  <label htmlFor="requestedHostel" className="block text-xs font-medium text-campus-secondary mb-1">
+                  <label htmlFor="requestedHostel" className="block text-xs font-semibold text-[#4D2A00] mb-1">
                     Requested Hostel Block *
                   </label>
                   <select
@@ -658,7 +656,7 @@ export const RegisterPage: React.FC<RegisterPageProps> = ({ onLoginSuccess }) =>
                     name="requestedHostel"
                     value={formData.requestedHostel}
                     onChange={handleChange}
-                    className="w-full px-3 py-2 bg-campus-bg border border-campus-border rounded text-campus-text text-xs focus:outline-none focus:border-campus-gold"
+                    className="w-full px-3.5 py-2.5 bg-white/60 border border-[rgba(77,42,0,0.12)] rounded-xl text-[#4D2A00] text-xs focus:outline-none focus:border-[#CC6F00]"
                   >
                     <option value="Hostel-A">Hostel-A (Boys Senior Block)</option>
                     <option value="Hostel-B">Hostel-B (Boys Junior Block)</option>
@@ -667,7 +665,7 @@ export const RegisterPage: React.FC<RegisterPageProps> = ({ onLoginSuccess }) =>
                 </div>
 
                 <div>
-                  <label htmlFor="roomPreference" className="block text-xs font-medium text-campus-secondary mb-1">
+                  <label htmlFor="roomPreference" className="block text-xs font-semibold text-[#4D2A00] mb-1">
                     Room Preference
                   </label>
                   <select
@@ -675,7 +673,7 @@ export const RegisterPage: React.FC<RegisterPageProps> = ({ onLoginSuccess }) =>
                     name="roomPreference"
                     value={formData.roomPreference}
                     onChange={handleChange}
-                    className="w-full px-3 py-2 bg-campus-bg border border-campus-border rounded text-campus-text text-xs focus:outline-none focus:border-campus-gold"
+                    className="w-full px-3.5 py-2.5 bg-white/60 border border-[rgba(77,42,0,0.12)] rounded-xl text-[#4D2A00] text-xs focus:outline-none focus:border-[#CC6F00]"
                   >
                     <option value="Double Sharing">Double Sharing (2 Beds)</option>
                     <option value="Single Room">Single Room (Subject to Availability)</option>
@@ -684,16 +682,16 @@ export const RegisterPage: React.FC<RegisterPageProps> = ({ onLoginSuccess }) =>
                 </div>
               </div>
 
-              <div className="p-3.5 bg-campus-elevated/60 border border-campus-border rounded text-xs text-campus-muted space-y-1">
-                <span className="font-semibold text-campus-gold block font-mono text-[11px] uppercase tracking-wider">Hostel Allocation Notice:</span>
+              <div className="p-4 bg-[#FDB773]/20 border border-[#CC6F00]/20 rounded-2xl text-xs text-[#4D2A00]/80 space-y-1">
+                <span className="font-bold text-[#CC6F00] block text-[11px] uppercase tracking-wider">Hostel Allocation Notice:</span>
                 <p className="leading-relaxed">
-                  Rooms and beds are assigned by the designated Hostel Warden and Administration after verifying admission eligibility. Your account will start in <strong className="text-campus-text">Pending Warden Verification</strong> status.
+                  Rooms and beds are assigned by the designated Hostel Warden and Administration after verifying admission eligibility. Your account will start in <strong className="text-[#4D2A00]">Pending Warden Verification</strong> status.
                 </p>
               </div>
 
               {/* Data Privacy and Consent Agreement */}
               <div className="pt-2">
-                <div className="p-3.5 bg-campus-elevated/40 border border-campus-border rounded">
+                <div className="p-4 bg-white/50 border border-[rgba(77,42,0,0.1)] rounded-2xl">
                   <label className="flex items-start space-x-2.5 cursor-pointer">
                     <input
                       type="checkbox"
@@ -701,9 +699,9 @@ export const RegisterPage: React.FC<RegisterPageProps> = ({ onLoginSuccess }) =>
                       required
                       checked={formData.consentAgreed}
                       onChange={handleChange}
-                      className="mt-0.5 rounded border-campus-border bg-campus-bg text-campus-gold focus:ring-campus-gold"
+                      className="mt-0.5 rounded border-[#CC6F00]/30 text-[#CC6F00] focus:ring-[#CC6F00]"
                     />
-                    <span className="text-xs text-campus-secondary leading-relaxed">
+                    <span className="text-xs text-[#4D2A00]/80 leading-relaxed">
                       I declare that the information provided is accurate and authentic. I consent to official campus verification, hostel allocation policies, and data processing in accordance with institutional guidelines. *
                     </span>
                   </label>
@@ -714,14 +712,14 @@ export const RegisterPage: React.FC<RegisterPageProps> = ({ onLoginSuccess }) =>
                 <button
                   type="button"
                   onClick={() => setCurrentStep(2)}
-                  className="px-4 py-2 bg-campus-elevated border border-campus-border hover:bg-campus-border/60 text-campus-secondary hover:text-campus-text text-xs font-medium rounded transition-colors"
+                  className="btn-secondary px-4 py-2 text-xs font-medium"
                 >
                   ← Back
                 </button>
                 <button
                   type="submit"
                   disabled={loading}
-                  className="px-6 py-2 bg-campus-gold hover:bg-campus-gold-light text-campus-bg text-xs font-semibold rounded disabled:opacity-40 transition-colors"
+                  className="btn-primary px-6 py-2.5 text-xs font-bold shadow-sm disabled:opacity-40"
                 >
                   {loading ? "Submitting Registration..." : "Submit Registration for Verification"}
                 </button>
@@ -730,9 +728,9 @@ export const RegisterPage: React.FC<RegisterPageProps> = ({ onLoginSuccess }) =>
           )}
         </form>
 
-        <div className="relative mt-6 pt-4 border-t border-campus-border text-center text-xs text-campus-muted">
+        <div className="relative mt-6 pt-4 border-t border-[rgba(77,42,0,0.1)] text-center text-xs text-[#4D2A00]/70">
           Already registered?{" "}
-          <Link to="/login" className="font-semibold text-campus-gold hover:underline">
+          <Link to="/login" className="font-bold text-[#CC6F00] hover:underline">
             Sign in to CampusDesk
           </Link>
         </div>
@@ -740,3 +738,5 @@ export const RegisterPage: React.FC<RegisterPageProps> = ({ onLoginSuccess }) =>
     </div>
   );
 };
+
+export default RegisterPage;
