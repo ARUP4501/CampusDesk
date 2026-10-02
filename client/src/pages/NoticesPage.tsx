@@ -289,14 +289,14 @@ export const NoticesPage: React.FC<{ user: UserProfile | null }> = ({ user }) =>
           </div>
 
           {/* Search Input */}
-          <div className="relative w-full md:w-64">
-            <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-[#4D2A00]/40" />
+          <div className="relative w-full md:w-64 flex items-center">
+            <Search className="w-4 h-4 absolute left-3.5 pointer-events-none text-[#4D2A00]/40" />
             <input
               type="text"
               placeholder="Search circulars..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-9 pr-3.5 py-2 text-xs border border-[rgba(77,42,0,0.12)] rounded-xl bg-white/60 text-[#4D2A00] placeholder-[#4D2A00]/40 focus:outline-none focus:border-[#CC6F00]"
+              className="w-full pl-10 pr-3.5 py-2 text-xs border border-[rgba(77,42,0,0.12)] rounded-xl bg-white/60 text-[#4D2A00] placeholder-[#4D2A00]/40 focus:outline-none focus:border-[#CC6F00]"
             />
           </div>
         </div>

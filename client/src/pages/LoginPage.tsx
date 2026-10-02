@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { apiRequest, UserProfile } from "../api/client.js";
-import { ArrowRight, Mail, KeyRound, Sparkles, User, Shield, Wrench, Building } from "lucide-react";
+import { apiRequest, UserProfile, setAuthToken, broadcastAuthEvent } from "../api/client.js";
+import { ArrowRight, Mail, KeyRound, Sparkles, User, Shield, Wrench, Building, Eye, EyeOff } from "lucide-react";
 
 interface LoginPageProps {
   onLoginSuccess: (user: UserProfile) => void;
@@ -11,6 +11,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onLoginSuccess }) => {
   const navigate = useNavigate();
   const [email, setEmail] = useState<string>("");
   const [password, setPassword] = useState<string>("");
+  const [showPassword, setShowPassword] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState<boolean>(false);
 
@@ -20,12 +21,16 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onLoginSuccess }) => {
     setLoading(true);
 
     try {
-      const data = await apiRequest<{ user: UserProfile }>("/api/auth/login", {
+      const data = await apiRequest<{ user: UserProfile; token?: string }>("/api/auth/login", {
         method: "POST",
         body: JSON.stringify({ email, password })
       });
+      if (data.token) {
+        setAuthToken(data.token);
+      }
       onLoginSuccess(data.user);
-      navigate(data.user.role === "STUDENT" ? "/dashboard" : "/admin");
+      broadcastAuthEvent({ type: "LOGIN", user: data.user });
+      navigate("/dashboard", { replace: true });
     } catch (err: any) {
       setError(err.message || "Failed to log in.");
     } finally {
@@ -62,7 +67,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onLoginSuccess }) => {
             <label htmlFor="email" className="block text-xs font-semibold text-campus-text mb-1.5">
               Email Address
             </label>
-            <div className="relative">
+            <div className="relative flex items-center">
               <input
                 id="email"
                 type="email"
@@ -70,9 +75,9 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onLoginSuccess }) => {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="student@campusdesk.edu"
-                className="w-full pl-9.5 pr-3.5 py-2.5 bg-white/70 border border-campus-border rounded-xl text-campus-text text-xs placeholder-campus-muted focus:outline-none focus:border-campus-accent font-mono"
+                className="w-full pl-10 pr-4 py-2.5 bg-white/70 border border-campus-border rounded-xl text-campus-text text-xs placeholder-campus-muted focus:outline-none focus:border-campus-accent font-mono transition-colors"
               />
-              <Mail className="w-4 h-4 text-campus-muted absolute left-3 top-3" />
+              <Mail className="w-4 h-4 text-campus-muted absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
             </div>
           </div>
 
@@ -82,17 +87,25 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onLoginSuccess }) => {
                 Password
               </label>
             </div>
-            <div className="relative">
+            <div className="relative flex items-center">
               <input
                 id="password"
-                type="password"
+                type={showPassword ? "text" : "password"}
                 required
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder="••••••••••••"
-                className="w-full pl-9.5 pr-3.5 py-2.5 bg-white/70 border border-campus-border rounded-xl text-campus-text text-xs placeholder-campus-muted focus:outline-none focus:border-campus-accent"
+                className="w-full pl-10 pr-10 py-2.5 bg-white/70 border border-campus-border rounded-xl text-campus-text text-xs placeholder-campus-muted focus:outline-none focus:border-campus-accent transition-colors"
               />
-              <KeyRound className="w-4 h-4 text-campus-muted absolute left-3 top-3" />
+              <KeyRound className="w-4 h-4 text-campus-muted absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+              <button
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
+                className="absolute right-3 top-1/2 -translate-y-1/2 p-1 text-campus-muted hover:text-campus-text transition-colors rounded-lg focus:outline-none"
+                aria-label={showPassword ? "Hide password" : "Show password"}
+              >
+                {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+              </button>
             </div>
           </div>
 

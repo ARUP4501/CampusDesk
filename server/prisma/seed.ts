@@ -7,6 +7,21 @@ async function main() {
   console.log("Seeding CampusDesk database with verified sample dataset...");
 
   // Clear existing records in logical order
+  await prisma.academicBranch.deleteMany();
+  await prisma.academicCourse.deleteMany();
+  await prisma.emergency.deleteMany();
+  await prisma.clubEventRegistration.deleteMany();
+  await prisma.clubEvent.deleteMany();
+  await prisma.clubAnnouncement.deleteMany();
+  await prisma.clubMember.deleteMany();
+  await prisma.club.deleteMany();
+  await prisma.plannedMaintenance.deleteMany();
+  await prisma.parcel.deleteMany();
+  await prisma.routeStop.deleteMany();
+  await prisma.busRoute.deleteMany();
+  await prisma.bus.deleteMany();
+  await prisma.transportRoute.deleteMany();
+  await prisma.parkingZone.deleteMany();
   await prisma.auditLog.deleteMany();
   await prisma.studentDocument.deleteMany();
   await prisma.hostelTransferRequest.deleteMany();
@@ -31,6 +46,105 @@ async function main() {
   await prisma.user.deleteMany();
 
   const commonPassword = await argon2.hash("Password@123");
+ 
+  // 0. Seed Academic Courses and Branches Master Data
+  console.log("Seeding Academic Courses and Branches...");
+  const courseMca = await prisma.academicCourse.create({
+    data: {
+      code: "MCA",
+      name: "Master of Computer Applications",
+      durationYears: 2,
+      isActive: true,
+      branches: {
+        create: [
+          { code: "CA", name: "Computer Applications", isActive: true },
+          { code: "DS", name: "Data Science", isActive: true }
+        ]
+      }
+    }
+  });
+
+  const courseBca = await prisma.academicCourse.create({
+    data: {
+      code: "BCA",
+      name: "Bachelor of Computer Applications",
+      durationYears: 3,
+      isActive: true,
+      branches: {
+        create: [
+          { code: "CA", name: "Computer Applications", isActive: true },
+          { code: "DS", name: "Data Science", isActive: true }
+        ]
+      }
+    }
+  });
+
+  const courseBba = await prisma.academicCourse.create({
+    data: {
+      code: "BBA",
+      name: "Bachelor of Business Administration",
+      durationYears: 3,
+      isActive: true,
+      branches: {
+        create: [
+          { code: "GEN", name: "General", isActive: true },
+          { code: "FIN", name: "Finance", isActive: true },
+          { code: "MKT", name: "Marketing", isActive: true },
+          { code: "HRM", name: "Human Resource Management", isActive: true }
+        ]
+      }
+    }
+  });
+
+  const courseBtech = await prisma.academicCourse.create({
+    data: {
+      code: "B.Tech",
+      name: "Bachelor of Technology",
+      durationYears: 4,
+      isActive: true,
+      branches: {
+        create: [
+          { code: "CSE", name: "Computer Science & Engineering", isActive: true },
+          { code: "IT", name: "Information Technology", isActive: true },
+          { code: "ECE", name: "Electronics & Communication Engineering", isActive: true },
+          { code: "MECH", name: "Mechanical Engineering", isActive: true },
+          { code: "CIVIL", name: "Civil Engineering", isActive: true }
+        ]
+      }
+    }
+  });
+
+  const courseMba = await prisma.academicCourse.create({
+    data: {
+      code: "MBA",
+      name: "Master of Business Administration",
+      durationYears: 2,
+      isActive: true,
+      branches: {
+        create: [
+          { code: "FIN", name: "Finance", isActive: true },
+          { code: "MKT", name: "Marketing", isActive: true },
+          { code: "HRM", name: "Human Resource Management", isActive: true },
+          { code: "OPS", name: "Operations", isActive: true }
+        ]
+      }
+    }
+  });
+
+  const courseMtech = await prisma.academicCourse.create({
+    data: {
+      code: "M.Tech",
+      name: "Master of Technology",
+      durationYears: 2,
+      isActive: true,
+      branches: {
+        create: [
+          { code: "CSE", name: "Computer Science & Engineering", isActive: true },
+          { code: "OTHER", name: "Other available specializations", isActive: true }
+        ]
+      }
+    }
+  });
 
   // 1. Create Hostels
   const hostelA = await prisma.hostel.create({
@@ -280,12 +394,12 @@ async function main() {
       dob: new Date("2004-02-20"),
       gender: "FEMALE",
       bloodGroup: "B+",
-      course: "B.Tech",
-      department: "Computer Science & Engineering",
-      branch: "CSE",
+      course: "BCA",
+      department: "Computer Applications",
+      branch: "Data Science",
       year: 2,
       semester: 4,
-      batch: "2024-2028",
+      batch: "2024-2027",
       permanentAddress: "Sector 5, Rourkela, Odisha 769002",
       currentAddress: "Room B-108, Bed-1, Hostel-B, Campus",
       fatherName: "Kishore Patel",
@@ -902,6 +1016,521 @@ async function main() {
       type: "DOCUMENT",
       linkUrl: "/documents"
     }
+  });
+
+  // 19. Create Dedicated Day Scholar Student
+  const dayScholar = await prisma.user.create({
+    data: {
+      email: "dayscholar@campusdesk.edu",
+      passwordHash: commonPassword,
+      fullName: "Ananya Mishra",
+      role: "STUDENT",
+      livingType: "DAY_SCHOLAR",
+      rollNumber: "2024DS201",
+      phone: "9876543230",
+      dob: new Date("2004-03-18"),
+      gender: "FEMALE",
+      bloodGroup: "O+",
+      course: "MCA",
+      department: "Computer Applications",
+      branch: "Computer Applications",
+      year: 1,
+      semester: 2,
+      batch: "2024-2026",
+      permanentAddress: "Plot 84, Nayapalli, Bhubaneswar, Odisha 751012",
+      currentAddress: "Plot 84, Nayapalli, Bhubaneswar, Odisha 751012",
+      fatherName: "Pradeep Mishra",
+      fatherPhone: "9876543277",
+      motherName: "Geeta Mishra",
+      motherPhone: "9876543278",
+      guardianName: "Pradeep Mishra",
+      guardianRelation: "Father",
+      guardianPhone: "9876543277",
+      guardianAddress: "Plot 84, Nayapalli, Bhubaneswar",
+      busRoute: "Route 1 - Master Canteen to Campus",
+      pickupPoint: "Vani Vihar Square",
+      vehicleNumber: "OD-02-CD-8910",
+      parkingZone: "Zone A - 2-Wheeler (Near Gate 1)",
+      verificationStatus: "ACTIVE",
+      isActive: true
+    }
+  });
+
+  // 20. Create Specialized Staff Members
+  const itStaff = await prisma.user.create({
+    data: {
+      email: "itstaff@campusdesk.edu",
+      passwordHash: commonPassword,
+      fullName: "Priya Mohanty",
+      role: "STAFF",
+      phone: "9876543207",
+      department: "IT & Technical Support",
+      employeeId: "EMP-STF-003",
+      verificationStatus: "ACTIVE",
+      isActive: true
+    }
+  });
+
+  const housekeepingStaff = await prisma.user.create({
+    data: {
+      email: "cleaning@campusdesk.edu",
+      passwordHash: commonPassword,
+      fullName: "Ramesh Nayak",
+      role: "STAFF",
+      phone: "9876543209",
+      department: "Housekeeping & Sanitation",
+      employeeId: "EMP-STF-004",
+      verificationStatus: "ACTIVE",
+      isActive: true
+    }
+  });
+
+  // 21. Create Campus Clubs
+  const codingClub = await prisma.club.create({
+    data: {
+      name: "ByteCraft - Coding & Technology Club",
+      category: "CODING_TECH",
+      description: "Premier competitive programming, open source development, web3, and AI building community of BPUT.",
+      logoIcon: "Code2",
+      coordinatorName: "Prof. S. Das",
+      coordinatorEmail: "bytecraft@campusdesk.edu",
+      coordinatorPhone: "9876543301",
+      meetingSchedule: "Every Wednesday & Saturday @ 5:30 PM",
+      roomLocation: "Computer Center Lab 4",
+      isRecruiting: true
+    }
+  });
+
+  const yogaClub = await prisma.club.create({
+    data: {
+      name: "Prana - Yoga & Wellness Society",
+      category: "YOGA_WELLNESS",
+      description: "Dedicated to holistic student mental health, mindfulness meditation, morning asanas, and stress relief sessions.",
+      logoIcon: "HeartHandshake",
+      coordinatorName: "Dr. M. Sahu",
+      coordinatorEmail: "wellness@campusdesk.edu",
+      coordinatorPhone: "9876543302",
+      meetingSchedule: "Daily 6:30 AM – 7:30 AM",
+      roomLocation: "SAC Yoga Hall",
+      isRecruiting: true
+    }
+  });
+
+  const musicClub = await prisma.club.create({
+    data: {
+      name: "Dhwani - Music & Performing Arts Society",
+      category: "MUSIC",
+      description: "Classical, contemporary, instrumental bands, and vocal harmony club organizing campus musical nights and concerts.",
+      logoIcon: "Music",
+      coordinatorName: "Ritu Verma",
+      coordinatorEmail: "dhwani@campusdesk.edu",
+      coordinatorPhone: "9876543303",
+      meetingSchedule: "Tuesday & Friday @ 5:00 PM",
+      roomLocation: "Auditorium Acoustic Room",
+      isRecruiting: true
+    }
+  });
+
+  const sportsClub = await prisma.club.create({
+    data: {
+      name: "Strikers - Sports & Athletics Association",
+      category: "SPORTS_FITNESS",
+      description: "Organizing inter-hostel football tournaments, cricket leagues, badminton championships, and gymnasium fitness.",
+      logoIcon: "Trophy",
+      coordinatorName: "Coach K. Mohapatra",
+      coordinatorEmail: "sports@campusdesk.edu",
+      coordinatorPhone: "9876543304",
+      meetingSchedule: "Weekdays @ 4:30 PM",
+      roomLocation: "Main Sports Complex",
+      isRecruiting: true
+    }
+  });
+
+  const debateClub = await prisma.club.create({
+    data: {
+      name: "Vakya - Literature & Debate Society",
+      category: "LITERATURE_DEBATE",
+      description: "Parliamentary debating, Model United Nations (MUN), creative writing, and public speaking forum.",
+      logoIcon: "MessageSquareText",
+      coordinatorName: "Prof. P. Ray",
+      coordinatorEmail: "debate@campusdesk.edu",
+      coordinatorPhone: "9876543305",
+      meetingSchedule: "Thursdays @ 6:00 PM",
+      roomLocation: "Seminar Hall 2",
+      isRecruiting: true
+    }
+  });
+
+  // 22. Register Students in Clubs
+  await prisma.clubMember.createMany({
+    data: [
+      { clubId: codingClub.id, studentId: student.id, role: "COORDINATOR" },
+      { clubId: yogaClub.id, studentId: student.id, role: "MEMBER" },
+      { clubId: codingClub.id, studentId: dayScholar.id, role: "MEMBER" },
+      { clubId: debateClub.id, studentId: dayScholar.id, role: "MEMBER" }
+    ]
+  });
+
+  // 23. Create Club Events
+  const hackathonEvent = await prisma.clubEvent.create({
+    data: {
+      clubId: codingClub.id,
+      title: "HackOdisha 2026 - 24-Hour Campus Hackathon",
+      description: "Build innovative real-world campus operations and smart governance solutions with cash prizes and internship tracks.",
+      date: new Date(Date.now() + 5 * 24 * 60 * 60 * 1000),
+      location: "Main Auditorium & Computing Complex",
+      capacity: 150
+    }
+  });
+
+  const yogaWorkshop = await prisma.clubEvent.create({
+    data: {
+      clubId: yogaClub.id,
+      title: "Mindfulness & Exam Stress Detox Workshop",
+      description: "Guided pranayama and guided sound bath meditation for pre-semester exam focus.",
+      date: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000),
+      location: "SAC Open Lawn",
+      capacity: 80
+    }
+  });
+
+  // Event Registrations
+  await prisma.clubEventRegistration.createMany({
+    data: [
+      { eventId: hackathonEvent.id, studentId: student.id },
+      { eventId: hackathonEvent.id, studentId: dayScholar.id },
+      { eventId: yogaWorkshop.id, studentId: dayScholar.id }
+    ]
+  });
+
+  // Club Announcements
+  await prisma.clubAnnouncement.create({
+    data: {
+      clubId: codingClub.id,
+      title: "HackOdisha Problem Statements Released",
+      content: "Track themes for Smart Campus, Healthcare, and FinTech are live on the portal. Form teams of 2-4 members."
+    }
+  });
+
+  // 24. Create Planned Maintenance Schedules
+  await prisma.plannedMaintenance.createMany({
+    data: [
+      {
+        title: "Hostel-A & B Overhead Water Tank Cleaning",
+        description: "Routine tank deep cleaning and booster pump maintenance. Water supply will be suspended temporarily.",
+        location: "Hostel-A & Hostel-B",
+        category: "WATER",
+        startTime: new Date(Date.now() + 18 * 60 * 60 * 1000),
+        endTime: new Date(Date.now() + 22 * 60 * 60 * 1000),
+        targetAudience: "HOSTELLER",
+        status: "SCHEDULED",
+        createdById: admin.id
+      },
+      {
+        title: "Campus Core Fiber Backbone Upgrade",
+        description: "Upgrading core switch hardware in Academic Block 2. Intermittent Wi-Fi drops expected for 45 minutes.",
+        location: "Academic Block 2 & Library",
+        category: "NETWORK",
+        startTime: new Date(Date.now() + 40 * 60 * 60 * 1000),
+        endTime: new Date(Date.now() + 42 * 60 * 60 * 1000),
+        targetAudience: "ALL",
+        status: "SCHEDULED",
+        createdById: admin.id
+      }
+    ]
+  });
+
+  // 25. Create SOS Emergency Records
+  await prisma.emergency.create({
+    data: {
+      alertNumber: "SOS-8001",
+      studentId: student.id,
+      category: "ELECTRICAL",
+      location: "Hostel-A, Floor 2, Room A-204",
+      description: "Severe sparks and smoke coming from the corridor electrical breaker panel.",
+      status: "RESOLVED",
+      acknowledgedById: wardenA.id,
+      acknowledgedAt: new Date(Date.now() - 2 * 60 * 60 * 1000),
+      resolvedById: electricalStaff.id,
+      resolvedAt: new Date(Date.now() - 1 * 60 * 60 * 1000),
+      responderNotes: "Main breaker isolated and charred fuse cartridge replaced safely."
+    }
+  });
+
+  await prisma.emergency.create({
+    data: {
+      alertNumber: "SOS-8002",
+      studentId: dayScholar.id,
+      category: "MEDICAL",
+      location: "Academic Block 1, Ground Floor Lab 2",
+      description: "Student feeling sudden dizziness and acute dehydration. First aid requested.",
+      status: "RESPONDING",
+      acknowledgedById: wardenA.id,
+      acknowledgedAt: new Date(Date.now() - 15 * 60 * 1000),
+      responderNotes: "Campus medical attendant dispatched with ORS kit and stretcher."
+    }
+  });
+
+  // 26. Create Inward Parcels
+  await prisma.parcel.create({
+    data: {
+      parcelNumber: "PCL-7001",
+      studentId: student.id,
+      courierService: "Amazon",
+      trackingNumber: "AMZN-OD-992144",
+      securityLocation: "Main Gate Security Desk",
+      otpCode: "4819",
+      status: "RECEIVED",
+      notes: "Medium cardboard parcel for Aarav Sharma."
+    }
+  });
+
+  await prisma.parcel.create({
+    data: {
+      parcelNumber: "PCL-7002",
+      studentId: dayScholar.id,
+      courierService: "SpeedPost",
+      trackingNumber: "SP-882190-IN",
+      securityLocation: "Academic Registry Counter",
+      otpCode: "7124",
+      status: "COLLECTED",
+      collectedAt: new Date(Date.now() - 3 * 60 * 60 * 1000),
+      verifiedByGuard: "Officer Rajesh Nayak",
+      notes: "Document envelope delivered."
+    }
+  });
+
+  // 27. Create Fleet Buses
+  const bus1 = await prisma.bus.create({
+    data: {
+      busNumber: "BUS-01",
+      vehicleNumber: "OD-02-AX-4450",
+      capacity: 52,
+      driverName: "Bishnu Charan Das",
+      driverPhone: "9876543401",
+      status: "ACTIVE"
+    }
+  });
+
+  const bus2 = await prisma.bus.create({
+    data: {
+      busNumber: "BUS-02",
+      vehicleNumber: "OD-02-BY-7812",
+      capacity: 50,
+      driverName: "Dilip Kumar Jena",
+      driverPhone: "9876543402",
+      status: "ACTIVE"
+    }
+  });
+
+  const bus3 = await prisma.bus.create({
+    data: {
+      busNumber: "BUS-03",
+      vehicleNumber: "OD-05-CT-2291",
+      capacity: 55,
+      driverName: "Satyajit Rout",
+      driverPhone: "9876543403",
+      status: "ACTIVE"
+    }
+  });
+
+  // 27b. Create Bus Routes with Assigned Buses & Ordered Stops
+  await prisma.busRoute.create({
+    data: {
+      routeNumber: "Route 1",
+      routeName: "Master Canteen to Campus",
+      description: "Central commuter route connecting Master Canteen railway station, Vani Vihar, Rasulgarh and Patia to campus.",
+      startPoint: "Master Canteen",
+      destination: "Campus Main Gate",
+      status: "ACTIVE",
+      delayStatus: "ON_TIME",
+      busId: bus1.id,
+      stops: {
+        create: [
+          { stopName: "Master Canteen Station", location: "Platform 1 Exit Gate", pickupTime: "07:30 AM", dropTime: "05:45 PM", stopOrder: 1 },
+          { stopName: "Vani Vihar Square", location: "Near University Flyover", pickupTime: "07:45 AM", dropTime: "05:30 PM", stopOrder: 2 },
+          { stopName: "Rasulgarh Square", location: "Overbridge Service Lane", pickupTime: "08:00 AM", dropTime: "05:15 PM", stopOrder: 3 },
+          { stopName: "Patia Big Bazaar", location: "Big Bazaar Bus Bay", pickupTime: "08:20 AM", dropTime: "04:55 PM", stopOrder: 4 },
+          { stopName: "Campus Main Gate", location: "Security Terminal 1", pickupTime: "08:40 AM", dropTime: "04:30 PM", stopOrder: 5 }
+        ]
+      }
+    }
+  });
+
+  await prisma.busRoute.create({
+    data: {
+      routeNumber: "Route 2",
+      routeName: "Khandagiri to Campus",
+      description: "West corridor transit covering Khandagiri, Jayadev Vihar, and Infocity IT corridor.",
+      startPoint: "Khandagiri Square",
+      destination: "Campus Main Gate",
+      status: "ACTIVE",
+      delayStatus: "ON_TIME",
+      busId: bus2.id,
+      stops: {
+        create: [
+          { stopName: "Khandagiri Square", location: "Near Caves Junction", pickupTime: "07:25 AM", dropTime: "05:40 PM", stopOrder: 1 },
+          { stopName: "Jayadev Vihar", location: "Hotel Mayfair Bus Bay", pickupTime: "07:50 AM", dropTime: "05:15 PM", stopOrder: 2 },
+          { stopName: "Infocity Square", location: "Software Complex Gate", pickupTime: "08:15 AM", dropTime: "04:50 PM", stopOrder: 3 },
+          { stopName: "Campus Main Gate", location: "Security Terminal 1", pickupTime: "08:35 AM", dropTime: "04:30 PM", stopOrder: 4 }
+        ]
+      }
+    }
+  });
+
+  await prisma.busRoute.create({
+    data: {
+      routeNumber: "Route 3",
+      routeName: "Cuttack Badambadi to Campus",
+      description: "Inter-city route linking Cuttack Badambadi, Link Road, and Phulnakhara to Campus.",
+      startPoint: "Badambadi Bus Stand",
+      destination: "Campus Main Gate",
+      status: "ACTIVE",
+      delayStatus: "DELAYED",
+      delayNotice: "Delay of 15 mins due to NH-16 flyover maintenance work near Nakhara.",
+      busId: bus3.id,
+      stops: {
+        create: [
+          { stopName: "Badambadi Bus Stand", location: "Bay No 4", pickupTime: "07:00 AM", dropTime: "06:00 PM", stopOrder: 1 },
+          { stopName: "Link Road Cuttack", location: "Madhupatna Junction", pickupTime: "07:15 AM", dropTime: "05:45 PM", stopOrder: 2 },
+          { stopName: "Phulnakhara Square", location: "Near Toll Gate Service Road", pickupTime: "07:45 AM", dropTime: "05:15 PM", stopOrder: 3 },
+          { stopName: "Campus Main Gate", location: "Security Terminal 1", pickupTime: "08:30 AM", dropTime: "04:30 PM", stopOrder: 4 }
+        ]
+      }
+    }
+  });
+
+  // 27c. Legacy TransportRoute table for backwards compatibility
+  await prisma.transportRoute.createMany({
+    data: [
+      {
+        routeNumber: "Route 1 - Master Canteen to Campus",
+        routeName: "Master Canteen – Vani Vihar – Rasulgarh – Patia – Campus",
+        busNumber: "OD-02-AX-4450",
+        driverName: "Bishnu Charan Das",
+        driverPhone: "9876543401",
+        stops: JSON.stringify([
+          { name: "Master Canteen", time: "07:30 AM" },
+          { name: "Vani Vihar Square", time: "07:45 AM" },
+          { name: "Rasulgarh Square", time: "08:00 AM" },
+          { name: "Patia Big Bazaar", time: "08:20 AM" },
+          { name: "Campus Main Gate", time: "08:40 AM" }
+        ]),
+        morningDeparture: "07:30 AM",
+        eveningDeparture: "05:15 PM",
+        status: "ON_TIME"
+      },
+      {
+        routeNumber: "Route 2 - Khandagiri to Campus",
+        routeName: "Khandagiri – Jayadev Vihar – Infocity – Campus",
+        busNumber: "OD-02-BY-7812",
+        driverName: "Dilip Kumar Jena",
+        driverPhone: "9876543402",
+        stops: JSON.stringify([
+          { name: "Khandagiri Square", time: "07:25 AM" },
+          { name: "Jayadev Vihar", time: "07:50 AM" },
+          { name: "Infocity Square", time: "08:15 AM" },
+          { name: "Campus Main Gate", time: "08:35 AM" }
+        ]),
+        morningDeparture: "07:25 AM",
+        eveningDeparture: "05:15 PM",
+        status: "ON_TIME"
+      },
+      {
+        routeNumber: "Route 3 - Cuttack Badambadi to Campus",
+        routeName: "Badambadi – Link Road – Phulnakhara – Campus",
+        busNumber: "OD-05-CT-2291",
+        driverName: "Satyajit Rout",
+        driverPhone: "9876543403",
+        stops: JSON.stringify([
+          { name: "Badambadi Bus Stand", time: "07:00 AM" },
+          { name: "Link Road Cuttack", time: "07:15 AM" },
+          { name: "Phulnakhara Square", time: "07:45 AM" },
+          { name: "Campus Main Gate", time: "08:30 AM" }
+        ]),
+        morningDeparture: "07:00 AM",
+        eveningDeparture: "05:30 PM",
+        status: "DELAYED",
+        statusNote: "Delay of 15 mins due to NH-16 flyover maintenance work near Nakhara."
+      }
+    ]
+  });
+
+  // 28. Create Campus Parking Zones
+  await prisma.parkingZone.createMany({
+    data: [
+      {
+        name: "Zone A - 2-Wheeler (Near Gate 1)",
+        vehicleType: "TWO_WHEELER",
+        totalSlots: 150,
+        occupiedSlots: 92,
+        status: "AVAILABLE",
+        notice: "Helmet mandatory for campus entry."
+      },
+      {
+        name: "Zone B - 4-Wheeler Student & Staff (East Lawn)",
+        vehicleType: "FOUR_WHEELER",
+        totalSlots: 40,
+        occupiedSlots: 38,
+        status: "AVAILABLE",
+        notice: "Park only inside marked yellow bays."
+      },
+      {
+        name: "Zone C - 2-Wheeler (Near Academic Block 2)",
+        vehicleType: "TWO_WHEELER",
+        totalSlots: 100,
+        occupiedSlots: 100,
+        status: "FULL",
+        notice: "Lot full. Diverted to Zone A."
+      }
+    ]
+  });
+
+  // 29. Create Recurring Issue Dataset (Multiple complaints for Fan/Plumbing in Hostel-A Room A-204)
+  await prisma.ticket.createMany({
+    data: [
+      {
+        ticketNumber: "CD-1091",
+        studentId: student.id,
+        title: "Ceiling Fan Regulator Sparking and Speed Stuck",
+        description: "Ceiling fan regulator emits burning smell and is stuck on highest speed.",
+        category: "ELECTRICAL",
+        hostelBlock: "Hostel-A",
+        roomNumber: "A-204",
+        priority: "HIGH",
+        status: "RESOLVED",
+        assignedStaffId: electricalStaff.id,
+        resolvedAt: new Date(Date.now() - 20 * 24 * 60 * 60 * 1000),
+        resolutionNote: "Repaired capacitor and regulator wiring."
+      },
+      {
+        ticketNumber: "CD-1092",
+        studentId: student.id,
+        title: "Ceiling Fan Stopped Working Again",
+        description: "Fan in room A-204 has completely stopped spinning again after last week repair.",
+        category: "ELECTRICAL",
+        hostelBlock: "Hostel-A",
+        roomNumber: "A-204",
+        priority: "HIGH",
+        status: "RESOLVED",
+        assignedStaffId: electricalStaff.id,
+        resolvedAt: new Date(Date.now() - 10 * 24 * 60 * 60 * 1000),
+        resolutionNote: "Motor winding lubricated."
+      },
+      {
+        ticketNumber: "CD-1093",
+        studentId: student.id,
+        title: "Ceiling Fan Stator Burnt - Recurring Failure",
+        description: "Fan bearing jammed and stator burnt with loud humming noise in A-204.",
+        category: "ELECTRICAL",
+        hostelBlock: "Hostel-A",
+        roomNumber: "A-204",
+        priority: "CRITICAL",
+        slaDeadline: new Date(Date.now() + 3 * 60 * 60 * 1000),
+        status: "ASSIGNED",
+        assignedStaffId: electricalStaff.id
+      }
+    ]
   });
 
   console.log("Database seeded successfully with all sample records!");

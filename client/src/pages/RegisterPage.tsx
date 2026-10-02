@@ -1,14 +1,88 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { apiRequest, UserProfile } from "../api/client.js";
-import { UserCheck, Shield, ChevronRight, CheckCircle2 } from "lucide-react";
+import { apiRequest, UserProfile, setAuthToken, broadcastAuthEvent } from "../api/client.js";
+import { UserCheck, Shield, ChevronRight, CheckCircle2, Eye, EyeOff, Lock, KeyRound, MapPin, Bus } from "lucide-react";
 
 interface RegisterPageProps {
   onLoginSuccess: (user: UserProfile) => void;
 }
 
+interface CourseOption {
+  code: string;
+  name: string;
+  durationYears: number;
+  branches: { code: string; name: string }[];
+}
+
+const DEFAULT_COURSES: CourseOption[] = [
+  {
+    code: "B.Tech",
+    name: "Bachelor of Technology",
+    durationYears: 4,
+    branches: [
+      { code: "CSE", name: "Computer Science & Engineering" },
+      { code: "IT", name: "Information Technology" },
+      { code: "ECE", name: "Electronics & Communication Engineering" },
+      { code: "MECH", name: "Mechanical Engineering" },
+      { code: "CIVIL", name: "Civil Engineering" }
+    ]
+  },
+  {
+    code: "MCA",
+    name: "Master of Computer Applications",
+    durationYears: 2,
+    branches: [
+      { code: "CA", name: "Computer Applications" },
+      { code: "DS", name: "Data Science" }
+    ]
+  },
+  {
+    code: "BCA",
+    name: "Bachelor of Computer Applications",
+    durationYears: 3,
+    branches: [
+      { code: "CA", name: "Computer Applications" },
+      { code: "DS", name: "Data Science" }
+    ]
+  },
+  {
+    code: "BBA",
+    name: "Bachelor of Business Administration",
+    durationYears: 3,
+    branches: [
+      { code: "GEN", name: "General" },
+      { code: "FIN", name: "Finance" },
+      { code: "MKT", name: "Marketing" },
+      { code: "HRM", name: "Human Resource Management" }
+    ]
+  },
+  {
+    code: "MBA",
+    name: "Master of Business Administration",
+    durationYears: 2,
+    branches: [
+      { code: "FIN", name: "Finance" },
+      { code: "MKT", name: "Marketing" },
+      { code: "HRM", name: "Human Resource Management" },
+      { code: "OPS", name: "Operations" }
+    ]
+  },
+  {
+    code: "M.Tech",
+    name: "Master of Technology",
+    durationYears: 2,
+    branches: [
+      { code: "CSE", name: "Computer Science & Engineering" },
+      { code: "OTHER", name: "Other available specializations" }
+    ]
+  }
+];
+
 export const RegisterPage: React.FC<RegisterPageProps> = ({ onLoginSuccess }) => {
   const navigate = useNavigate();
+  const [coursesList, setCoursesList] = useState<CourseOption[]>(DEFAULT_COURSES);
+  const [showPassword, setShowPassword] = useState<boolean>(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState<boolean>(false);
   const [formData, setFormData] = useState({
     fullName: "",
     dob: "",
@@ -21,7 +95,7 @@ export const RegisterPage: React.FC<RegisterPageProps> = ({ onLoginSuccess }) =>
     confirmPassword: "",
     course: "B.Tech",
     department: "Computer Science & Engineering",
-    branch: "CSE",
+    branch: "Computer Science & Engineering",
     year: 1,
     semester: 1,
     batch: "2024-2028",
@@ -35,8 +109,13 @@ export const RegisterPage: React.FC<RegisterPageProps> = ({ onLoginSuccess }) =>
     guardianRelation: "Uncle",
     guardianPhone: "",
     guardianAddress: "",
+    livingType: "HOSTELLER",
     requestedHostel: "Hostel-A",
     roomPreference: "Double Sharing",
+    busRoute: "Route 1",
+    pickupPoint: "Master Canteen",
+    vehicleNumber: "",
+    parkingZone: "Zone A (Two-Wheeler)",
     consentAgreed: false
   });
 
@@ -44,6 +123,33 @@ export const RegisterPage: React.FC<RegisterPageProps> = ({ onLoginSuccess }) =>
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const [loading, setLoading] = useState<boolean>(false);
   const [currentStep, setCurrentStep] = useState<number>(1);
+
+  // Load live active courses from database
+  useEffect(() => {
+    apiRequest<{ courses: CourseOption[] }>("/api/academic/courses")
+      .then((res) => {
+        if (res?.courses && res.courses.length > 0) {
+          setCoursesList(res.courses);
+        }
+      })
+      .catch(() => {
+        // Fallback to DEFAULT_COURSES on network issues
+      });
+  }, []);
+
+  const handleCourseChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const selectedCode = e.target.value;
+    const selectedCourseObj = coursesList.find((c) => c.code === selectedCode);
+    const defaultBranch = selectedCourseObj?.branches?.[0]?.name || "";
+    setFormData((prev) => ({
+      ...prev,
+      course: selectedCode,
+      branch: defaultBranch,
+      department: defaultBranch,
+      year: 1,
+      semester: 1
+    }));
+  };
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
     const { name, value, type } = e.target;
@@ -90,7 +196,7 @@ export const RegisterPage: React.FC<RegisterPageProps> = ({ onLoginSuccess }) =>
 
     setLoading(true);
     try {
-      const data = await apiRequest<{ user: UserProfile; message: string }>("/api/auth/register", {
+      const data = await apiRequest<{ user: UserProfile; token?: string; message: string }>("/api/auth/register", {
         method: "POST",
         body: JSON.stringify({
           ...formData,
@@ -100,10 +206,14 @@ export const RegisterPage: React.FC<RegisterPageProps> = ({ onLoginSuccess }) =>
         })
       });
 
+      if (data.token) {
+        setAuthToken(data.token);
+      }
       setSuccessMessage(data.message || "Registration submitted for verification!");
       onLoginSuccess(data.user);
+      broadcastAuthEvent({ type: "LOGIN", user: data.user });
       setTimeout(() => {
-        navigate("/dashboard");
+        navigate("/dashboard", { replace: true });
       }, 1500);
     } catch (err: any) {
       setError(err.message || "Registration failed. Please check your information and try again.");
@@ -328,117 +438,149 @@ export const RegisterPage: React.FC<RegisterPageProps> = ({ onLoginSuccess }) =>
                   <label htmlFor="password" className="block text-xs font-semibold text-[#4D2A00] mb-1">
                     Create Password (min 8 chars) *
                   </label>
-                  <input
-                    id="password"
-                    name="password"
-                    type="password"
-                    required
-                    value={formData.password}
-                    onChange={handleChange}
-                    placeholder="••••••••"
-                    className="w-full px-3.5 py-2.5 bg-white/60 border border-[rgba(77,42,0,0.12)] rounded-xl text-[#4D2A00] text-xs placeholder-[#4D2A00]/40 focus:outline-none focus:border-[#CC6F00]"
-                  />
+                  <div className="relative flex items-center">
+                    <input
+                      id="password"
+                      name="password"
+                      type={showPassword ? "text" : "password"}
+                      required
+                      value={formData.password}
+                      onChange={handleChange}
+                      placeholder="••••••••"
+                      className="w-full pl-10 pr-10 py-2.5 bg-white/60 border border-[rgba(77,42,0,0.12)] rounded-xl text-[#4D2A00] text-xs placeholder-[#4D2A00]/40 focus:outline-none focus:border-[#CC6F00] transition-colors"
+                    />
+                    <KeyRound className="w-4 h-4 text-[#4D2A00]/40 absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+                    <button
+                      type="button"
+                      onClick={() => setShowPassword(!showPassword)}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 p-1 text-[#4D2A00]/50 hover:text-[#4D2A00] transition-colors rounded-lg focus:outline-none"
+                      aria-label={showPassword ? "Hide password" : "Show password"}
+                    >
+                      {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                    </button>
+                  </div>
                 </div>
 
                 <div>
                   <label htmlFor="confirmPassword" className="block text-xs font-semibold text-[#4D2A00] mb-1">
                     Confirm Password *
                   </label>
-                  <input
-                    id="confirmPassword"
-                    name="confirmPassword"
-                    type="password"
-                    required
-                    value={formData.confirmPassword}
-                    onChange={handleChange}
-                    placeholder="••••••••"
-                    className="w-full px-3.5 py-2.5 bg-white/60 border border-[rgba(77,42,0,0.12)] rounded-xl text-[#4D2A00] text-xs placeholder-[#4D2A00]/40 focus:outline-none focus:border-[#CC6F00]"
-                  />
+                  <div className="relative flex items-center">
+                    <input
+                      id="confirmPassword"
+                      name="confirmPassword"
+                      type={showConfirmPassword ? "text" : "password"}
+                      required
+                      value={formData.confirmPassword}
+                      onChange={handleChange}
+                      placeholder="••••••••"
+                      className="w-full pl-10 pr-10 py-2.5 bg-white/60 border border-[rgba(77,42,0,0.12)] rounded-xl text-[#4D2A00] text-xs placeholder-[#4D2A00]/40 focus:outline-none focus:border-[#CC6F00] transition-colors"
+                    />
+                    <Lock className="w-4 h-4 text-[#4D2A00]/40 absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+                    <button
+                      type="button"
+                      onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 p-1 text-[#4D2A00]/50 hover:text-[#4D2A00] transition-colors rounded-lg focus:outline-none"
+                      aria-label={showConfirmPassword ? "Hide password" : "Show password"}
+                    >
+                      {showConfirmPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                    </button>
+                  </div>
                 </div>
               </div>
 
               <h2 className="text-xs font-bold text-[#CC6F00] uppercase tracking-wider border-b border-[rgba(77,42,0,0.1)] pb-1.5 pt-3">
                 2. Academic Details
               </h2>
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                <div>
-                  <label htmlFor="course" className="block text-xs font-semibold text-[#4D2A00] mb-1">
-                    Course / Degree *
-                  </label>
-                  <select
-                    id="course"
-                    name="course"
-                    value={formData.course}
-                    onChange={handleChange}
-                    className="w-full px-3.5 py-2.5 bg-white/60 border border-[rgba(77,42,0,0.12)] rounded-xl text-[#4D2A00] text-xs focus:outline-none focus:border-[#CC6F00]"
-                  >
-                    <option value="B.Tech">B.Tech</option>
-                    <option value="M.Tech">M.Tech</option>
-                    <option value="MCA">MCA</option>
-                    <option value="MBA">MBA</option>
-                  </select>
-                </div>
+              {(() => {
+                const selectedCourseObj = coursesList.find((c) => c.code === formData.course) || coursesList[0];
+                const availableBranches = selectedCourseObj?.branches || [];
+                const maxYears = selectedCourseObj?.durationYears || 4;
 
-                <div>
-                  <label htmlFor="branch" className="block text-xs font-semibold text-[#4D2A00] mb-1">
-                    Department / Branch *
-                  </label>
-                  <select
-                    id="branch"
-                    name="branch"
-                    value={formData.branch}
-                    onChange={handleChange}
-                    className="w-full px-3.5 py-2.5 bg-white/60 border border-[rgba(77,42,0,0.12)] rounded-xl text-[#4D2A00] text-xs focus:outline-none focus:border-[#CC6F00]"
-                  >
-                    <option value="CSE">CSE (Computer Science)</option>
-                    <option value="ECE">ECE (Electronics)</option>
-                    <option value="MECH">MECH (Mechanical)</option>
-                    <option value="CIVIL">CIVIL (Civil)</option>
-                    <option value="EE">EE (Electrical)</option>
-                  </select>
-                </div>
-
-                <div>
-                  <div className="grid grid-cols-2 gap-2">
+                return (
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                     <div>
-                      <label htmlFor="year" className="block text-xs font-semibold text-[#4D2A00] mb-1">
-                        Year *
+                      <label htmlFor="course" className="block text-xs font-semibold text-[#4D2A00] mb-1">
+                        Course / Degree *
                       </label>
                       <select
-                        id="year"
-                        name="year"
-                        value={formData.year}
-                        onChange={handleChange}
-                        className="w-full px-3.5 py-2.5 bg-white/60 border border-[rgba(77,42,0,0.12)] rounded-xl text-[#4D2A00] text-xs focus:outline-none focus:border-[#CC6F00]"
+                        id="course"
+                        name="course"
+                        value={formData.course}
+                        onChange={handleCourseChange}
+                        className="w-full px-3.5 py-2.5 bg-white/60 border border-[rgba(77,42,0,0.12)] rounded-xl text-[#4D2A00] text-xs focus:outline-none focus:border-[#CC6F00] font-semibold"
                       >
-                        <option value={1}>1st Yr</option>
-                        <option value={2}>2nd Yr</option>
-                        <option value={3}>3rd Yr</option>
-                        <option value={4}>4th Yr</option>
-                      </select>
-                    </div>
-
-                    <div>
-                      <label htmlFor="semester" className="block text-xs font-semibold text-[#4D2A00] mb-1">
-                        Semester
-                      </label>
-                      <select
-                        id="semester"
-                        name="semester"
-                        value={formData.semester}
-                        onChange={handleChange}
-                        className="w-full px-3.5 py-2.5 bg-white/60 border border-[rgba(77,42,0,0.12)] rounded-xl text-[#4D2A00] text-xs focus:outline-none focus:border-[#CC6F00]"
-                      >
-                        {[1, 2, 3, 4, 5, 6, 7, 8].map((s) => (
-                          <option key={s} value={s}>
-                            Sem {s}
+                        {coursesList.map((c) => (
+                          <option key={c.code} value={c.code}>
+                            {c.code} — {c.name}
                           </option>
                         ))}
                       </select>
                     </div>
+
+                    <div>
+                      <label htmlFor="branch" className="block text-xs font-semibold text-[#4D2A00] mb-1">
+                        Branch / Specialization *
+                      </label>
+                      <select
+                        id="branch"
+                        name="branch"
+                        value={formData.branch}
+                        onChange={handleChange}
+                        className="w-full px-3.5 py-2.5 bg-white/60 border border-[rgba(77,42,0,0.12)] rounded-xl text-[#4D2A00] text-xs focus:outline-none focus:border-[#CC6F00]"
+                      >
+                        {availableBranches.map((b) => (
+                          <option key={b.code} value={b.name}>
+                            {b.name} ({b.code})
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+
+                    <div>
+                      <div className="grid grid-cols-2 gap-2">
+                        <div>
+                          <label htmlFor="year" className="block text-xs font-semibold text-[#4D2A00] mb-1">
+                            Year *
+                          </label>
+                          <select
+                            id="year"
+                            name="year"
+                            value={formData.year}
+                            onChange={handleChange}
+                            className="w-full px-3.5 py-2.5 bg-white/60 border border-[rgba(77,42,0,0.12)] rounded-xl text-[#4D2A00] text-xs focus:outline-none focus:border-[#CC6F00]"
+                          >
+                            {Array.from({ length: maxYears }, (_, i) => i + 1).map((yr) => (
+                              <option key={yr} value={yr}>
+                                {yr === 1 ? "1st Yr" : yr === 2 ? "2nd Yr" : yr === 3 ? "3rd Yr" : `${yr}th Yr`}
+                              </option>
+                            ))}
+                          </select>
+                        </div>
+
+                        <div>
+                          <label htmlFor="semester" className="block text-xs font-semibold text-[#4D2A00] mb-1">
+                            Semester
+                          </label>
+                          <select
+                            id="semester"
+                            name="semester"
+                            value={formData.semester}
+                            onChange={handleChange}
+                            className="w-full px-3.5 py-2.5 bg-white/60 border border-[rgba(77,42,0,0.12)] rounded-xl text-[#4D2A00] text-xs focus:outline-none focus:border-[#CC6F00]"
+                          >
+                            {Array.from({ length: maxYears * 2 }, (_, i) => i + 1).map((s) => (
+                              <option key={s} value={s}>
+                                Sem {s}
+                              </option>
+                            ))}
+                          </select>
+                        </div>
+                      </div>
+                    </div>
                   </div>
-                </div>
-              </div>
+                );
+              })()}
 
               <div className="flex justify-end pt-4">
                 <button
@@ -640,52 +782,172 @@ export const RegisterPage: React.FC<RegisterPageProps> = ({ onLoginSuccess }) =>
             </div>
           )}
 
-          {/* STEP 3: Hostel Preference & Consent */}
+          {/* STEP 3: Living Type & Preferences */}
           {currentStep === 3 && (
             <div className="space-y-4">
               <h2 className="text-xs font-bold text-[#CC6F00] uppercase tracking-wider border-b border-[rgba(77,42,0,0.1)] pb-1.5">
-                6. Hostel Admission Preference
+                6. Campus Living Status & Logistics
               </h2>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div>
-                  <label htmlFor="requestedHostel" className="block text-xs font-semibold text-[#4D2A00] mb-1">
-                    Requested Hostel Block *
-                  </label>
-                  <select
-                    id="requestedHostel"
-                    name="requestedHostel"
-                    value={formData.requestedHostel}
-                    onChange={handleChange}
-                    className="w-full px-3.5 py-2.5 bg-white/60 border border-[rgba(77,42,0,0.12)] rounded-xl text-[#4D2A00] text-xs focus:outline-none focus:border-[#CC6F00]"
-                  >
-                    <option value="Hostel-A">Hostel-A (Boys Senior Block)</option>
-                    <option value="Hostel-B">Hostel-B (Boys Junior Block)</option>
-                    <option value="Hostel-C">Hostel-C (Girls Campus Block)</option>
-                  </select>
-                </div>
 
-                <div>
-                  <label htmlFor="roomPreference" className="block text-xs font-semibold text-[#4D2A00] mb-1">
-                    Room Preference
-                  </label>
-                  <select
-                    id="roomPreference"
-                    name="roomPreference"
-                    value={formData.roomPreference}
-                    onChange={handleChange}
-                    className="w-full px-3.5 py-2.5 bg-white/60 border border-[rgba(77,42,0,0.12)] rounded-xl text-[#4D2A00] text-xs focus:outline-none focus:border-[#CC6F00]"
+              <div>
+                <label className="block text-xs font-semibold text-[#4D2A00] mb-1.5">
+                  Are you a Hosteller or a Day Scholar? *
+                </label>
+                <div className="grid grid-cols-2 gap-3">
+                  <button
+                    type="button"
+                    onClick={() => setFormData((prev) => ({ ...prev, livingType: "HOSTELLER" }))}
+                    className={`p-3 rounded-2xl border text-left transition-all ${
+                      formData.livingType === "HOSTELLER"
+                        ? "bg-[#FDB773] text-[#4D2A00] font-bold border-[#CC6F00] shadow-sm"
+                        : "bg-white/60 text-[#4D2A00]/70 border-[rgba(77,42,0,0.12)]"
+                    }`}
                   >
-                    <option value="Double Sharing">Double Sharing (2 Beds)</option>
-                    <option value="Single Room">Single Room (Subject to Availability)</option>
-                    <option value="Triple Sharing">Triple Sharing (3 Beds)</option>
-                  </select>
+                    <div className="text-xs font-bold">Hosteller</div>
+                    <div className="text-[10px] opacity-80 mt-0.5">Living in campus residence hostel</div>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => setFormData((prev) => ({ ...prev, livingType: "DAY_SCHOLAR" }))}
+                    className={`p-3 rounded-2xl border text-left transition-all ${
+                      formData.livingType === "DAY_SCHOLAR"
+                        ? "bg-[#FDB773] text-[#4D2A00] font-bold border-[#CC6F00] shadow-sm"
+                        : "bg-white/60 text-[#4D2A00]/70 border-[rgba(77,42,0,0.12)]"
+                    }`}
+                  >
+                    <div className="text-xs font-bold">Day Scholar</div>
+                    <div className="text-[10px] opacity-80 mt-0.5">Daily commuting via bus / vehicle</div>
+                  </button>
                 </div>
               </div>
 
+              {formData.livingType === "HOSTELLER" ? (
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 animate-fadeIn">
+                  <div>
+                    <label htmlFor="requestedHostel" className="block text-xs font-semibold text-[#4D2A00] mb-1">
+                      Requested Hostel Block *
+                    </label>
+                    <select
+                      id="requestedHostel"
+                      name="requestedHostel"
+                      value={formData.requestedHostel}
+                      onChange={handleChange}
+                      className="w-full px-3.5 py-2.5 bg-white/60 border border-[rgba(77,42,0,0.12)] rounded-xl text-[#4D2A00] text-xs focus:outline-none focus:border-[#CC6F00]"
+                    >
+                      <option value="Hostel-A">Hostel-A (Boys Senior Block)</option>
+                      <option value="Hostel-B">Hostel-B (Boys Junior Block)</option>
+                      <option value="Hostel-C">Hostel-C (Girls Campus Block)</option>
+                    </select>
+                  </div>
+
+                  <div>
+                    <label htmlFor="roomPreference" className="block text-xs font-semibold text-[#4D2A00] mb-1">
+                      Room Preference
+                    </label>
+                    <select
+                      id="roomPreference"
+                      name="roomPreference"
+                      value={formData.roomPreference}
+                      onChange={handleChange}
+                      className="w-full px-3.5 py-2.5 bg-white/60 border border-[rgba(77,42,0,0.12)] rounded-xl text-[#4D2A00] text-xs focus:outline-none focus:border-[#CC6F00]"
+                    >
+                      <option value="Double Sharing">Double Sharing (2 Beds)</option>
+                      <option value="Single Room">Single Room (Subject to Availability)</option>
+                      <option value="Triple Sharing">Triple Sharing (3 Beds)</option>
+                    </select>
+                  </div>
+                </div>
+              ) : (
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 animate-fadeIn">
+                  <div className="sm:col-span-2">
+                    <label htmlFor="currentAddress" className="block text-xs font-semibold text-[#4D2A00] mb-1">
+                      City Residence / Local Commuter Address *
+                    </label>
+                    <input
+                      id="currentAddress"
+                      name="currentAddress"
+                      type="text"
+                      required={formData.livingType === "DAY_SCHOLAR"}
+                      value={formData.currentAddress}
+                      onChange={handleChange}
+                      placeholder="e.g. Plot 45, Forest Park, Bhubaneswar, Odisha"
+                      className="w-full px-3.5 py-2.5 bg-white/60 border border-[rgba(77,42,0,0.12)] rounded-xl text-[#4D2A00] text-xs placeholder-[#4D2A00]/40 focus:outline-none focus:border-[#CC6F00]"
+                    />
+                  </div>
+
+                  <div>
+                    <label htmlFor="busRoute" className="block text-xs font-semibold text-[#4D2A00] mb-1">
+                      Preferred University Bus Route
+                    </label>
+                    <select
+                      id="busRoute"
+                      name="busRoute"
+                      value={formData.busRoute}
+                      onChange={handleChange}
+                      className="w-full px-3.5 py-2.5 bg-white/60 border border-[rgba(77,42,0,0.12)] rounded-xl text-[#4D2A00] text-xs focus:outline-none focus:border-[#CC6F00]"
+                    >
+                      <option value="Route 1">Route 1 (Master Canteen / Vani Vihar)</option>
+                      <option value="Route 2">Route 2 (Khandagiri / Baramunda)</option>
+                      <option value="Route 3">Route 3 (Patia / Infocity)</option>
+                      <option value="Route 4">Route 4 (Cuttack Link Road / Badambadi)</option>
+                      <option value="Self-Transport">Self-Transport / Personal Vehicle</option>
+                    </select>
+                  </div>
+
+                  <div>
+                    <label htmlFor="pickupPoint" className="block text-xs font-semibold text-[#4D2A00] mb-1">
+                      Pickup / Boarding Stop
+                    </label>
+                    <input
+                      id="pickupPoint"
+                      name="pickupPoint"
+                      type="text"
+                      value={formData.pickupPoint}
+                      onChange={handleChange}
+                      placeholder="e.g. Master Canteen Square"
+                      className="w-full px-3.5 py-2.5 bg-white/60 border border-[rgba(77,42,0,0.12)] rounded-xl text-[#4D2A00] text-xs placeholder-[#4D2A00]/40 focus:outline-none focus:border-[#CC6F00]"
+                    />
+                  </div>
+
+                  <div>
+                    <label htmlFor="vehicleNumber" className="block text-xs font-semibold text-[#4D2A00] mb-1">
+                      Vehicle Reg. Number (If Self-Driving)
+                    </label>
+                    <input
+                      id="vehicleNumber"
+                      name="vehicleNumber"
+                      type="text"
+                      value={formData.vehicleNumber}
+                      onChange={handleChange}
+                      placeholder="e.g. OD-02-AB-1234"
+                      className="w-full px-3.5 py-2.5 bg-white/60 border border-[rgba(77,42,0,0.12)] rounded-xl text-[#4D2A00] text-xs placeholder-[#4D2A00]/40 focus:outline-none focus:border-[#CC6F00] font-mono uppercase"
+                    />
+                  </div>
+
+                  <div>
+                    <label htmlFor="parkingZone" className="block text-xs font-semibold text-[#4D2A00] mb-1">
+                      Requested Parking Zone
+                    </label>
+                    <select
+                      id="parkingZone"
+                      name="parkingZone"
+                      value={formData.parkingZone}
+                      onChange={handleChange}
+                      className="w-full px-3.5 py-2.5 bg-white/60 border border-[rgba(77,42,0,0.12)] rounded-xl text-[#4D2A00] text-xs focus:outline-none focus:border-[#CC6F00]"
+                    >
+                      <option value="Zone A (Two-Wheeler)">Zone A (Two-Wheeler Main Lot)</option>
+                      <option value="Zone B (Four-Wheeler)">Zone B (Four-Wheeler North Lot)</option>
+                      <option value="Zone C (Bicycle)">Zone C (Eco Bicycle Stand)</option>
+                    </select>
+                  </div>
+                </div>
+              )}
+
               <div className="p-4 bg-[#FDB773]/20 border border-[#CC6F00]/20 rounded-2xl text-xs text-[#4D2A00]/80 space-y-1">
-                <span className="font-bold text-[#CC6F00] block text-[11px] uppercase tracking-wider">Hostel Allocation Notice:</span>
+                <span className="font-bold text-[#CC6F00] block text-[11px] uppercase tracking-wider">Campus Enrollment Notice:</span>
                 <p className="leading-relaxed">
-                  Rooms and beds are assigned by the designated Hostel Warden and Administration after verifying admission eligibility. Your account will start in <strong className="text-[#4D2A00]">Pending Warden Verification</strong> status.
+                  Student applications undergo verification by designated campus officers. Your account will start in <strong className="text-[#4D2A00]">Pending Verification</strong> status.
                 </p>
               </div>
 
@@ -702,7 +964,7 @@ export const RegisterPage: React.FC<RegisterPageProps> = ({ onLoginSuccess }) =>
                       className="mt-0.5 rounded border-[#CC6F00]/30 text-[#CC6F00] focus:ring-[#CC6F00]"
                     />
                     <span className="text-xs text-[#4D2A00]/80 leading-relaxed">
-                      I declare that the information provided is accurate and authentic. I consent to official campus verification, hostel allocation policies, and data processing in accordance with institutional guidelines. *
+                      I declare that the information provided is accurate and authentic. I consent to official campus verification, institutional guidelines, and data processing. *
                     </span>
                   </label>
                 </div>

@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
-import { apiRequest, UserProfile } from "./api/client.js";
+import { apiRequest, UserProfile, clearAuthToken, subscribeAuthEvents, broadcastAuthEvent } from "./api/client.js";
 import { Navbar } from "./components/Navbar.js";
 import { Footer } from "./components/Footer.js";
 import { OfflineBanner } from "./components/OfflineBanner.js";
@@ -26,6 +26,10 @@ import { FaqAssistantPage } from "./pages/FaqAssistantPage.js";
 import { CommandConsolePage } from "./pages/CommandConsolePage.js";
 import { AdminDashboardPage } from "./pages/AdminDashboardPage.js";
 import { DataImportPage } from "./pages/DataImportPage.js";
+import { ClubsPage } from "./pages/ClubsPage.js";
+import { TransportPage } from "./pages/TransportPage.js";
+import { ParcelsPage } from "./pages/ParcelsPage.js";
+import { CampusHelpPage } from "./pages/CampusHelpPage.js";
 import { PrivacyPage } from "./pages/PrivacyPage.js";
 import { TermsPage } from "./pages/TermsPage.js";
 import { AdoptionPage } from "./pages/AdoptionPage.js";
@@ -43,6 +47,7 @@ export const App: React.FC = () => {
       setUser(data.user);
     } catch {
       setUser(null);
+      clearAuthToken();
     } finally {
       setLoading(false);
     }
@@ -50,16 +55,30 @@ export const App: React.FC = () => {
 
   useEffect(() => {
     checkAuth();
+
+    // Multi-tab auth synchronization
+    const unsubscribe = subscribeAuthEvents((msg) => {
+      if (msg.type === "LOGOUT" || msg.type === "SESSION_EXPIRED") {
+        setUser(null);
+        clearAuthToken();
+      } else if (msg.type === "LOGIN") {
+        setUser(msg.user);
+      }
+    });
+
+    return unsubscribe;
   }, []);
 
   const handleLogout = async () => {
     try {
       await apiRequest("/api/auth/logout", { method: "POST" });
     } catch (err) {
-      console.error(err);
+      console.error("Logout API error:", err);
     } finally {
+      clearAuthToken();
       setUser(null);
-      window.location.href = "/";
+      broadcastAuthEvent({ type: "LOGOUT" });
+      window.location.href = "/login";
     }
   };
 
@@ -75,6 +94,8 @@ export const App: React.FC = () => {
     );
   }
 
+  const isWardenOrAdmin = user?.role === "ADMIN" || user?.role === "WARDEN";
+
   return (
     <BrowserRouter>
       <div className="min-h-screen flex flex-col bg-campus-bg text-campus-text selection:bg-campus-peach selection:text-campus-text">
@@ -85,25 +106,27 @@ export const App: React.FC = () => {
           onOpenDigitalId={user ? () => setProfileModalStudentId(user.id) : undefined}
         />
 
-
         <div className="flex-1 flex flex-col">
           <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8 page-fade-in">
             <Routes>
+              {/* Home Landing vs Dashboard */}
               <Route
                 path="/"
                 element={
                   user ? (
-                    <DashboardPage user={user} />
+                    <DashboardPage key={user.id} user={user} />
                   ) : (
                     <LandingPage user={user} onLoginSuccess={(u) => setUser(u)} />
                   )
                 }
               />
+
+              {/* Login / Registration */}
               <Route
                 path="/login"
                 element={
                   user ? (
-                    <Navigate to="/" replace />
+                    <Navigate to="/dashboard" replace />
                   ) : (
                     <LoginPage onLoginSuccess={(u) => setUser(u)} />
                   )
@@ -113,93 +136,127 @@ export const App: React.FC = () => {
                 path="/register"
                 element={
                   user ? (
-                    <Navigate to="/" replace />
+                    <Navigate to="/dashboard" replace />
                   ) : (
                     <RegisterPage onLoginSuccess={(u) => setUser(u)} />
                   )
                 }
               />
 
-              {/* Authenticated Application Routes */}
+              {/* Authenticated Application Routes (Fresh key on user switch) */}
               <Route
                 path="/dashboard"
-                element={user ? <DashboardPage user={user} /> : <Navigate to="/login" replace />}
+                element={
+                  user ? (
+                    <DashboardPage key={user.id} user={user} />
+                  ) : (
+                    <Navigate to="/login" replace />
+                  )
+                }
               />
               <Route
                 path="/tickets"
-                element={user ? <TicketsPage user={user} /> : <Navigate to="/login" replace />}
+                element={user ? <TicketsPage key={user.id} user={user} /> : <Navigate to="/login" replace />}
               />
               <Route
                 path="/tickets/new"
-                element={user ? <NewTicketPage user={user} /> : <Navigate to="/login" replace />}
+                element={user ? <NewTicketPage key={user.id} user={user} /> : <Navigate to="/login" replace />}
               />
               <Route
                 path="/tickets/:id"
-                element={user ? <TicketDetailPage user={user} /> : <Navigate to="/login" replace />}
+                element={user ? <TicketDetailPage key={user.id} user={user} /> : <Navigate to="/login" replace />}
               />
               <Route
                 path="/gatepass"
-                element={user ? <GatePassPage user={user} /> : <Navigate to="/login" replace />}
+                element={user ? <GatePassPage key={user.id} user={user} /> : <Navigate to="/login" replace />}
               />
               <Route
                 path="/gate-log"
                 element={
-                  user && user.role !== "STUDENT" ? (
-                    <GateLogPage user={user} />
+                  user ? (
+                    user.role !== "STUDENT" ? (
+                      <GateLogPage key={user.id} user={user} />
+                    ) : (
+                      <Navigate to="/dashboard" replace />
+                    )
                   ) : (
-                    <Navigate to="/" replace />
+                    <Navigate to="/login" replace />
                   )
                 }
               />
               <Route
                 path="/notices"
-                element={user ? <NoticesPage user={user} /> : <Navigate to="/login" replace />}
+                element={user ? <NoticesPage key={user.id} user={user} /> : <Navigate to="/login" replace />}
               />
               <Route
                 path="/notices/:id"
-                element={user ? <NoticeDetailPage user={user} /> : <Navigate to="/login" replace />}
+                element={user ? <NoticeDetailPage key={user.id} user={user} /> : <Navigate to="/login" replace />}
               />
               <Route
                 path="/academics"
-                element={user ? <TimetableAttendancePage user={user} /> : <Navigate to="/login" replace />}
+                element={user ? <TimetableAttendancePage key={user.id} user={user} /> : <Navigate to="/login" replace />}
               />
               <Route
                 path="/mess"
-                element={user ? <MessPage user={user} /> : <Navigate to="/login" replace />}
+                element={user ? <MessPage key={user.id} user={user} /> : <Navigate to="/login" replace />}
+              />
+              <Route
+                path="/clubs"
+                element={user ? <ClubsPage key={user.id} user={user} /> : <Navigate to="/login" replace />}
+              />
+              <Route
+                path="/transport"
+                element={user ? <TransportPage key={user.id} user={user} /> : <Navigate to="/login" replace />}
+              />
+              <Route
+                path="/parcels"
+                element={user ? <ParcelsPage key={user.id} user={user} /> : <Navigate to="/login" replace />}
+              />
+              <Route
+                path="/help"
+                element={user ? <CampusHelpPage key={user.id} user={user} /> : <Navigate to="/login" replace />}
               />
               <Route
                 path="/documents"
-                element={user ? <DocumentRequestsPage user={user} /> : <Navigate to="/login" replace />}
+                element={user ? <DocumentRequestsPage key={user.id} user={user} /> : <Navigate to="/login" replace />}
               />
               <Route
                 path="/fees"
-                element={user ? <FeeStatusPage user={user} /> : <Navigate to="/login" replace />}
+                element={user ? <FeeStatusPage key={user.id} user={user} /> : <Navigate to="/login" replace />}
               />
               <Route
                 path="/faq"
-                element={user ? <FaqAssistantPage user={user} /> : <Navigate to="/login" replace />}
+                element={user ? <FaqAssistantPage key={user.id} user={user} /> : <Navigate to="/login" replace />}
               />
               <Route
                 path="/console"
-                element={user ? <CommandConsolePage user={user} /> : <Navigate to="/login" replace />}
+                element={user ? <CommandConsolePage key={user.id} user={user} /> : <Navigate to="/login" replace />}
               />
               <Route
                 path="/admin"
                 element={
-                  user && (user.role === "ADMIN" || user.role === "WARDEN") ? (
-                    <AdminDashboardPage user={user} />
+                  user ? (
+                    isWardenOrAdmin ? (
+                      <AdminDashboardPage key={user.id} user={user} />
+                    ) : (
+                      <Navigate to="/dashboard" replace />
+                    )
                   ) : (
-                    <Navigate to="/" replace />
+                    <Navigate to="/login" replace />
                   )
                 }
               />
               <Route
                 path="/import"
                 element={
-                  user && user.role === "ADMIN" ? (
-                    <DataImportPage user={user} />
+                  user ? (
+                    user.role === "ADMIN" ? (
+                      <DataImportPage key={user.id} user={user} />
+                    ) : (
+                      <Navigate to="/dashboard" replace />
+                    )
                   ) : (
-                    <Navigate to="/" replace />
+                    <Navigate to="/login" replace />
                   )
                 }
               />

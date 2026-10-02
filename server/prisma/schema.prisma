@@ -49,6 +49,13 @@ model User {
   requestedHostel         String?
   roomPreference          String?
 
+  // Living Type & Day Scholar Fields
+  livingType              String            @default("HOSTELLER") // HOSTELLER, DAY_SCHOLAR
+  busRoute                String?           // For Day Scholars (e.g. Route 1 - Master Canteen)
+  pickupPoint             String?           // For Day Scholars (e.g. Khandagiri Square)
+  vehicleNumber           String?           // For Day Scholars parking / vehicle pass
+  parkingZone             String?           // Assigned / preferred parking zone
+
   // Verification & Lifecycle
   verificationStatus      String            @default("ACTIVE") // PENDING_WARDEN_VERIFICATION, REJECTED_BY_WARDEN, PENDING_ADMIN_APPROVAL, REJECTED_BY_ADMIN, ACTIVE, INACTIVE
   wardenVerificationDate  DateTime?
@@ -80,8 +87,12 @@ model User {
   transferRequests        HostelTransferRequest[] @relation("StudentTransferRequests")
   documents               StudentDocument[] @relation("StudentDocuments")
   systemAuditLogs         AuditLog[]        @relation("AuditLogActor")
+  emergencies             Emergency[]       @relation("StudentEmergencies")
+  clubMemberships         ClubMember[]      @relation("StudentClubMemberships")
+  eventRegistrations      ClubEventRegistration[] @relation("StudentEventRegistrations")
+  parcels                 Parcel[]          @relation("StudentParcels")
 
-  @@index([role, hostelBlock, verificationStatus])
+  @@index([role, hostelBlock, verificationStatus, livingType])
 }
 
 model PushSubscription {
@@ -215,6 +226,11 @@ model Ticket {
   photoMimeType       String?
   escalationLevel     Int             @default(0)
   escalatedAt         DateTime?
+  slaDeadline         DateTime?
+  isOverdue           Boolean         @default(false)
+  manualPriorityOverride Boolean        @default(false)
+  priorityOverriddenById String?
+  priorityOverrideReason String?
   resolvedAt          DateTime?
   resolutionNote      String?
   createdAt           DateTime        @default(now())
@@ -223,7 +239,7 @@ model Ticket {
   auditLogs           TicketAuditLog[]
 
   @@index([category, hostelBlock, roomNumber])
-  @@index([status, createdAt])
+  @@index([status, priority, createdAt])
 }
 
 model TicketAuditLog {
@@ -440,3 +456,263 @@ model ClassifierTrainingData {
   source    String   @default("INITIAL")
   createdAt DateTime @default(now())
 }
+
+// ----------------------------------------------------
+// SOS & CAMPUS EMERGENCY RESPONSE
+// ----------------------------------------------------
+model Emergency {
+  id               String    @id @default(uuid())
+  alertNumber      String    @unique // e.g. "SOS-8001"
+  studentId        String
+  student          User      @relation("StudentEmergencies", fields: [studentId], references: [id], onDelete: Cascade)
+  studentType      String?   // HOSTELLER, DAY_SCHOLAR
+  category         String    // MEDICAL, FIRE_SMOKE, LIFT_STUCK, SECURITY, ELECTRICAL, OTHER
+  location         String    // Context-aware auto string (Hostel/Floor/Room or Academic Block/Campus Area)
+  emergencyContact String?   // Guardian / parent contact at time of alert
+  coordinates      String?   // Optional GPS coords e.g. "20.3541,85.8192"
+  description      String?
+  status           String    @default("ACTIVE") // ACTIVE, ACKNOWLEDGED, RESOLVED (NEW supported as alias for ACTIVE)
+  acknowledgedById String?
+  acknowledgedAt   DateTime?
+  resolvedById     String?
+  resolvedAt       DateTime?
+  responderNotes   String?
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+
+  @@index([status, createdAt])
+  @@index([studentId])
+}
+
+// ----------------------------------------------------
+// CAMPUS CLUBS & STUDENT ENGAGEMENT
+// ----------------------------------------------------
+model Club {
+  id               String             @id @default(uuid())
+  name             String             @unique // e.g. "Coding & Technology Club", "Yoga & Wellness Society"
+  category         String             // CODING_TECH, YOGA_WELLNESS, MUSIC, DANCE, ART_CREATIVITY, PHOTOGRAPHY, DRAMA_THEATRE, SPORTS_FITNESS, LITERATURE_DEBATE, PUBLIC_SPEAKING, SOCIAL_SERVICE, MEDIA_CONTENT
+  description      String
+  logoIcon         String?            @default("Sparkles") // Lucide icon name or emoji
+  coordinatorName  String?
+  coordinatorEmail String?
+  coordinatorPhone String?
+  meetingSchedule  String?            // e.g. "Wednesdays & Saturdays @ 5:30 PM, Student Activity Center"
+  roomLocation     String?            // e.g. "SAC Room 102"
+  isRecruiting     Boolean            @default(true)
+  createdAt        DateTime           @default(now())
+  updatedAt        DateTime           @updatedAt
+
+  members          ClubMember[]
+  events           ClubEvent[]
+  announcements    ClubAnnouncement[]
+}
+
+model ClubMember {
+  id        String   @id @default(uuid())
+  clubId    String
+  club      Club     @relation(fields: [clubId], references: [id], onDelete: Cascade)
+  studentId String
+  student   User     @relation("StudentClubMemberships", fields: [studentId], references: [id], onDelete: Cascade)
+  role      String   @default("MEMBER") // LEAD, COORDINATOR, MEMBER
+  joinedAt  DateTime @default(now())
+
+  @@unique([clubId, studentId])
+  @@index([studentId])
+}
+
+model ClubEvent {
+  id            String                  @id @default(uuid())
+  clubId        String
+  club          Club                    @relation(fields: [clubId], references: [id], onDelete: Cascade)
+  title         String
+  description   String
+  date          DateTime
+  location      String
+  capacity      Int                     @default(100)
+  isCancelled   Boolean                 @default(false)
+  createdAt     DateTime                @default(now())
+  updatedAt     DateTime                @updatedAt
+
+  registrations ClubEventRegistration[]
+
+  @@index([clubId, date])
+}
+
+model ClubEventRegistration {
+  id           String    @id @default(uuid())
+  eventId      String
+  event        ClubEvent @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  studentId    String
+  student      User      @relation("StudentEventRegistrations", fields: [studentId], references: [id], onDelete: Cascade)
+  registeredAt DateTime  @default(now())
+
+  @@unique([eventId, studentId])
+  @@index([studentId])
+}
+
+model ClubAnnouncement {
+  id        String   @id @default(uuid())
+  clubId    String
+  club      Club     @relation(fields: [clubId], references: [id], onDelete: Cascade)
+  title     String
+  content   String
+  createdAt DateTime @default(now())
+
+  @@index([clubId, createdAt])
+}
+
+// ----------------------------------------------------
+// PLANNED CAMPUS MAINTENANCE
+// ----------------------------------------------------
+model PlannedMaintenance {
+  id             String   @id @default(uuid())
+  title          String   // e.g. "Hostel-B Water Pipeline Maintenance"
+  description    String   // e.g. "Overhead tank cleaning and valve repair. Water supply suspended 2 PM - 5 PM."
+  location       String   // e.g. "Hostel-B", "Campus Wi-Fi Core", "Academic Block 2"
+  category       String   // WATER, ELECTRICAL, NETWORK, ELEVATOR, GENERAL
+  startTime      DateTime
+  endTime        DateTime
+  targetAudience String   @default("ALL") // ALL, HOSTELLER, DAY_SCHOLAR, HOSTEL_A, HOSTEL_B, HOSTEL_C
+  status         String   @default("SCHEDULED") // SCHEDULED, IN_PROGRESS, COMPLETED, CANCELLED
+  createdById    String
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  @@index([status, startTime])
+}
+
+// ----------------------------------------------------
+// PARCEL MANAGEMENT
+// ----------------------------------------------------
+model Parcel {
+  id               String    @id @default(uuid())
+  parcelNumber     String    @unique // e.g. "PCL-7001"
+  studentId        String
+  student          User      @relation("StudentParcels", fields: [studentId], references: [id], onDelete: Cascade)
+  trackingNumber   String?
+  courierService   String    // Amazon, Flipkart, BlueDart, Delhivery, SpeedPost, Other
+  securityLocation String    @default("Main Gate Security Desk")
+  otpCode          String    // 4-digit verification code e.g. "6291"
+  status           String    @default("RECEIVED") // RECEIVED, COLLECTED, RETURNED_TO_COURIER
+  receivedAt       DateTime  @default(now())
+  collectedAt      DateTime?
+  verifiedByGuard  String?
+  notes            String?
+
+  @@index([studentId, status])
+}
+
+// ----------------------------------------------------
+// CAMPUS TRANSPORT MANAGEMENT (BUSES, ROUTES & STOPS)
+// ----------------------------------------------------
+model Bus {
+  id            String     @id @default(uuid())
+  busNumber     String     @unique // e.g. "BUS-01", "BUS-02"
+  vehicleNumber String     // e.g. "OD-02-AX-4450"
+  capacity      Int        @default(50)
+  driverName    String     // e.g. "Bishnu Charan Das"
+  driverPhone   String     // e.g. "9876543401"
+  status        String     @default("ACTIVE") // ACTIVE, INACTIVE
+  createdAt     DateTime   @default(now())
+  updatedAt     DateTime   @updatedAt
+
+  routes        BusRoute[]
+
+  @@index([status])
+}
+
+model BusRoute {
+  id          String      @id @default(uuid())
+  routeNumber String      @unique // e.g. "Route 1"
+  routeName   String      // e.g. "Master Canteen to Campus"
+  description String?     // e.g. "Daily scholar route covering Master Canteen, Vani Vihar, Rasulgarh and Patia."
+  startPoint  String      // e.g. "Master Canteen"
+  destination String      // e.g. "Campus Main Gate"
+  status      String      @default("ACTIVE") // ACTIVE, INACTIVE
+  delayStatus String      @default("ON_TIME") // ON_TIME, DELAYED, CANCELLED
+  delayNotice String?
+  busId       String?
+  bus         Bus?        @relation(fields: [busId], references: [id], onDelete: SetNull)
+  stops       RouteStop[]
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+
+  @@index([status])
+  @@index([busId])
+}
+
+model RouteStop {
+  id         String   @id @default(uuid())
+  routeId    String
+  route      BusRoute @relation(fields: [routeId], references: [id], onDelete: Cascade)
+  stopName   String   // e.g. "Vani Vihar Square"
+  location   String?  // e.g. "Near Overbridge / NH-16"
+  pickupTime String   // e.g. "07:45 AM"
+  dropTime   String?  // e.g. "05:30 PM"
+  stopOrder  Int      // 1, 2, 3...
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@index([routeId, stopOrder])
+}
+
+// ----------------------------------------------------
+// DAY SCHOLAR TRANSPORT & PARKING
+// ----------------------------------------------------
+model TransportRoute {
+  id                String   @id @default(uuid())
+  routeNumber       String   @unique // e.g. "Route 1"
+  routeName         String   // e.g. "Master Canteen - Vani Vihar - Patia - Campus"
+  busNumber         String   // e.g. "OD-02-AX-4450"
+  driverName        String
+  driverPhone       String
+  stops             String   // JSON array string: [{"name":"Master Canteen","time":"07:30 AM"},{"name":"Vani Vihar","time":"07:45 AM"}]
+  morningDeparture  String   // "07:30 AM"
+  eveningDeparture  String   // "05:15 PM"
+  status            String   @default("ON_TIME") // ON_TIME, DELAYED, MAINTENANCE
+  statusNote        String?
+  updatedAt         DateTime @default(now()) @updatedAt
+}
+
+model ParkingZone {
+  id             String   @id @default(uuid())
+  name           String   @unique // e.g. "Zone A - 2-Wheeler (Near Gate 1)"
+  vehicleType    String   // TWO_WHEELER, FOUR_WHEELER
+  totalSlots     Int
+  occupiedSlots  Int      @default(0)
+  status         String   @default("AVAILABLE") // AVAILABLE, FULL, RESTRICTED
+  notice         String?
+  updatedAt      DateTime @default(now()) @updatedAt
+}
+
+// ----------------------------------------------------
+// EXPANDED ACADEMIC COURSES & BRANCHES MASTER DATA
+// ----------------------------------------------------
+model AcademicCourse {
+  id            String           @id @default(uuid())
+  code          String           @unique // e.g. "MCA", "BCA", "BBA", "B.Tech", "MBA", "M.Tech"
+  name          String           // e.g. "Master of Computer Applications"
+  durationYears Int              @default(2) // 2, 3, 4
+  isActive      Boolean          @default(true)
+  createdAt     DateTime         @default(now())
+  updatedAt     DateTime         @updatedAt
+
+  branches      AcademicBranch[]
+
+  @@index([isActive])
+}
+
+model AcademicBranch {
+  id          String         @id @default(uuid())
+  courseId    String
+  course      AcademicCourse @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  code        String         // e.g. "CA", "DS", "CSE", "IT", "HRM"
+  name        String         // e.g. "Computer Applications", "Data Science", "Computer Science & Engineering"
+  isActive    Boolean        @default(true)
+  createdAt   DateTime       @default(now())
+  updatedAt   DateTime       @updatedAt
+
+  @@unique([courseId, code])
+  @@index([courseId, isActive])
+}
+

@@ -21,6 +21,13 @@ import { adminRouter } from "./routes/admin.routes.js";
 import { hostelRouter } from "./routes/hostel.routes.js";
 import { notificationRouter } from "./routes/notification.routes.js";
 import { importRouter } from "./routes/import.routes.js";
+import { emergencyRouter } from "./routes/emergency.routes.js";
+import { clubRouter } from "./routes/club.routes.js";
+import { maintenanceRouter } from "./routes/maintenance.routes.js";
+import { parcelRouter } from "./routes/parcel.routes.js";
+import { transportRouter } from "./routes/transport.routes.js";
+import { parkingRouter } from "./routes/parking.routes.js";
+import { directoryRouter } from "./routes/directory.routes.js";
 import { generalApiLimiter } from "./middleware/rateLimit.middleware.js";
 
 const __filename = fileURLToPath(import.meta.url);
@@ -80,6 +87,13 @@ app.use("/api/admin", adminRouter);
 app.use("/api/hostels", hostelRouter);
 app.use("/api/notifications", notificationRouter);
 app.use("/api/import", importRouter);
+app.use("/api/emergencies", emergencyRouter);
+app.use("/api/clubs", clubRouter);
+app.use("/api/maintenance", maintenanceRouter);
+app.use("/api/parcels", parcelRouter);
+app.use("/api/transport", transportRouter);
+app.use("/api/parking", parkingRouter);
+app.use("/api/directory", directoryRouter);
 
 // Serve static frontend assets strictly in production mode
 const clientDistPath = path.resolve(__dirname, "../../client/dist");

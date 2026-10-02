@@ -5,9 +5,10 @@ import { prisma } from "../prisma.js";
 import { requireAuth, requireRoles } from "../middleware/auth.middleware.js";
 import { validateBody } from "../middleware/validate.middleware.js";
 import { classifierService } from "../services/classifier.service.js";
+import { assignmentService } from "../services/assignment.service.js";
 import { createNotification } from "../services/push.service.js";
 import { generateTicketSlipPdf } from "../services/pdf.service.js";
-import { CreateTicketSchema, UpdateTicketStatusSchema } from "../shared/schemas.js";
+import { CreateTicketSchema, UpdateTicketStatusSchema, OverrideTicketPrioritySchema } from "../shared/schemas.js";
 
 export const ticketRouter = Router();
 
@@ -24,7 +25,7 @@ const upload = multer({
   }
 });
 
-// Create new ticket with optional photo compression
+// Create new ticket with smart staff assignment, SLA target, and photo compression
 ticketRouter.post(
   "/",
   requireAuth,
@@ -43,6 +44,13 @@ ticketRouter.post(
       const textToClassify = `${title} ${description}`;
       const classification = classifierService.classify(textToClassify);
       const chosenCategory = category || classification.category;
+      const chosenPriority = priority || "MEDIUM";
+
+      // Calculate SLA deadline based on priority
+      const slaDeadline = assignmentService.calculateSlaDeadline(chosenPriority);
+
+      // Smart staff assignment engine
+      const assignment = await assignmentService.smartAssignStaff(chosenCategory, hostelBlock);
 
       // Process and compress photo with sharp if provided
       let photoData: Buffer | null = null;
@@ -58,6 +66,7 @@ ticketRouter.post(
 
       const totalCount = await prisma.ticket.count();
       const ticketNumber = `CD-${1000 + totalCount + 1}`;
+      const initialStatus = assignment.assignedStaffId ? "ASSIGNED" : "SUBMITTED";
 
       const ticket = await prisma.ticket.create({
         data: {
@@ -70,8 +79,10 @@ ticketRouter.post(
           isCategoryCorrected: category ? category !== classification.category : false,
           hostelBlock,
           roomNumber,
-          priority: priority as any,
-          status: "SUBMITTED",
+          priority: chosenPriority as any,
+          slaDeadline,
+          status: initialStatus,
+          assignedStaffId: assignment.assignedStaffId || undefined,
           photoData: (photoData || undefined) as any,
           photoMimeType: photoMimeType || undefined
         }
@@ -82,35 +93,41 @@ ticketRouter.post(
         data: {
           ticketId: ticket.id,
           changedById: req.user!.id,
-          toStatus: "SUBMITTED",
+          toStatus: initialStatus,
           action: "TICKET_CREATED",
-          note: `Complaint submitted by student. Auto-classified as ${classification.category} (confidence: ${(classification.confidence * 100).toFixed(0)}%).`
+          note: `Complaint filed (${chosenPriority} priority, SLA: ${slaDeadline.toLocaleDateString()} ${slaDeadline.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}). ${assignment.explanation}`
         }
       });
 
-      // Check recurring issues in same hostel block or room within last 14 days
-      const fourteenDaysAgo = new Date(Date.now() - 14 * 24 * 60 * 60 * 1000);
+      // Check recurring issues in same location/category within last 30 days
+      const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
       const recurringTickets = await prisma.ticket.findMany({
         where: {
           id: { not: ticket.id },
           category: chosenCategory as any,
           hostelBlock,
           roomNumber,
-          createdAt: { gte: fourteenDaysAgo }
+          createdAt: { gte: thirtyDaysAgo }
         },
-        select: { id: true, ticketNumber: true, title: true, createdAt: true }
+        select: { id: true, ticketNumber: true, title: true, priority: true, status: true, createdAt: true }
       });
 
       // Notify staff/wardens
-      const notifyStaff = await prisma.user.findMany({
-        where: { role: { in: ["WARDEN", "STAFF"] }, isActive: true }
+      const notifyUsers = await prisma.user.findMany({
+        where: {
+          OR: [
+            { role: "WARDEN" },
+            { id: assignment.assignedStaffId || undefined }
+          ],
+          isActive: true
+        }
       });
 
-      for (const staff of notifyStaff) {
+      for (const u of notifyUsers) {
         await createNotification(
-          staff.id,
-          `New Ticket: #${ticketNumber}`,
-          `${chosenCategory} issue reported in ${hostelBlock} ${roomNumber}: "${title}"`,
+          u.id,
+          `New ${chosenPriority} Ticket: #${ticketNumber}`,
+          `${chosenCategory} issue reported in ${hostelBlock} ${roomNumber}: "${title}". Target SLA: ${slaDeadline.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`,
           "TICKET",
           `/tickets/${ticket.id}`
         );
@@ -125,10 +142,13 @@ ticketRouter.post(
         predictedCategory: classification.category,
         predictionConfidence: classification.confidence,
         matchedKeywords: classification.matchedKeywords,
+        assignmentExplanation: assignment.explanation,
+        slaDeadline,
         recurringIssue: recurringTickets.length > 0 ? {
           isRecurring: true,
-          count: recurringTickets.length,
-          previousTickets: recurringTickets
+          count: recurringTickets.length + 1,
+          previousTickets: recurringTickets,
+          insight: `Repeated ${chosenCategory} issue detected in ${hostelBlock} ${roomNumber} (${recurringTickets.length + 1} complaints in 30 days). Consider equipment inspection or replacement.`
         } : null
       });
     } catch (err: any) {
@@ -375,6 +395,133 @@ ticketRouter.patch(
     } catch (err: any) {
       console.error("Failed to update ticket:", err);
       res.status(500).json({ error: "Failed to update ticket status." });
+    }
+  }
+);
+
+// Override Ticket Priority (Warden & Admin only) with mandatory audit reason
+ticketRouter.patch(
+  "/:id/priority",
+  requireAuth,
+  requireRoles(["WARDEN", "ADMIN"]),
+  validateBody(OverrideTicketPrioritySchema),
+  async (req: Request, res: Response): Promise<void> => {
+    try {
+      const { id } = req.params;
+      const { priority, reason } = req.body;
+
+      const ticket = await prisma.ticket.findUnique({ where: { id } });
+      if (!ticket) {
+        res.status(404).json({ error: "Ticket not found." });
+        return;
+      }
+
+      const previousPriority = ticket.priority;
+      const newSlaDeadline = assignmentService.calculateSlaDeadline(priority, ticket.createdAt);
+
+      const updated = await prisma.$transaction(async (tx) => {
+        const t = await tx.ticket.update({
+          where: { id },
+          data: {
+            priority: priority as any,
+            slaDeadline: newSlaDeadline,
+            manualPriorityOverride: true,
+            priorityOverriddenById: req.user!.id,
+            priorityOverrideReason: reason
+          }
+        });
+
+        await tx.ticketAuditLog.create({
+          data: {
+            ticketId: id,
+            changedById: req.user!.id,
+            fromStatus: ticket.status,
+            toStatus: ticket.status,
+            action: "PRIORITY_OVERRIDE",
+            note: `Priority changed from ${previousPriority} to ${priority}. Reason: "${reason}". SLA adjusted to ${newSlaDeadline.toLocaleDateString()} ${newSlaDeadline.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}.`
+          }
+        });
+
+        return t;
+      });
+
+      // Notify student
+      await createNotification(
+        ticket.studentId,
+        `Priority Updated: Ticket #${ticket.ticketNumber}`,
+        `Your ticket priority was updated to ${priority} by ${req.user!.fullName}. Reason: "${reason}"`,
+        "TICKET",
+        `/tickets/${ticket.id}`
+      );
+
+      res.json({
+        message: `Priority updated to ${priority}.`,
+        ticket: updated,
+        slaDeadline: newSlaDeadline
+      });
+    } catch (err: any) {
+      console.error("Failed to override priority:", err);
+      res.status(500).json({ error: "Failed to override ticket priority." });
+    }
+  }
+);
+
+// Recurring complaints analytics list
+ticketRouter.get(
+  "/analytics/recurring",
+  requireAuth,
+  requireRoles(["WARDEN", "ADMIN", "STAFF"]),
+  async (_req: Request, res: Response): Promise<void> => {
+    try {
+      const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
+      const tickets = await prisma.ticket.findMany({
+        where: {
+          createdAt: { gte: thirtyDaysAgo }
+        },
+        select: {
+          id: true,
+          ticketNumber: true,
+          title: true,
+          category: true,
+          hostelBlock: true,
+          roomNumber: true,
+          priority: true,
+          status: true,
+          createdAt: true
+        },
+        orderBy: { createdAt: "desc" }
+      });
+
+      // Group by location key (hostelBlock + roomNumber + category)
+      const groups: Record<string, any[]> = {};
+      for (const t of tickets) {
+        const key = `${t.hostelBlock}::${t.roomNumber || "General"}::${t.category}`;
+        if (!groups[key]) groups[key] = [];
+        groups[key].push(t);
+      }
+
+      // Filter keys that have >= 2 occurrences
+      const recurringList = Object.entries(groups)
+        .filter(([_, list]) => list.length >= 2)
+        .map(([key, list]) => {
+          const [hostelBlock, roomNumber, category] = key.split("::");
+          return {
+            key,
+            hostelBlock,
+            roomNumber,
+            category,
+            count: list.length,
+            latestTitle: list[0].title,
+            latestDate: list[0].createdAt,
+            tickets: list,
+            recommendedAction: list.length >= 4 ? "Asset Replacement / Major Overhaul" : "Scheduled Preventative Maintenance"
+          };
+        })
+        .sort((a, b) => b.count - a.count);
+
+      res.json({ recurringIssues: recurringList });
+    } catch (err: any) {
+      res.status(500).json({ error: "Failed to fetch recurring issue analytics." });
     }
   }
 );

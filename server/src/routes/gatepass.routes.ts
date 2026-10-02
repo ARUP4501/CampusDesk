@@ -201,6 +201,100 @@ gatePassRouter.patch(
   }
 );
 
+// Cryptographic QR Verification & Pass Inspection (Security Guard / Warden)
+gatePassRouter.post(
+  "/verify-qr",
+  requireAuth,
+  requireRoles(["STAFF", "WARDEN", "ADMIN"]),
+  async (req: Request, res: Response): Promise<void> => {
+    try {
+      const rawToken = (req.body.token || req.body.passIdentifier || "").trim();
+      if (!rawToken) {
+        res.status(400).json({ error: "Pass identifier or QR token payload is required." });
+        return;
+      }
+
+      let passNumber = rawToken;
+      try {
+        const parsed = JSON.parse(rawToken);
+        if (parsed.passNumber) passNumber = parsed.passNumber;
+      } catch {
+        // Plain string
+      }
+
+      const gatePass = await prisma.gatePass.findFirst({
+        where: {
+          OR: [
+            { passNumber: passNumber },
+            { id: passNumber }
+          ]
+        },
+        include: {
+          student: {
+            select: {
+              id: true,
+              fullName: true,
+              rollNumber: true,
+              phone: true,
+              hostelBlock: true,
+              roomNumber: true,
+              course: true,
+              department: true,
+              livingType: true
+            }
+          },
+          approvedBy: { select: { id: true, fullName: true, role: true } }
+        }
+      });
+
+      if (!gatePass) {
+        res.status(404).json({
+          valid: false,
+          error: `Invalid Pass: No record found with identifier "${passNumber}".`
+        });
+        return;
+      }
+
+      const now = new Date();
+      const isPastExpectedReturn = now > new Date(gatePass.expectedReturnDate);
+
+      let statusDescription = "";
+      let nextAction: "EXIT" | "ENTRY" | "NONE" = "NONE";
+      let isValidForUse = false;
+
+      if (gatePass.status === "APPROVED") {
+        nextAction = "EXIT";
+        isValidForUse = true;
+        statusDescription = "Authorized for Campus Exit.";
+      } else if (gatePass.status === "EXITED") {
+        nextAction = "ENTRY";
+        isValidForUse = true;
+        statusDescription = isPastExpectedReturn
+          ? "Student is returning past the approved return curfew."
+          : "Authorized for Campus Return.";
+      } else if (gatePass.status === "RETURNED") {
+        statusDescription = "Gate pass has already been completed and used for re-entry.";
+      } else if (gatePass.status === "REJECTED") {
+        statusDescription = "Gate pass was rejected by the Hostel Warden.";
+      } else if (gatePass.status === "PENDING") {
+        statusDescription = "Gate pass is still awaiting Warden approval.";
+      }
+
+      res.json({
+        valid: isValidForUse,
+        gatePass,
+        nextAction,
+        isLate: isPastExpectedReturn,
+        statusDescription,
+        verifiedAt: now.toISOString()
+      });
+    } catch (err: any) {
+      console.error("QR Verification error:", err);
+      res.status(500).json({ error: "Failed to verify gate pass QR token." });
+    }
+  }
+);
+
 // Gate Log: Guard scans QR or enters pass number to record exit or entry
 gatePassRouter.post(
   "/gate-log/record",

@@ -5,6 +5,7 @@ export interface UserProfile {
   email: string;
   fullName: string;
   role: "STUDENT" | "WARDEN" | "STAFF" | "ADMIN";
+  livingType?: "HOSTELLER" | "DAY_SCHOLAR";
   employeeId?: string | null;
   rollNumber?: string | null;
   phone: string;
@@ -32,6 +33,10 @@ export interface UserProfile {
   bedNumber?: string | null;
   requestedHostel?: string | null;
   roomPreference?: string | null;
+  busRoute?: string | null;
+  pickupPoint?: string | null;
+  vehicleNumber?: string | null;
+  parkingZone?: string | null;
   verificationStatus?: "PENDING_WARDEN_VERIFICATION" | "REJECTED_BY_WARDEN" | "PENDING_ADMIN_APPROVAL" | "REJECTED_BY_ADMIN" | "ACTIVE" | "INACTIVE";
   wardenVerificationDate?: string | null;
   adminApprovalDate?: string | null;
@@ -40,6 +45,14 @@ export interface UserProfile {
 }
 
 const API_BASE = "";
+
+// Compatibility stubs (no storage / no broadcast / cookie-only auth)
+export function setAuthToken(_token?: string | null): void {}
+export function clearAuthToken(): void {}
+export function broadcastAuthEvent(_msg?: any): void {}
+export function subscribeAuthEvents(_callback?: (msg: any) => void): () => void {
+  return () => {};
+}
 
 export async function apiRequest<T>(
   endpoint: string,

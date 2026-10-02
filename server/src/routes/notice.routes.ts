@@ -57,6 +57,12 @@ noticeRouter.post(
         studentFilter.hostelBlock = targetValue;
       } else if (targetType === "YEAR" && targetValue) {
         studentFilter.year = parseInt(targetValue, 10);
+      } else if (targetType === "HOSTELLER" || targetType === "HOSTELLERS") {
+        studentFilter.livingType = "HOSTELLER";
+      } else if (targetType === "DAY_SCHOLAR" || targetType === "DAY_SCHOLARS") {
+        studentFilter.livingType = "DAY_SCHOLAR";
+      } else if (targetType === "INDIVIDUAL" && targetValue) {
+        studentFilter.OR = [{ id: targetValue }, { rollNumber: targetValue }, { email: targetValue }];
       }
 
       const targetStudents = await prisma.user.findMany({

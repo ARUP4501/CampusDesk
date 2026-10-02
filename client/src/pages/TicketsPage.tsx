@@ -107,14 +107,14 @@ export const TicketsPage: React.FC<{ user: UserProfile | null }> = ({ user }) =>
       {/* Filter and Search Bar */}
       <div className="glass-panel p-4 rounded-2xl border border-[rgba(77,42,0,0.08)] flex flex-wrap items-center justify-between gap-3">
         <form onSubmit={handleSearchSubmit} className="flex items-center space-x-2 flex-grow sm:max-w-md">
-          <div className="relative w-full">
-            <Search className="w-4 h-4 text-[#4D2A00]/40 absolute left-3 top-1/2 -translate-y-1/2" />
+          <div className="relative w-full flex items-center">
+            <Search className="w-4 h-4 text-[#4D2A00]/40 absolute left-3.5 pointer-events-none" />
             <input
               type="text"
               placeholder="Search by ticket #, title, description, or room..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full text-xs pl-9 pr-3.5 py-2 bg-white/60 border border-[rgba(77,42,0,0.12)] text-[#4D2A00] placeholder-[#4D2A00]/40 rounded-xl focus:outline-none focus:border-[#CC6F00]"
+              className="w-full text-xs pl-10 pr-3.5 py-2 bg-white/60 border border-[rgba(77,42,0,0.12)] text-[#4D2A00] placeholder-[#4D2A00]/40 rounded-xl focus:outline-none focus:border-[#CC6F00]"
             />
           </div>
           <button

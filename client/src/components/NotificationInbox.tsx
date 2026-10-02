@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { Bell, CheckCheck } from "lucide-react";
 import { Link } from "react-router-dom";
-import { apiRequest } from "../api/client.js";
+import { apiRequest, UserProfile } from "../api/client.js";
 
 interface NotificationItem {
   id: string;
@@ -13,12 +13,21 @@ interface NotificationItem {
   createdAt: string;
 }
 
-export const NotificationInbox: React.FC = () => {
+interface NotificationInboxProps {
+  user?: UserProfile | null;
+}
+
+export const NotificationInbox: React.FC<NotificationInboxProps> = ({ user }) => {
   const [isOpen, setIsOpen] = useState<boolean>(false);
   const [notifications, setNotifications] = useState<NotificationItem[]>([]);
   const [unreadCount, setUnreadCount] = useState<number>(0);
 
   const fetchNotifications = async () => {
+    if (!user) {
+      setNotifications([]);
+      setUnreadCount(0);
+      return;
+    }
     try {
       const data = await apiRequest<{ notifications: NotificationItem[]; unreadCount: number }>("/api/notifications");
       setNotifications(data.notifications || []);
@@ -29,10 +38,15 @@ export const NotificationInbox: React.FC = () => {
   };
 
   useEffect(() => {
+    if (!user) {
+      setNotifications([]);
+      setUnreadCount(0);
+      return;
+    }
     fetchNotifications();
     const interval = setInterval(fetchNotifications, 15000);
     return () => clearInterval(interval);
-  }, []);
+  }, [user?.id]);
 
   const markAllRead = async () => {
     try {

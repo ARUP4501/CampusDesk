@@ -204,6 +204,248 @@ adminRouter.get(
 );
 
 // =========================================================================
+// CAMPUS PULSE — LIVE OPERATIONAL OVERVIEW
+// =========================================================================
+adminRouter.get(
+  "/pulse",
+  requireAuth,
+  requireRoles(["ADMIN", "WARDEN"]),
+  async (req: Request, res: Response): Promise<void> => {
+    try {
+      const now = new Date();
+      const startOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+      const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
+
+      const effectiveHostel =
+        req.user!.role === "WARDEN" && req.user!.hostelBlock ? req.user!.hostelBlock : undefined;
+
+      // 1. Live Active SOS Emergencies
+      const activeEmergencies = await prisma.emergency.findMany({
+        where: {
+          status: { in: ["NEW", "ACKNOWLEDGED", "RESPONDING"] }
+        },
+        include: {
+          student: {
+            select: { id: true, fullName: true, rollNumber: true, phone: true, livingType: true, hostelBlock: true, roomNumber: true }
+          }
+        },
+        orderBy: { createdAt: "desc" }
+      });
+
+      // 2. Critical & Emergency Complaints
+      const criticalTickets = await prisma.ticket.findMany({
+        where: {
+          priority: { in: ["CRITICAL", "EMERGENCY", "HIGH"] },
+          status: { in: ["SUBMITTED", "ASSIGNED", "IN_PROGRESS"] },
+          ...(effectiveHostel ? { hostelBlock: effectiveHostel } : {})
+        },
+        include: {
+          student: { select: { fullName: true, rollNumber: true } },
+          assignedStaff: { select: { fullName: true } }
+        },
+        orderBy: { createdAt: "desc" }
+      });
+
+      // 3. Overdue Complaints (passed SLA Deadline)
+      const overdueTickets = await prisma.ticket.findMany({
+        where: {
+          status: { in: ["SUBMITTED", "ASSIGNED", "IN_PROGRESS"] },
+          slaDeadline: { lt: now },
+          ...(effectiveHostel ? { hostelBlock: effectiveHostel } : {})
+        },
+        include: {
+          student: { select: { fullName: true, rollNumber: true } },
+          assignedStaff: { select: { fullName: true } }
+        },
+        orderBy: { slaDeadline: "asc" }
+      });
+
+      // 4. Completed Today
+      const completedToday = await prisma.ticket.count({
+        where: {
+          status: { in: ["RESOLVED", "CLOSED"] },
+          resolvedAt: { gte: startOfDay },
+          ...(effectiveHostel ? { hostelBlock: effectiveHostel } : {})
+        }
+      });
+
+      // 5. Recurring issues in last 30 days
+      const thirtyDayTickets = await prisma.ticket.findMany({
+        where: {
+          createdAt: { gte: thirtyDaysAgo },
+          ...(effectiveHostel ? { hostelBlock: effectiveHostel } : {})
+        },
+        select: { hostelBlock: true, roomNumber: true, category: true, title: true }
+      });
+
+      const recurringGroups: Record<string, number> = {};
+      for (const t of thirtyDayTickets) {
+        const key = `${t.hostelBlock}::${t.roomNumber || "General"}::${t.category}`;
+        recurringGroups[key] = (recurringGroups[key] || 0) + 1;
+      }
+      const recurringCount = Object.values(recurringGroups).filter((c) => c >= 2).length;
+
+      // 6. Active Planned Maintenance
+      const activeMaintenance = await prisma.plannedMaintenance.findMany({
+        where: {
+          status: { in: ["SCHEDULED", "IN_PROGRESS"] },
+          endTime: { gte: now }
+        },
+        orderBy: { startTime: "asc" }
+      });
+
+      // 7. Staff Active Workload Matrix
+      const staffList = await prisma.user.findMany({
+        where: { role: "STAFF", isActive: true },
+        include: {
+          ticketsAssigned: {
+            where: { status: { in: ["ASSIGNED", "IN_PROGRESS"] } },
+            select: { id: true, priority: true }
+          }
+        }
+      });
+
+      const staffWorkload = staffList.map((s) => ({
+        id: s.id,
+        fullName: s.fullName,
+        department: s.department || "General",
+        activeTicketsCount: s.ticketsAssigned.length,
+        hasCriticalTicket: s.ticketsAssigned.some((t) => t.priority === "CRITICAL" || t.priority === "HIGH")
+      }));
+
+      // 8. Students currently outside campus
+      const activeExitsCount = await prisma.gatePass.count({
+        where: { status: "EXITED" }
+      });
+
+      res.json({
+        pulse: {
+          activeEmergenciesCount: activeEmergencies.length,
+          activeEmergenciesList: activeEmergencies,
+          activeEmergencies: activeEmergencies.length,
+          criticalTicketsCount: criticalTickets.length,
+          criticalTicketsList: criticalTickets.slice(0, 5),
+          criticalTickets: criticalTickets.length,
+          overdueTicketsCount: overdueTickets.length,
+          overdueTicketsList: overdueTickets.slice(0, 5),
+          overdueTickets: overdueTickets.length,
+          completedTodayCount: completedToday,
+          resolvedToday: completedToday,
+          recurringIssuesCount: recurringCount,
+          recurringCount: recurringCount,
+          activeMaintenanceCount: activeMaintenance.length,
+          activeMaintenanceList: activeMaintenance,
+          activeMaintenance: activeMaintenance.length,
+          staffWorkload,
+          activeExitsCount,
+          activeGatePasses: activeExitsCount,
+          lastUpdated: now.toISOString()
+        }
+      });
+    } catch (err: any) {
+      console.error("Pulse query error:", err);
+      res.status(500).json({ error: "Failed to generate campus pulse overview." });
+    }
+  }
+);
+
+// =========================================================================
+// CAMPUS ISSUE HEATMAP / HOTSPOTS
+// =========================================================================
+adminRouter.get(
+  "/heatmap",
+  requireAuth,
+  requireRoles(["ADMIN", "WARDEN"]),
+  async (req: Request, res: Response): Promise<void> => {
+    try {
+      const { category, priority, status, days } = req.query;
+      const daysCount = parseInt(days as string, 10) || 30;
+      const startDate = new Date(Date.now() - daysCount * 24 * 60 * 60 * 1000);
+
+      const whereClause: any = {
+        createdAt: { gte: startDate }
+      };
+
+      if (category && category !== "ALL") {
+        whereClause.category = category;
+      }
+      if (priority && priority !== "ALL") {
+        whereClause.priority = priority;
+      }
+      if (status && status !== "ALL") {
+        whereClause.status = status;
+      }
+
+      const tickets = await prisma.ticket.findMany({
+        where: whereClause,
+        select: {
+          id: true,
+          ticketNumber: true,
+          title: true,
+          category: true,
+          hostelBlock: true,
+          roomNumber: true,
+          priority: true,
+          status: true,
+          createdAt: true
+        }
+      });
+
+      // Aggregate by location (hostelBlock / campus building)
+      const locationMap: Record<string, { count: number; criticalCount: number; categories: Record<string, number>; tickets: any[] }> = {};
+
+      for (const t of tickets) {
+        const loc = t.hostelBlock || "Campus General";
+        if (!locationMap[loc]) {
+          locationMap[loc] = {
+            count: 0,
+            criticalCount: 0,
+            categories: {},
+            tickets: []
+          };
+        }
+        locationMap[loc].count += 1;
+        if (t.priority === "CRITICAL" || t.priority === "HIGH" || t.priority === "EMERGENCY") {
+          locationMap[loc].criticalCount += 1;
+        }
+        locationMap[loc].categories[t.category] = (locationMap[loc].categories[t.category] || 0) + 1;
+        locationMap[loc].tickets.push(t);
+      }
+
+      // Format hotspots array
+      const maxCount = Math.max(...Object.values(locationMap).map((l) => l.count), 1);
+      const hotspots = Object.entries(locationMap).map(([location, data]) => {
+        const intensity = Math.round((data.count / maxCount) * 100);
+        let heatLevel: "CRITICAL" | "HIGH" | "MEDIUM" | "LOW" = "LOW";
+        if (intensity >= 75 || data.criticalCount >= 3) heatLevel = "CRITICAL";
+        else if (intensity >= 45 || data.criticalCount >= 1) heatLevel = "HIGH";
+        else if (intensity >= 20) heatLevel = "MEDIUM";
+
+        return {
+          location,
+          totalComplaints: data.count,
+          criticalComplaints: data.criticalCount,
+          intensity,
+          heatLevel,
+          topCategory: Object.entries(data.categories).sort((a, b) => b[1] - a[1])[0]?.[0] || "GENERAL",
+          categoryBreakdown: data.categories,
+          sampleTickets: data.tickets.slice(0, 3)
+        };
+      }).sort((a, b) => b.totalComplaints - a.totalComplaints);
+
+      res.json({
+        timeframeDays: daysCount,
+        totalAnalyzedTickets: tickets.length,
+        hotspots
+      });
+    } catch (err: any) {
+      console.error("Heatmap analytics error:", err);
+      res.status(500).json({ error: "Failed to generate campus issue heatmap." });
+    }
+  }
+);
+
+// =========================================================================
 // 2. STUDENT VERIFICATION WORKFLOW (Warden & Admin Scoped)
 // =========================================================================
 

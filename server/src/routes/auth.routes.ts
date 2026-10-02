@@ -7,8 +7,18 @@ import { requireAuth } from "../middleware/auth.middleware.js";
 import { authRateLimiter } from "../middleware/rateLimit.middleware.js";
 import { validateBody } from "../middleware/validate.middleware.js";
 import { LoginSchema, RegisterSchema } from "../shared/schemas.js";
+import { validateCourseBranch } from "./academic.routes.js";
 
 export const authRouter = Router();
+
+export const AUTH_COOKIE_NAME = "campusdesk_token";
+
+export const getAuthCookieOptions = () => ({
+  httpOnly: true,
+  secure: config.NODE_ENV === "production",
+  sameSite: "lax" as const,
+  path: "/"
+});
 
 // Register new user (Student Registration with 2-step verification)
 authRouter.post("/register", authRateLimiter, async (req: Request, res: Response): Promise<void> => {
@@ -21,6 +31,7 @@ authRouter.post("/register", authRateLimiter, async (req: Request, res: Response
       dob,
       gender,
       bloodGroup,
+      livingType,
       rollNumber,
       course,
       department,
@@ -40,6 +51,10 @@ authRouter.post("/register", authRateLimiter, async (req: Request, res: Response
       guardianAddress,
       requestedHostel,
       roomPreference,
+      busRoute,
+      pickupPoint,
+      vehicleNumber,
+      parkingZone,
       consentAgreed
     } = req.body;
 
@@ -51,6 +66,19 @@ authRouter.post("/register", authRateLimiter, async (req: Request, res: Response
     if (!consentAgreed) {
       res.status(400).json({ error: "You must agree to the Privacy Policy and Terms of Service." });
       return;
+    }
+
+    const effectiveLivingType = (livingType === "DAY_SCHOLAR" || req.body.studentType === "DAY_SCHOLAR") ? "DAY_SCHOLAR" : "HOSTELLER";
+    const selectedCourse = (course || "B.Tech").trim();
+    const selectedBranch = branch ? branch.trim() : (department ? department.trim() : null);
+
+    // Validate Course -> Branch master relationship
+    if (selectedCourse && selectedBranch) {
+      const courseCheck = await validateCourseBranch(selectedCourse, selectedBranch);
+      if (!courseCheck.valid) {
+        res.status(400).json({ error: courseCheck.error });
+        return;
+      }
     }
 
     const existingUser = await prisma.user.findUnique({
@@ -80,14 +108,15 @@ authRouter.post("/register", authRateLimiter, async (req: Request, res: Response
         passwordHash,
         fullName,
         role: "STUDENT",
+        livingType: effectiveLivingType,
         rollNumber: rollNumber ? rollNumber.toUpperCase() : null,
         phone,
         dob: dob ? new Date(dob) : null,
         gender: gender || null,
         bloodGroup: bloodGroup || null,
-        course: course || "B.Tech",
-        department: department || "General",
-        branch: branch ? branch.toUpperCase() : (department ? department.toUpperCase() : null),
+        course: selectedCourse,
+        department: department || selectedBranch || "General",
+        branch: selectedBranch || selectedCourse,
         year: year ? parseInt(String(year), 10) : 1,
         semester: semester ? parseInt(String(semester), 10) : 1,
         batch: batch || `${new Date().getFullYear()}-${new Date().getFullYear() + 4}`,
@@ -101,10 +130,14 @@ authRouter.post("/register", authRateLimiter, async (req: Request, res: Response
         guardianRelation: guardianRelation || null,
         guardianPhone: guardianPhone || null,
         guardianAddress: guardianAddress || null,
-        requestedHostel: requestedHostel || "Hostel-A",
+        requestedHostel: effectiveLivingType === "HOSTELLER" ? (requestedHostel || "Hostel-A") : null,
         roomPreference: roomPreference || null,
-        verificationStatus: "PENDING_WARDEN_VERIFICATION",
-        isActive: false // Activated upon final Admin approval
+        busRoute: effectiveLivingType === "DAY_SCHOLAR" ? (busRoute || null) : null,
+        pickupPoint: effectiveLivingType === "DAY_SCHOLAR" ? (pickupPoint || null) : null,
+        vehicleNumber: vehicleNumber || null,
+        parkingZone: parkingZone || null,
+        verificationStatus: effectiveLivingType === "HOSTELLER" ? "PENDING_WARDEN_VERIFICATION" : "ACTIVE",
+        isActive: effectiveLivingType === "DAY_SCHOLAR" ? true : false // Day scholars activate immediately or upon admin review
       }
     });
 
@@ -145,10 +178,8 @@ authRouter.post("/register", authRateLimiter, async (req: Request, res: Response
     // Sign session token
     const token = jwt.sign({ userId: user.id }, config.JWT_SECRET, { expiresIn: "7d" });
 
-    res.cookie("campusdesk_token", token, {
-      httpOnly: true,
-      secure: config.NODE_ENV === "production",
-      sameSite: "lax",
+    res.cookie(AUTH_COOKIE_NAME, token, {
+      ...getAuthCookieOptions(),
       maxAge: 7 * 24 * 60 * 60 * 1000
     });
 
@@ -160,6 +191,7 @@ authRouter.post("/register", authRateLimiter, async (req: Request, res: Response
         email: user.email,
         fullName: user.fullName,
         role: user.role,
+        livingType: user.livingType,
         rollNumber: user.rollNumber,
         phone: user.phone,
         course: user.course,
@@ -171,6 +203,10 @@ authRouter.post("/register", authRateLimiter, async (req: Request, res: Response
         hostelBlock: user.hostelBlock,
         roomNumber: user.roomNumber,
         bedNumber: user.bedNumber,
+        busRoute: user.busRoute,
+        pickupPoint: user.pickupPoint,
+        vehicleNumber: user.vehicleNumber,
+        parkingZone: user.parkingZone,
         verificationStatus: user.verificationStatus,
         isActive: user.isActive
       }
@@ -203,10 +239,8 @@ authRouter.post("/login", authRateLimiter, validateBody(LoginSchema), async (req
 
     const token = jwt.sign({ userId: user.id }, config.JWT_SECRET, { expiresIn: "7d" });
 
-    res.cookie("campusdesk_token", token, {
-      httpOnly: true,
-      secure: config.NODE_ENV === "production",
-      sameSite: "lax",
+    res.cookie(AUTH_COOKIE_NAME, token, {
+      ...getAuthCookieOptions(),
       maxAge: 7 * 24 * 60 * 60 * 1000
     });
 
@@ -218,6 +252,8 @@ authRouter.post("/login", authRateLimiter, validateBody(LoginSchema), async (req
         email: user.email,
         fullName: user.fullName,
         role: user.role,
+        livingType: user.livingType,
+        studentType: user.role === "STUDENT" ? user.livingType : undefined,
         rollNumber: user.rollNumber,
         employeeId: user.employeeId,
         phone: user.phone,
@@ -225,6 +261,10 @@ authRouter.post("/login", authRateLimiter, validateBody(LoginSchema), async (req
         roomNumber: user.roomNumber,
         bedNumber: user.bedNumber,
         requestedHostel: user.requestedHostel,
+        busRoute: user.busRoute,
+        pickupPoint: user.pickupPoint,
+        vehicleNumber: user.vehicleNumber,
+        parkingZone: user.parkingZone,
         batch: user.batch,
         branch: user.branch,
         course: user.course,
@@ -252,6 +292,7 @@ authRouter.get("/me", requireAuth, async (req: Request, res: Response): Promise<
         email: true,
         fullName: true,
         role: true,
+        livingType: true,
         employeeId: true,
         rollNumber: true,
         phone: true,
@@ -279,6 +320,10 @@ authRouter.get("/me", requireAuth, async (req: Request, res: Response): Promise<
         bedNumber: true,
         requestedHostel: true,
         roomPreference: true,
+        busRoute: true,
+        pickupPoint: true,
+        vehicleNumber: true,
+        parkingZone: true,
         verificationStatus: true,
         wardenVerificationDate: true,
         adminApprovalDate: true,
@@ -293,7 +338,12 @@ authRouter.get("/me", requireAuth, async (req: Request, res: Response): Promise<
       return;
     }
 
-    res.json({ user });
+    res.json({
+      user: {
+        ...user,
+        studentType: user.role === "STUDENT" ? user.livingType : undefined
+      }
+    });
   } catch (err: any) {
     res.status(500).json({ error: "Failed to fetch user profile." });
   }
@@ -302,7 +352,7 @@ authRouter.get("/me", requireAuth, async (req: Request, res: Response): Promise<
 
 // Logout
 authRouter.post("/logout", (req: Request, res: Response): void => {
-  res.clearCookie("campusdesk_token");
+  res.clearCookie(AUTH_COOKIE_NAME, getAuthCookieOptions());
   res.json({ message: "Logged out successfully." });
 });
 

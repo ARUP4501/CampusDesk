@@ -20,7 +20,22 @@ import {
   ArrowRightLeft,
   ScrollText,
   BedDouble,
-  DoorOpen
+  DoorOpen,
+  Activity,
+  Siren,
+  Flame,
+  ShieldAlert,
+  Sparkles,
+  MapPin,
+  Radio,
+  Plus,
+  PhoneCall,
+  Repeat,
+  GraduationCap,
+  Volume2,
+  VolumeX,
+  Filter,
+  CheckCircle
 } from "lucide-react";
 import { apiRequest, UserProfile } from "../api/client.js";
 import { StudentProfileModal } from "../components/StudentProfileModal.js";
@@ -34,8 +49,62 @@ export const AdminDashboardPage: React.FC<AdminDashboardPageProps> = ({ user }) 
   const isWarden = user?.role === "WARDEN";
 
   const [activeTab, setActiveTab] = useState<
-    "overview" | "verifications" | "wardens" | "staff" | "students" | "hostels" | "transfers" | "audit"
-  >("overview");
+    "pulse" | "overview" | "emergencies" | "heatmap" | "maintenance" | "verifications" | "wardens" | "staff" | "students" | "hostels" | "transfers" | "audit" | "courses"
+  >("pulse");
+
+  // Campus Pulse State
+  const [pulseData, setPulseData] = useState<any>(null);
+  const [pulseLoading, setPulseLoading] = useState<boolean>(false);
+
+  // SOS Emergencies State & Filters
+  const [emergencies, setEmergencies] = useState<any[]>([]);
+  const [emergenciesLoading, setEmergenciesLoading] = useState<boolean>(false);
+  const [emergencyActionLoading, setEmergencyActionLoading] = useState<boolean>(false);
+  const [emergencyStatusFilter, setEmergencyStatusFilter] = useState<string>("ALL");
+  const [emergencyTypeFilter, setEmergencyTypeFilter] = useState<string>("ALL");
+  const [emergencyCategoryFilter, setEmergencyCategoryFilter] = useState<string>("ALL");
+  const [emergencyAudioMuted, setEmergencyAudioMuted] = useState<boolean>(false);
+  const [activeNoteModalEmergency, setActiveNoteModalEmergency] = useState<any | null>(null);
+  const [responderNoteText, setResponderNoteText] = useState<string>("");
+  const [targetStatusForNote, setTargetStatusForNote] = useState<string>("");
+
+  // Academic Courses & Branches State
+  const [courses, setCourses] = useState<any[]>([]);
+  const [coursesLoading, setCoursesLoading] = useState<boolean>(false);
+  const [showCourseModal, setShowCourseModal] = useState<boolean>(false);
+  const [editingCourse, setEditingCourse] = useState<any | null>(null);
+  const [courseForm, setCourseForm] = useState({
+    code: "",
+    name: "",
+    durationYears: 4,
+    type: "SEMESTER"
+  });
+  const [showBranchModal, setShowBranchModal] = useState<boolean>(false);
+  const [selectedCourseForBranch, setSelectedCourseForBranch] = useState<any | null>(null);
+  const [editingBranch, setEditingBranch] = useState<any | null>(null);
+  const [branchForm, setBranchForm] = useState({
+    code: "",
+    name: "",
+    courseId: ""
+  });
+  const [courseActionLoading, setCourseActionLoading] = useState<boolean>(false);
+
+  // Campus Heatmap State
+  const [heatmapData, setHeatmapData] = useState<any>(null);
+  const [heatmapLoading, setHeatmapLoading] = useState<boolean>(false);
+
+  // Planned Maintenance State
+  const [maintenanceList, setMaintenanceList] = useState<any[]>([]);
+  const [maintenanceLoading, setMaintenanceLoading] = useState<boolean>(false);
+  const [showMaintenanceModal, setShowMaintenanceModal] = useState<boolean>(false);
+  const [maintenanceForm, setMaintenanceForm] = useState({
+    title: "",
+    description: "",
+    location: "Hostel Block A",
+    affectedAudience: "Hostel-A Residents",
+    startTime: new Date(Date.now() + 3600000).toISOString().slice(0, 16),
+    endTime: new Date(Date.now() + 10800000).toISOString().slice(0, 16)
+  });
 
   // Dashboard Metrics
   const [statsData, setStatsData] = useState<any>(null);
@@ -127,9 +196,14 @@ export const AdminDashboardPage: React.FC<AdminDashboardPageProps> = ({ user }) 
 
   useEffect(() => {
     fetchStats();
+    fetchPulse();
   }, [hostelFilter]);
 
   useEffect(() => {
+    if (activeTab === "pulse") fetchPulse();
+    if (activeTab === "emergencies") fetchEmergencies();
+    if (activeTab === "heatmap") fetchHeatmap();
+    if (activeTab === "maintenance") fetchMaintenance();
     if (activeTab === "verifications") fetchVerifications();
     if (activeTab === "students") fetchStudents();
     if (activeTab === "wardens" && isAdmin) fetchWardens();
@@ -137,7 +211,230 @@ export const AdminDashboardPage: React.FC<AdminDashboardPageProps> = ({ user }) 
     if (activeTab === "hostels") fetchHostels();
     if (activeTab === "transfers") fetchTransfers();
     if (activeTab === "audit" && isAdmin) fetchAuditLogs();
+    if (activeTab === "courses" && isAdmin) fetchCourses();
   }, [activeTab]);
+
+  // Siren audio chime for incoming emergencies
+  const playSirenChime = () => {
+    if (emergencyAudioMuted) return;
+    try {
+      const AudioCtx = window.AudioContext || (window as any).webkitAudioContext;
+      if (!AudioCtx) return;
+      const ctx = new AudioCtx();
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.type = "sine";
+      osc.frequency.setValueAtTime(880, ctx.currentTime);
+      osc.frequency.exponentialRampToValueAtTime(440, ctx.currentTime + 0.4);
+      gain.gain.setValueAtTime(0.12, ctx.currentTime);
+      gain.gain.linearRampToValueAtTime(0, ctx.currentTime + 0.4);
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      osc.start();
+      osc.stop(ctx.currentTime + 0.4);
+    } catch (e) {}
+  };
+
+  // Auto-refresh emergency feed every 6 seconds when viewing emergencies tab
+  useEffect(() => {
+    if (activeTab !== "emergencies") return;
+    const timer = setInterval(() => {
+      fetchEmergencies();
+      fetchPulse();
+    }, 6000);
+    return () => clearInterval(timer);
+  }, [activeTab]);
+
+  const fetchPulse = async () => {
+    setPulseLoading(true);
+    try {
+      const data = await apiRequest<any>("/api/admin/pulse");
+      setPulseData(data);
+    } catch (err: any) {
+      console.error("Failed to load pulse:", err);
+    } finally {
+      setPulseLoading(false);
+    }
+  };
+
+  const fetchEmergencies = async () => {
+    setEmergenciesLoading(true);
+    try {
+      const data = await apiRequest<{ emergencies: any[] }>("/api/emergencies");
+      const list = data.emergencies || [];
+      setEmergencies(list);
+      // Play audio chime if active unacknowledged beacons exist
+      const hasActive = list.some((e) => e.status === "ACTIVE" || e.status === "NEW");
+      if (hasActive) {
+        playSirenChime();
+      }
+    } catch (err: any) {
+      showToast(err.message || "Failed to load emergencies.", "error");
+    } finally {
+      setEmergenciesLoading(false);
+    }
+  };
+
+  const fetchCourses = async () => {
+    setCoursesLoading(true);
+    try {
+      const data = await apiRequest<{ courses: any[] }>("/api/academic/courses?includeInactive=true");
+      setCourses(data.courses || []);
+    } catch (err: any) {
+      showToast(err.message || "Failed to load courses.", "error");
+    } finally {
+      setCoursesLoading(false);
+    }
+  };
+
+  const handleSaveCourse = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setCourseActionLoading(true);
+    try {
+      if (editingCourse) {
+        await apiRequest(`/api/academic/courses/${editingCourse.id}`, {
+          method: "PUT",
+          body: JSON.stringify(courseForm)
+        });
+        showToast("Course program updated successfully");
+      } else {
+        await apiRequest("/api/academic/courses", {
+          method: "POST",
+          body: JSON.stringify(courseForm)
+        });
+        showToast("Course program registered successfully");
+      }
+      setShowCourseModal(false);
+      setEditingCourse(null);
+      setCourseForm({ code: "", name: "", durationYears: 4, type: "SEMESTER" });
+      fetchCourses();
+    } catch (err: any) {
+      showToast(err.message || "Failed to save course program", "error");
+    } finally {
+      setCourseActionLoading(false);
+    }
+  };
+
+  const handleToggleCourseStatus = async (courseId: string, currentStatus: boolean) => {
+    try {
+      await apiRequest(`/api/academic/courses/${courseId}/status`, {
+        method: "PATCH",
+        body: JSON.stringify({ isActive: !currentStatus })
+      });
+      showToast(`Course program ${!currentStatus ? "activated" : "deactivated"}`);
+      fetchCourses();
+    } catch (err: any) {
+      showToast(err.message || "Failed to update course status", "error");
+    }
+  };
+
+  const handleSaveBranch = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setCourseActionLoading(true);
+    try {
+      if (editingBranch) {
+        await apiRequest(`/api/academic/branches/${editingBranch.id}`, {
+          method: "PUT",
+          body: JSON.stringify({ code: branchForm.code, name: branchForm.name })
+        });
+        showToast("Academic branch updated successfully");
+      } else {
+        await apiRequest("/api/academic/branches", {
+          method: "POST",
+          body: JSON.stringify(branchForm)
+        });
+        showToast("Academic branch added successfully");
+      }
+      setShowBranchModal(false);
+      setEditingBranch(null);
+      setSelectedCourseForBranch(null);
+      setBranchForm({ code: "", name: "", courseId: "" });
+      fetchCourses();
+    } catch (err: any) {
+      showToast(err.message || "Failed to save branch", "error");
+    } finally {
+      setCourseActionLoading(false);
+    }
+  };
+
+  const handleToggleBranchStatus = async (branchId: string, currentStatus: boolean) => {
+    try {
+      await apiRequest(`/api/academic/branches/${branchId}/status`, {
+        method: "PATCH",
+        body: JSON.stringify({ isActive: !currentStatus })
+      });
+      showToast(`Academic branch ${!currentStatus ? "activated" : "deactivated"}`);
+      fetchCourses();
+    } catch (err: any) {
+      showToast(err.message || "Failed to update branch status", "error");
+    }
+  };
+
+  const fetchHeatmap = async () => {
+    setHeatmapLoading(true);
+    try {
+      const data = await apiRequest<any>("/api/admin/heatmap");
+      setHeatmapData(data);
+    } catch (err: any) {
+      showToast(err.message || "Failed to load heatmap.", "error");
+    } finally {
+      setHeatmapLoading(false);
+    }
+  };
+
+  const fetchMaintenance = async () => {
+    setMaintenanceLoading(true);
+    try {
+      const data = await apiRequest<{ maintenance: any[] }>("/api/maintenance");
+      setMaintenanceList(data.maintenance || []);
+    } catch (err: any) {
+      showToast(err.message || "Failed to load maintenance schedules.", "error");
+    } finally {
+      setMaintenanceLoading(false);
+    }
+  };
+
+  const handleUpdateEmergencyStatus = async (emergencyId: string, status: string, notes?: string) => {
+    setEmergencyActionLoading(true);
+    try {
+      await apiRequest(`/api/emergencies/${emergencyId}/status`, {
+        method: "PATCH",
+        body: JSON.stringify({ status, responderNotes: notes || undefined })
+      });
+      showToast(`Emergency beacon marked as ${status}`);
+      setActiveNoteModalEmergency(null);
+      setResponderNoteText("");
+      fetchEmergencies();
+      fetchPulse();
+    } catch (err: any) {
+      showToast(err.message || "Failed to update emergency beacon", "error");
+    } finally {
+      setEmergencyActionLoading(false);
+    }
+  };
+
+  const handleCreateMaintenance = async (e: React.FormEvent) => {
+    e.preventDefault();
+    try {
+      await apiRequest("/api/maintenance", {
+        method: "POST",
+        body: JSON.stringify(maintenanceForm)
+      });
+      setShowMaintenanceModal(false);
+      showToast("Planned maintenance scheduled and student broadcast dispatched!");
+      setMaintenanceForm({
+        title: "",
+        description: "",
+        location: "Hostel Block A",
+        affectedAudience: "Hostel-A Residents",
+        startTime: new Date(Date.now() + 3600000).toISOString().slice(0, 16),
+        endTime: new Date(Date.now() + 10800000).toISOString().slice(0, 16)
+      });
+      fetchMaintenance();
+    } catch (err: any) {
+      showToast(err.message || "Failed to schedule maintenance", "error");
+    }
+  };
 
   const fetchStats = async () => {
     setLoadingStats(true);
@@ -484,13 +781,66 @@ export const AdminDashboardPage: React.FC<AdminDashboardPageProps> = ({ user }) 
       {/* Role-Based Tab Navigation */}
       <div className="border border-[rgba(77,42,0,0.1)] glass-panel rounded-3xl px-2 flex overflow-x-auto space-x-1">
         <button
+          onClick={() => setActiveTab("pulse")}
+          className={`py-3 px-3 text-xs font-medium border-b-2 flex items-center space-x-1.5 whitespace-nowrap transition-colors ${
+            activeTab === "pulse" ? "border-[#CC6F00] text-[#CC6F00] font-bold" : "border-transparent text-[#4D2A00]/70 hover:text-[#4D2A00]"
+          }`}
+        >
+          <Activity className="w-3.5 h-3.5" />
+          <span>Campus Pulse</span>
+        </button>
+
+        <button
+          onClick={() => setActiveTab("emergencies")}
+          className={`py-3 px-3 text-xs font-medium border-b-2 flex items-center space-x-1.5 whitespace-nowrap transition-colors ${
+            activeTab === "emergencies" ? "border-rose-600 text-rose-700 font-bold" : "border-transparent text-[#4D2A00]/70 hover:text-[#4D2A00]"
+          }`}
+        >
+          <Siren className="w-3.5 h-3.5 text-rose-600" />
+          <span>SOS Emergencies</span>
+          {(typeof pulseData?.pulse?.activeEmergencies === "number"
+            ? pulseData.pulse.activeEmergencies
+            : (Array.isArray(pulseData?.pulse?.activeEmergencies)
+                ? pulseData.pulse.activeEmergencies.length
+                : (pulseData?.pulse?.activeEmergenciesCount || 0))) > 0 && (
+            <span className="px-1.5 py-0.2 text-[9px] font-mono bg-rose-600 text-white rounded-full font-bold animate-pulse">
+              {typeof pulseData?.pulse?.activeEmergencies === "number"
+                ? pulseData.pulse.activeEmergencies
+                : (Array.isArray(pulseData?.pulse?.activeEmergencies)
+                    ? pulseData.pulse.activeEmergencies.length
+                    : (pulseData?.pulse?.activeEmergenciesCount || 0))}
+            </span>
+          )}
+        </button>
+
+        <button
+          onClick={() => setActiveTab("heatmap")}
+          className={`py-3 px-3 text-xs font-medium border-b-2 flex items-center space-x-1.5 whitespace-nowrap transition-colors ${
+            activeTab === "heatmap" ? "border-[#CC6F00] text-[#CC6F00] font-bold" : "border-transparent text-[#4D2A00]/70 hover:text-[#4D2A00]"
+          }`}
+        >
+          <Flame className="w-3.5 h-3.5 text-amber-700" />
+          <span>Issue Heatmap</span>
+        </button>
+
+        <button
+          onClick={() => setActiveTab("maintenance")}
+          className={`py-3 px-3 text-xs font-medium border-b-2 flex items-center space-x-1.5 whitespace-nowrap transition-colors ${
+            activeTab === "maintenance" ? "border-[#CC6F00] text-[#CC6F00] font-bold" : "border-transparent text-[#4D2A00]/70 hover:text-[#4D2A00]"
+          }`}
+        >
+          <Radio className="w-3.5 h-3.5 text-campus-accent" />
+          <span>Planned Outages</span>
+        </button>
+
+        <button
           onClick={() => setActiveTab("overview")}
           className={`py-3 px-3 text-xs font-medium border-b-2 flex items-center space-x-1.5 whitespace-nowrap transition-colors ${
             activeTab === "overview" ? "border-[#CC6F00] text-[#CC6F00] font-bold" : "border-transparent text-[#4D2A00]/70 hover:text-[#4D2A00]"
           }`}
         >
           <BarChart2 className="w-3.5 h-3.5" />
-          <span>Dashboard Overview</span>
+          <span>Hostel Stats</span>
         </button>
 
         <button
@@ -569,9 +919,877 @@ export const AdminDashboardPage: React.FC<AdminDashboardPageProps> = ({ user }) 
               <ScrollText className="w-3.5 h-3.5" />
               <span>System Audit Logs</span>
             </button>
+
+            <button
+              onClick={() => setActiveTab("courses")}
+              className={`py-3 px-3 text-xs font-medium border-b-2 flex items-center space-x-1.5 whitespace-nowrap transition-colors ${
+                activeTab === "courses" ? "border-[#CC6F00] text-[#CC6F00] font-bold" : "border-transparent text-[#4D2A00]/70 hover:text-[#4D2A00]"
+              }`}
+            >
+              <GraduationCap className="w-3.5 h-3.5" />
+              <span>Courses & Branches</span>
+            </button>
           </>
         )}
       </div>
+
+      {/* TAB: CAMPUS PULSE */}
+      {activeTab === "pulse" && (
+        <div className="space-y-6">
+          <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-8 gap-3">
+            <div className="p-4 rounded-3xl glass-card border border-campus-border">
+              <span className="text-[10px] font-mono text-campus-muted uppercase block">Active SOS</span>
+              <p className={`text-2xl font-extrabold font-mono mt-1 ${(typeof pulseData?.pulse?.activeEmergencies === "number" ? pulseData.pulse.activeEmergencies : (Array.isArray(pulseData?.pulse?.activeEmergencies) ? pulseData.pulse.activeEmergencies.length : (pulseData?.pulse?.activeEmergenciesCount || 0))) > 0 ? "text-rose-600 animate-pulse" : "text-campus-text"}`}>
+                {typeof pulseData?.pulse?.activeEmergencies === "number"
+                  ? pulseData.pulse.activeEmergencies
+                  : (Array.isArray(pulseData?.pulse?.activeEmergencies)
+                      ? pulseData.pulse.activeEmergencies.length
+                      : (pulseData?.pulse?.activeEmergenciesCount || 0))}
+              </p>
+              <span className="text-[10px] text-campus-secondary">High Priority</span>
+            </div>
+
+            <div className="p-4 rounded-3xl glass-card border border-campus-border">
+              <span className="text-[10px] font-mono text-campus-muted uppercase block">Critical Issues</span>
+              <p className="text-2xl font-extrabold font-mono text-rose-600 mt-1">
+                {typeof pulseData?.pulse?.criticalTickets === "number"
+                  ? pulseData.pulse.criticalTickets
+                  : (Array.isArray(pulseData?.pulse?.criticalTickets)
+                      ? pulseData.pulse.criticalTickets.length
+                      : (pulseData?.pulse?.criticalTicketsCount || 0))}
+              </p>
+              <span className="text-[10px] text-campus-secondary">4h SLA Target</span>
+            </div>
+
+            <div className="p-4 rounded-3xl glass-card border border-campus-border">
+              <span className="text-[10px] font-mono text-campus-muted uppercase block">Overdue SLA</span>
+              <p className="text-2xl font-extrabold font-mono text-amber-700 mt-1">
+                {typeof pulseData?.pulse?.overdueTickets === "number"
+                  ? pulseData.pulse.overdueTickets
+                  : (Array.isArray(pulseData?.pulse?.overdueTickets)
+                      ? pulseData.pulse.overdueTickets.length
+                      : (pulseData?.pulse?.overdueTicketsCount || 0))}
+              </p>
+              <span className="text-[10px] text-campus-secondary">Escalated</span>
+            </div>
+
+            <div className="p-4 rounded-3xl glass-card border border-campus-border">
+              <span className="text-[10px] font-mono text-campus-muted uppercase block">Recurring Issues</span>
+              <p className="text-2xl font-extrabold font-mono text-campus-accent mt-1">
+                {pulseData?.pulse?.recurringCount ?? pulseData?.pulse?.recurringIssuesCount ?? 0}
+              </p>
+              <span className="text-[10px] text-campus-secondary">30-Day Repeats</span>
+            </div>
+
+            <div className="p-4 rounded-3xl glass-card border border-campus-border">
+              <span className="text-[10px] font-mono text-campus-muted uppercase block">Pending Tickets</span>
+              <p className="text-2xl font-extrabold font-mono text-campus-text mt-1">
+                {pulseData?.pulse?.pendingTickets ?? 0}
+              </p>
+              <span className="text-[10px] text-campus-secondary">Active Queue</span>
+            </div>
+
+            <div className="p-4 rounded-3xl glass-card border border-campus-border">
+              <span className="text-[10px] font-mono text-campus-muted uppercase block">Resolved Today</span>
+              <p className="text-2xl font-extrabold font-mono text-emerald-700 mt-1">
+                {pulseData?.pulse?.resolvedToday ?? pulseData?.pulse?.completedTodayCount ?? 0}
+              </p>
+              <span className="text-[10px] text-emerald-700 font-medium">Completed</span>
+            </div>
+
+            <div className="p-4 rounded-3xl glass-card border border-campus-border">
+              <span className="text-[10px] font-mono text-campus-muted uppercase block">Gate Exits</span>
+              <p className="text-2xl font-extrabold font-mono text-campus-text mt-1">
+                {pulseData?.pulse?.activeGatePasses ?? pulseData?.pulse?.activeExitsCount ?? 0}
+              </p>
+              <span className="text-[10px] text-campus-secondary">Outside Campus</span>
+            </div>
+
+            <div className="p-4 rounded-3xl glass-card border border-campus-border">
+              <span className="text-[10px] font-mono text-campus-muted uppercase block">Active Outages</span>
+              <p className="text-2xl font-extrabold font-mono text-campus-accent mt-1">
+                {typeof pulseData?.pulse?.activeMaintenance === "number"
+                  ? pulseData.pulse.activeMaintenance
+                  : (Array.isArray(pulseData?.pulse?.activeMaintenance)
+                      ? pulseData.pulse.activeMaintenance.length
+                      : (pulseData?.pulse?.activeMaintenanceCount || 0))}
+              </p>
+              <span className="text-[10px] text-campus-secondary">Notified</span>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+            {/* Real-time Staff Load */}
+            <div className="glass-card rounded-3xl p-5 border border-campus-border space-y-3">
+              <h3 className="text-xs font-mono font-bold text-campus-accent uppercase tracking-wider flex items-center space-x-1.5">
+                <Wrench className="w-4 h-4" />
+                <span>Technician Active Workload & Capacity</span>
+              </h3>
+              <div className="space-y-2.5">
+                {pulseData?.staffWorkload && pulseData.staffWorkload.length > 0 ? (
+                  pulseData.staffWorkload.map((staff: any) => (
+                    <div key={staff.id} className="p-3 bg-white/70 border border-campus-border rounded-2xl flex items-center justify-between text-xs">
+                      <div>
+                        <strong className="text-campus-text">{staff.name}</strong>
+                        <p className="text-[11px] text-campus-secondary">{staff.department}</p>
+                      </div>
+                      <div className="text-right font-mono">
+                        <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${
+                          staff.activeTasks > 5 ? "bg-rose-100 text-rose-800" : "bg-emerald-100 text-emerald-800"
+                        }`}>
+                          {staff.activeTasks} Active Tasks
+                        </span>
+                        <span className="text-[10px] text-campus-muted block mt-0.5">{staff.resolvedToday} resolved today</span>
+                      </div>
+                    </div>
+                  ))
+                ) : (
+                  <p className="text-xs text-campus-muted py-4 text-center">No staff load metrics available.</p>
+                )}
+              </div>
+            </div>
+
+            {/* Hotspots Overview */}
+            <div className="glass-card rounded-3xl p-5 border border-campus-border space-y-3">
+              <div className="flex items-center justify-between">
+                <h3 className="text-xs font-mono font-bold text-campus-accent uppercase tracking-wider flex items-center space-x-1.5">
+                  <Flame className="w-4 h-4 text-amber-700" />
+                  <span>Campus Complaint Hotspots</span>
+                </h3>
+                <button onClick={() => setActiveTab("heatmap")} className="text-xs font-semibold text-campus-accent hover:underline">
+                  Open Heatmap &rarr;
+                </button>
+              </div>
+
+              <div className="space-y-2.5">
+                {pulseData?.hotspots && pulseData.hotspots.length > 0 ? (
+                  pulseData.hotspots.map((spot: any, i: number) => (
+                    <div key={i} className="p-3 bg-white/70 border border-campus-border rounded-2xl flex items-center justify-between text-xs">
+                      <div className="flex items-center space-x-2">
+                        <span className="w-6 h-6 rounded-full bg-campus-btnPrimary text-campus-text font-bold text-[10px] flex items-center justify-center">
+                          {i + 1}
+                        </span>
+                        <div>
+                          <strong className="text-campus-text">{spot.location}</strong>
+                          <p className="text-[11px] text-campus-secondary font-mono">{spot.category}</p>
+                        </div>
+                      </div>
+                      <span className="px-2.5 py-1 rounded-full text-[11px] font-mono font-bold bg-amber-100 text-amber-900 border border-amber-300">
+                        {spot.count} Incidents
+                      </span>
+                    </div>
+                  ))
+                ) : (
+                  <p className="text-xs text-campus-muted py-4 text-center">No concentrated hotspots detected.</p>
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* TAB: SOS EMERGENCIES COMMAND CENTER */}
+      {activeTab === "emergencies" && (
+        <div className="space-y-4 animate-fadeIn">
+          {/* Header & Controls */}
+          <div className="glass-panel p-5 rounded-3xl border border-[rgba(77,42,0,0.1)] flex flex-col md:flex-row md:items-center justify-between gap-4">
+            <div className="flex items-center space-x-3">
+              <div className="w-10 h-10 rounded-2xl bg-rose-500/10 border border-rose-500/30 text-rose-600 flex items-center justify-center font-bold">
+                <Siren className="w-5 h-5 animate-bounce" />
+              </div>
+              <div>
+                <h2 className="text-base font-bold text-[#4D2A00] flex items-center space-x-2">
+                  <span>Campus Emergency SOS Command</span>
+                  <span className="px-2 py-0.5 rounded-full text-xs font-mono font-bold bg-rose-600 text-white">
+                    {emergencies.filter((e) => e.status === "ACTIVE" || e.status === "NEW").length} Active
+                  </span>
+                </h2>
+                <p className="text-xs text-[#4D2A00]/70">
+                  Real-time beacon feed targeting Wardens for hostel residents and Campus Security for day scholars.
+                </p>
+              </div>
+            </div>
+
+            <div className="flex items-center space-x-2.5 flex-wrap">
+              <button
+                onClick={() => setEmergencyAudioMuted(!emergencyAudioMuted)}
+                className={`px-3 py-1.5 rounded-xl text-xs font-semibold flex items-center space-x-1.5 border transition-all ${
+                  emergencyAudioMuted
+                    ? "bg-stone-100 text-stone-600 border-stone-300"
+                    : "bg-rose-50 text-rose-700 border-rose-200"
+                }`}
+                title={emergencyAudioMuted ? "Audio Siren Muted" : "Audio Siren Enabled"}
+              >
+                {emergencyAudioMuted ? <VolumeX className="w-3.5 h-3.5" /> : <Volume2 className="w-3.5 h-3.5" />}
+                <span>{emergencyAudioMuted ? "Siren Muted" : "Siren Alert On"}</span>
+              </button>
+
+              <button
+                onClick={fetchEmergencies}
+                className="btn-secondary px-3.5 py-1.5 rounded-xl text-xs font-semibold flex items-center space-x-1"
+              >
+                <Repeat className="w-3.5 h-3.5" />
+                <span>Refresh Feed</span>
+              </button>
+            </div>
+          </div>
+
+          {/* Filters Bar */}
+          <div className="glass-panel p-3.5 rounded-2xl border border-[rgba(77,42,0,0.1)] flex flex-wrap items-center gap-3 text-xs">
+            <div className="flex items-center space-x-1.5 text-campus-muted font-medium">
+              <Filter className="w-3.5 h-3.5" />
+              <span>Filters:</span>
+            </div>
+
+            <div className="flex items-center space-x-1">
+              <label className="text-campus-muted font-mono text-[11px]">Status:</label>
+              <select
+                value={emergencyStatusFilter}
+                onChange={(e) => setEmergencyStatusFilter(e.target.value)}
+                className="px-2.5 py-1 bg-white/70 border border-campus-border rounded-lg text-campus-text text-xs"
+              >
+                <option value="ALL">All Statuses</option>
+                <option value="ACTIVE">Active / Unresolved</option>
+                <option value="ACKNOWLEDGED">Acknowledged</option>
+                <option value="RESPONDING">Responding</option>
+                <option value="RESOLVED">Resolved</option>
+              </select>
+            </div>
+
+            <div className="flex items-center space-x-1">
+              <label className="text-campus-muted font-mono text-[11px]">Student Type:</label>
+              <select
+                value={emergencyTypeFilter}
+                onChange={(e) => setEmergencyTypeFilter(e.target.value)}
+                className="px-2.5 py-1 bg-white/70 border border-campus-border rounded-lg text-campus-text text-xs"
+              >
+                <option value="ALL">All Students</option>
+                <option value="HOSTELLER">Hostellers Only</option>
+                <option value="DAY_SCHOLAR">Day Scholars Only</option>
+              </select>
+            </div>
+
+            <div className="flex items-center space-x-1">
+              <label className="text-campus-muted font-mono text-[11px]">Category:</label>
+              <select
+                value={emergencyCategoryFilter}
+                onChange={(e) => setEmergencyCategoryFilter(e.target.value)}
+                className="px-2.5 py-1 bg-white/70 border border-campus-border rounded-lg text-campus-text text-xs"
+              >
+                <option value="ALL">All Categories</option>
+                <option value="MEDICAL">Medical</option>
+                <option value="FIRE_SMOKE">Fire / Smoke</option>
+                <option value="LIFT_STUCK">Lift Stuck</option>
+                <option value="SECURITY">Security Threat</option>
+                <option value="OTHER">Other</option>
+              </select>
+            </div>
+          </div>
+
+          {/* Emergency Cards Grid */}
+          {emergenciesLoading ? (
+            <div className="p-12 text-center text-xs text-campus-muted glass-card rounded-3xl">Loading emergency beacons...</div>
+          ) : (
+            (() => {
+              const filtered = emergencies.filter((em) => {
+                if (emergencyStatusFilter !== "ALL") {
+                  if (emergencyStatusFilter === "ACTIVE") {
+                    if (em.status !== "ACTIVE" && em.status !== "NEW") return false;
+                  } else if (em.status !== emergencyStatusFilter) {
+                    return false;
+                  }
+                }
+                if (emergencyTypeFilter !== "ALL") {
+                  const sType = em.studentType || em.student?.livingType || "HOSTELLER";
+                  if (sType !== emergencyTypeFilter) return false;
+                }
+                if (emergencyCategoryFilter !== "ALL" && em.category !== emergencyCategoryFilter) {
+                  return false;
+                }
+                return true;
+              });
+
+              if (filtered.length === 0) {
+                return (
+                  <div className="p-12 text-center text-xs text-campus-muted glass-card rounded-3xl space-y-1">
+                    <p className="font-bold text-campus-text text-sm">✓ Perimeter Clear</p>
+                    <p>No emergency beacons matching the selected filters.</p>
+                  </div>
+                );
+              }
+
+              return (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {filtered.map((em) => {
+                    const isNewOrActive = em.status === "ACTIVE" || em.status === "NEW";
+                    const isHostelStudent = (em.studentType || em.student?.livingType) === "HOSTELLER";
+                    const emergencyPhone = em.emergencyContact || em.student?.guardianPhone || em.student?.fatherPhone || em.student?.phone;
+
+                    return (
+                      <div
+                        key={em.id}
+                        className={`p-5 rounded-3xl glass-card border-2 space-y-4 transition-all ${
+                          isNewOrActive
+                            ? "border-rose-500 bg-rose-50/50 shadow-md ring-2 ring-rose-500/20"
+                            : em.status === "ACKNOWLEDGED"
+                            ? "border-amber-400/80 bg-amber-50/30"
+                            : em.status === "RESPONDING"
+                            ? "border-blue-400/80 bg-blue-50/30"
+                            : "border-campus-border opacity-90"
+                        }`}
+                      >
+                        {/* Header Badges */}
+                        <div className="flex items-center justify-between gap-2">
+                          <div className="flex items-center space-x-2">
+                            <span className="px-2.5 py-1 rounded-xl text-[11px] font-mono font-bold bg-rose-100 text-rose-900 border border-rose-300 flex items-center space-x-1">
+                              <ShieldAlert className="w-3.5 h-3.5" />
+                              <span>{em.category}</span>
+                            </span>
+                            <span className={`px-2 py-0.5 rounded-full text-[10px] font-mono font-bold border ${
+                              isHostelStudent
+                                ? "bg-amber-100 text-amber-900 border-amber-300"
+                                : "bg-blue-100 text-blue-900 border-blue-300"
+                            }`}>
+                              {isHostelStudent ? "Hosteller" : "Day Scholar"}
+                            </span>
+                          </div>
+
+                          <div className="flex items-center space-x-1.5">
+                            <span className="text-[10px] font-mono text-campus-muted">
+                              #{em.alertNumber || em.id.slice(0, 8)}
+                            </span>
+                            <span
+                              className={`px-2.5 py-0.5 rounded-full text-[10px] font-mono font-bold ${
+                                isNewOrActive
+                                  ? "status-badge-error animate-pulse"
+                                  : em.status === "ACKNOWLEDGED"
+                                  ? "bg-amber-100 text-amber-900 border border-amber-300"
+                                  : em.status === "RESPONDING"
+                                  ? "bg-blue-100 text-blue-900 border border-blue-300"
+                                  : "status-badge-success"
+                              }`}
+                            >
+                              {isNewOrActive ? "ACTIVE" : em.status}
+                            </span>
+                          </div>
+                        </div>
+
+                        {/* Location & Description */}
+                        <div className="space-y-1">
+                          <div className="flex items-center space-x-2">
+                            <MapPin className="w-4 h-4 text-rose-600 shrink-0" />
+                            <strong className="text-sm text-campus-text">{em.location}</strong>
+                          </div>
+                          {em.description && (
+                            <p className="text-xs text-campus-secondary mt-1 bg-white/60 p-2 rounded-xl border border-campus-border">
+                              {em.description}
+                            </p>
+                          )}
+                        </div>
+
+                        {/* Student & Guardian Info */}
+                        <div className="p-3 bg-white/80 rounded-2xl border border-campus-border text-xs space-y-1.5 font-mono">
+                          <div className="flex items-center justify-between">
+                            <span className="text-campus-muted">Student:</span>
+                            <strong className="text-campus-text">
+                              {em.student?.fullName || "Student"} ({em.student?.rollNumber || "N/A"})
+                            </strong>
+                          </div>
+
+                          <div className="flex items-center justify-between">
+                            <span className="text-campus-muted">Profile Context:</span>
+                            <span className="text-campus-text font-sans text-[11px]">
+                              {isHostelStudent
+                                ? `${em.student?.hostelBlock || "Block"} Rm ${em.student?.roomNumber || "N/A"}${em.student?.bedNumber ? ` (${em.student?.bedNumber})` : ""}`
+                                : em.student?.currentAddress || (em.student?.busRoute ? `Route: ${em.student?.busRoute}` : "Day Scholar Campus")}
+                            </span>
+                          </div>
+
+                          <div className="flex items-center justify-between">
+                            <span className="text-campus-muted">Student Phone:</span>
+                            <a
+                              href={`tel:${em.student?.phone}`}
+                              className="text-campus-accent font-bold hover:underline flex items-center space-x-1"
+                            >
+                              <PhoneCall className="w-3 h-3" />
+                              <span>{em.student?.phone || "N/A"}</span>
+                            </a>
+                          </div>
+
+                          {emergencyPhone && (
+                            <div className="flex items-center justify-between border-t border-campus-border/60 pt-1">
+                              <span className="text-rose-700 font-bold">Emergency Contact:</span>
+                              <a
+                                href={`tel:${emergencyPhone}`}
+                                className="text-rose-600 font-bold hover:underline flex items-center space-x-1"
+                              >
+                                <PhoneCall className="w-3 h-3" />
+                                <span>{emergencyPhone}</span>
+                              </a>
+                            </div>
+                          )}
+
+                          <div className="flex items-center justify-between text-[10px] text-campus-muted pt-0.5">
+                            <span>Dispatched At:</span>
+                            <span>{new Date(em.createdAt).toLocaleTimeString()} ({new Date(em.createdAt).toLocaleDateString()})</span>
+                          </div>
+                        </div>
+
+                        {/* Responder Notes */}
+                        {em.responderNotes && (
+                          <div className="p-2.5 rounded-xl bg-white/70 border border-campus-border text-xs font-sans text-campus-text">
+                            <span className="font-bold text-campus-accent">Responder Log: </span>
+                            {em.responderNotes}
+                          </div>
+                        )}
+
+                        {/* Action Buttons */}
+                        <div className="pt-2 border-t border-campus-border flex items-center space-x-2 flex-wrap gap-y-2">
+                          {isNewOrActive && (
+                            <button
+                              onClick={() => {
+                                setActiveNoteModalEmergency(em);
+                                setTargetStatusForNote("ACKNOWLEDGED");
+                                setResponderNoteText("Command center acknowledged alert. Security responding.");
+                              }}
+                              disabled={emergencyActionLoading}
+                              className="flex-1 py-2 px-3 rounded-xl text-xs font-bold btn-primary"
+                            >
+                              Acknowledge
+                            </button>
+                          )}
+
+                          {(isNewOrActive || em.status === "ACKNOWLEDGED") && (
+                            <button
+                              onClick={() => {
+                                setActiveNoteModalEmergency(em);
+                                setTargetStatusForNote("RESPONDING");
+                                setResponderNoteText("Security and response team dispatched to scene.");
+                              }}
+                              disabled={emergencyActionLoading}
+                              className="flex-1 py-2 px-3 rounded-xl text-xs font-bold btn-secondary bg-amber-100 text-amber-900 border-amber-300 hover:bg-amber-200"
+                            >
+                              Mark Responding
+                            </button>
+                          )}
+
+                          {em.status !== "RESOLVED" && (
+                            <button
+                              onClick={() => {
+                                setActiveNoteModalEmergency(em);
+                                setTargetStatusForNote("RESOLVED");
+                                setResponderNoteText("Incident verified and resolved safely on campus.");
+                              }}
+                              disabled={emergencyActionLoading}
+                              className="flex-1 py-2 px-3 rounded-xl text-xs font-bold bg-emerald-600 hover:bg-emerald-700 text-white shadow-sm"
+                            >
+                              Resolve
+                            </button>
+                          )}
+
+                          <button
+                            onClick={() => {
+                              setActiveNoteModalEmergency(em);
+                              setTargetStatusForNote(em.status);
+                              setResponderNoteText(em.responderNotes || "");
+                            }}
+                            className="p-2 rounded-xl text-xs font-semibold btn-secondary"
+                            title="Add or update responder note"
+                          >
+                            Note
+                          </button>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              );
+            })()
+          )}
+        </div>
+      )}
+
+      {/* TAB: ACADEMIC COURSES & BRANCHES (ADMIN ONLY) */}
+      {activeTab === "courses" && isAdmin && (
+        <div className="space-y-6 animate-fadeIn">
+          <div className="glass-panel p-6 rounded-3xl border border-[rgba(77,42,0,0.1)] flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+            <div className="flex items-center space-x-3">
+              <div className="w-10 h-10 rounded-2xl bg-amber-500/10 border border-amber-500/20 text-[#CC6F00] flex items-center justify-center font-bold">
+                <GraduationCap className="w-5 h-5" />
+              </div>
+              <div>
+                <h2 className="text-base font-bold text-[#4D2A00]">Academic Courses & Department Branches</h2>
+                <p className="text-xs text-[#4D2A00]/70">
+                  Manage college degree programs, year durations, and dependent department specializations for student registration.
+                </p>
+              </div>
+            </div>
+
+            <button
+              onClick={() => {
+                setEditingCourse(null);
+                setCourseForm({ code: "", name: "", durationYears: 4, type: "SEMESTER" });
+                setShowCourseModal(true);
+              }}
+              className="px-4 py-2.5 bg-[#FDB773] hover:bg-[#FED3A2] text-[#4D2A00] text-xs font-bold rounded-xl transition-all shadow-sm flex items-center space-x-2 shrink-0"
+            >
+              <Plus className="w-4 h-4" />
+              <span>Add Degree Program</span>
+            </button>
+          </div>
+
+          {coursesLoading ? (
+            <div className="p-12 text-center text-xs text-campus-muted glass-card rounded-3xl">Loading academic programs...</div>
+          ) : courses.length === 0 ? (
+            <div className="p-12 text-center text-xs text-campus-muted glass-card rounded-3xl">
+              No academic programs configured yet. Click "Add Degree Program" to configure your first course.
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 gap-5">
+              {courses.map((c) => (
+                <div
+                  key={c.id}
+                  className={`p-6 rounded-3xl glass-card border transition-all ${
+                    c.isActive ? "border-campus-border" : "border-rose-300/60 bg-rose-50/20 opacity-80"
+                  }`}
+                >
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 border-b border-campus-border">
+                    <div className="flex items-center space-x-3">
+                      <span className="px-3 py-1 rounded-xl text-xs font-mono font-bold bg-[#FDB773]/30 text-[#4D2A00] border border-[#FDB773]">
+                        {c.code}
+                      </span>
+                      <div>
+                        <h3 className="text-sm font-bold text-[#4D2A00] flex items-center space-x-2">
+                          <span>{c.name}</span>
+                          {!c.isActive && (
+                            <span className="px-2 py-0.5 rounded-full text-[9px] font-mono bg-rose-100 text-rose-700 border border-rose-300">
+                              INACTIVE
+                            </span>
+                          )}
+                        </h3>
+                        <p className="text-xs text-campus-muted font-mono mt-0.5">
+                          {c.durationYears} Years ({c.durationYears * 2} Semesters) • {c.branches?.length || 0} Specializations
+                        </p>
+                      </div>
+                    </div>
+
+                    <div className="flex items-center space-x-2 shrink-0">
+                      <button
+                        onClick={() => {
+                          setSelectedCourseForBranch(c);
+                          setEditingBranch(null);
+                          setBranchForm({ code: "", name: "", courseId: c.id });
+                          setShowBranchModal(true);
+                        }}
+                        className="px-3 py-1.5 text-xs font-semibold bg-white/70 hover:bg-white text-campus-accent border border-campus-border rounded-xl flex items-center space-x-1"
+                      >
+                        <Plus className="w-3.5 h-3.5" />
+                        <span>Add Branch</span>
+                      </button>
+
+                      <button
+                        onClick={() => {
+                          setEditingCourse(c);
+                          setCourseForm({
+                            code: c.code,
+                            name: c.name,
+                            durationYears: c.durationYears,
+                            type: c.type || "SEMESTER"
+                          });
+                          setShowCourseModal(true);
+                        }}
+                        className="px-3 py-1.5 text-xs font-semibold btn-secondary rounded-xl"
+                      >
+                        Edit
+                      </button>
+
+                      <button
+                        onClick={() => handleToggleCourseStatus(c.id, c.isActive)}
+                        className={`px-3 py-1.5 text-xs font-semibold rounded-xl border ${
+                          c.isActive
+                            ? "bg-rose-50 text-rose-700 border-rose-200 hover:bg-rose-100"
+                            : "bg-emerald-50 text-emerald-700 border-emerald-200 hover:bg-emerald-100"
+                        }`}
+                      >
+                        {c.isActive ? "Deactivate" : "Activate"}
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Branches List */}
+                  <div className="pt-4">
+                    <p className="text-[11px] font-mono font-bold text-campus-secondary uppercase tracking-wider mb-2.5">
+                      Offered Branches / Specializations
+                    </p>
+                    {(!c.branches || c.branches.length === 0) ? (
+                      <p className="text-xs text-campus-muted py-2 italic">
+                        No branches assigned to this program yet.
+                      </p>
+                    ) : (
+                      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2.5">
+                        {c.branches.map((b: any) => (
+                          <div
+                            key={b.id}
+                            className={`p-3 rounded-2xl border text-xs flex items-center justify-between gap-2 ${
+                              b.isActive
+                                ? "bg-white/70 border-campus-border"
+                                : "bg-rose-50/40 border-rose-200 text-campus-muted"
+                            }`}
+                          >
+                            <div className="min-w-0">
+                              <div className="flex items-center space-x-1.5">
+                                <span className="font-mono font-bold text-[#CC6F00]">{b.code}</span>
+                                {!b.isActive && (
+                                  <span className="text-[9px] font-mono text-rose-600 font-bold">(Inactive)</span>
+                                )}
+                              </div>
+                              <p className="text-[11px] text-campus-secondary truncate" title={b.name}>
+                                {b.name}
+                              </p>
+                            </div>
+
+                            <div className="flex items-center space-x-1 shrink-0">
+                              <button
+                                onClick={() => {
+                                  setSelectedCourseForBranch(c);
+                                  setEditingBranch(b);
+                                  setBranchForm({ code: b.code, name: b.name, courseId: c.id });
+                                  setShowBranchModal(true);
+                                }}
+                                className="p-1 rounded-lg text-campus-muted hover:text-campus-text"
+                                title="Edit Branch"
+                              >
+                                <Wrench className="w-3 h-3" />
+                              </button>
+                              <button
+                                onClick={() => handleToggleBranchStatus(b.id, b.isActive)}
+                                className={`px-2 py-0.5 rounded text-[10px] font-mono font-semibold ${
+                                  b.isActive
+                                    ? "bg-rose-100 text-rose-700 hover:bg-rose-200"
+                                    : "bg-emerald-100 text-emerald-700 hover:bg-emerald-200"
+                                }`}
+                              >
+                                {b.isActive ? "Off" : "On"}
+                              </button>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* TAB: CAMPUS ISSUE HEATMAP */}
+      {activeTab === "heatmap" && (
+        <div className="space-y-6">
+          <div className="glass-card rounded-3xl p-6 border border-campus-border space-y-4">
+            <h2 className="text-sm font-bold text-campus-text flex items-center space-x-2">
+              <Flame className="w-4 h-4 text-amber-700" />
+              <span>Campus Complaint Concentration Heatmap</span>
+            </h2>
+
+            {heatmapLoading ? (
+              <div className="p-12 text-center text-xs text-campus-muted">Analyzing complaint hotspots...</div>
+            ) : (
+              <div className="space-y-6">
+                {/* Block Breakdown */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                  {heatmapData?.heatmap && Object.entries(heatmapData.heatmap).map(([block, data]: any) => (
+                    <div key={block} className="p-4 rounded-2xl bg-white/70 border border-campus-border space-y-3">
+                      <div className="flex items-center justify-between">
+                        <strong className="text-xs text-campus-text">{block}</strong>
+                        <span className={`px-2 py-0.5 rounded-full text-[10px] font-mono font-bold ${
+                          data.total > 10 ? "bg-rose-100 text-rose-900" : data.total > 5 ? "bg-amber-100 text-amber-900" : "bg-emerald-100 text-emerald-900"
+                        }`}>
+                          {data.total} Complaints
+                        </span>
+                      </div>
+
+                      <div className="space-y-1.5 text-[11px] font-mono text-campus-secondary">
+                        <div className="flex items-center justify-between">
+                          <span>Critical / High:</span>
+                          <strong className="text-rose-600">{data.critical || 0}</strong>
+                        </div>
+                        <div className="flex items-center justify-between">
+                          <span>Recurring Issues:</span>
+                          <strong className="text-amber-700">{data.recurring || 0}</strong>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+
+                {/* Category Concentration */}
+                {heatmapData?.categoryBreakdown && (
+                  <div className="p-4 bg-white/50 rounded-2xl border border-campus-border space-y-3">
+                    <h3 className="text-xs font-mono font-bold uppercase text-campus-accent">
+                      Category Distribution Breakdown
+                    </h3>
+                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs">
+                      {heatmapData.categoryBreakdown.map((c: any) => (
+                        <div key={c.category} className="p-3 bg-white rounded-xl border border-campus-border/60">
+                          <span className="text-[11px] font-semibold text-campus-text block truncate">{c.category}</span>
+                          <span className="text-lg font-bold text-campus-accent font-mono">{c.count}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* TAB: PLANNED MAINTENANCE SCHEDULER */}
+      {activeTab === "maintenance" && (
+        <div className="space-y-4">
+          <div className="flex items-center justify-between">
+            <h2 className="text-sm font-bold text-campus-text flex items-center space-x-2">
+              <Radio className="w-4 h-4 text-campus-accent" />
+              <span>Scheduled Utility Maintenance & Outages ({maintenanceList.length})</span>
+            </h2>
+            <button
+              onClick={() => setShowMaintenanceModal(true)}
+              className="btn-primary px-3.5 py-2 rounded-xl text-xs font-bold flex items-center space-x-1.5 shadow-sm"
+            >
+              <Plus className="w-4 h-4" />
+              <span>Schedule Maintenance Outage</span>
+            </button>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {maintenanceList.map((m) => (
+              <div key={m.id} className="p-5 rounded-3xl glass-card border border-campus-border space-y-3">
+                <div className="flex items-center justify-between">
+                  <span className="px-2.5 py-0.5 rounded-full text-[10px] font-mono font-bold bg-amber-100 text-amber-900 border border-amber-300">
+                    {m.location}
+                  </span>
+                  <span className={`px-2 py-0.5 rounded-full text-[10px] font-mono font-bold ${
+                    m.status === "ACTIVE" ? "status-badge-warning" : "status-badge-neutral"
+                  }`}>
+                    {m.status}
+                  </span>
+                </div>
+
+                <div>
+                  <h3 className="text-base font-bold text-campus-text">{m.title}</h3>
+                  <p className="text-xs text-campus-secondary mt-1">{m.description}</p>
+                </div>
+
+                <div className="pt-2 border-t border-campus-border text-xs text-campus-secondary font-mono space-y-1">
+                  <div>Audience: <strong>{m.affectedAudience}</strong></div>
+                  <div>Window: <strong>{new Date(m.startTime).toLocaleString([], { dateStyle: "short", timeStyle: "short" })} to {new Date(m.endTime).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}</strong></div>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          {/* Schedule Maintenance Modal */}
+          {showMaintenanceModal && (
+            <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-md p-4 animate-fadeIn">
+              <div className="glass-modal rounded-3xl max-w-md w-full p-6 space-y-4 shadow-elevated">
+                <div className="flex items-center justify-between border-b border-campus-border pb-3">
+                  <h3 className="text-base font-bold text-campus-text">Schedule Planned Outage</h3>
+                  <button onClick={() => setShowMaintenanceModal(false)} className="text-campus-muted hover:text-campus-text p-1">
+                    <X className="w-5 h-5" />
+                  </button>
+                </div>
+
+                <form onSubmit={handleCreateMaintenance} className="space-y-4 text-xs">
+                  <div>
+                    <label className="block text-campus-text mb-1 font-semibold">Title *</label>
+                    <input
+                      required
+                      type="text"
+                      placeholder="e.g. Block B Water Pipe Replacement"
+                      value={maintenanceForm.title}
+                      onChange={(e) => setMaintenanceForm({ ...maintenanceForm, title: e.target.value })}
+                      className="w-full px-3.5 py-2.5 border border-campus-border rounded-xl bg-white/70 text-campus-text focus:outline-none focus:border-campus-accent"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-campus-text mb-1 font-semibold">Location *</label>
+                    <input
+                      required
+                      type="text"
+                      value={maintenanceForm.location}
+                      onChange={(e) => setMaintenanceForm({ ...maintenanceForm, location: e.target.value })}
+                      className="w-full px-3.5 py-2.5 border border-campus-border rounded-xl bg-white/70 text-campus-text focus:outline-none focus:border-campus-accent"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-campus-text mb-1 font-semibold">Affected Audience *</label>
+                    <input
+                      required
+                      type="text"
+                      placeholder="e.g. Hostel-B All Floors"
+                      value={maintenanceForm.affectedAudience}
+                      onChange={(e) => setMaintenanceForm({ ...maintenanceForm, affectedAudience: e.target.value })}
+                      className="w-full px-3.5 py-2.5 border border-campus-border rounded-xl bg-white/70 text-campus-text focus:outline-none focus:border-campus-accent"
+                    />
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <label className="block text-campus-text mb-1 font-semibold">Start Time *</label>
+                      <input
+                        required
+                        type="datetime-local"
+                        value={maintenanceForm.startTime}
+                        onChange={(e) => setMaintenanceForm({ ...maintenanceForm, startTime: e.target.value })}
+                        className="w-full px-3.5 py-2.5 border border-campus-border rounded-xl bg-white/70 text-campus-text focus:outline-none focus:border-campus-accent"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-campus-text mb-1 font-semibold">End Time *</label>
+                      <input
+                        required
+                        type="datetime-local"
+                        value={maintenanceForm.endTime}
+                        onChange={(e) => setMaintenanceForm({ ...maintenanceForm, endTime: e.target.value })}
+                        className="w-full px-3.5 py-2.5 border border-campus-border rounded-xl bg-white/70 text-campus-text focus:outline-none focus:border-campus-accent"
+                      />
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="block text-campus-text mb-1 font-semibold">Description *</label>
+                    <textarea
+                      required
+                      rows={3}
+                      value={maintenanceForm.description}
+                      onChange={(e) => setMaintenanceForm({ ...maintenanceForm, description: e.target.value })}
+                      placeholder="Explain outage details and student instructions..."
+                      className="w-full px-3.5 py-2.5 border border-campus-border rounded-xl bg-white/70 text-campus-text focus:outline-none focus:border-campus-accent resize-none"
+                    />
+                  </div>
+
+                  <div className="flex justify-end space-x-2.5 pt-3 border-t border-campus-border">
+                    <button
+                      type="button"
+                      onClick={() => setShowMaintenanceModal(false)}
+                      className="btn-secondary px-4 py-2 rounded-xl font-semibold"
+                    >
+                      Cancel
+                    </button>
+                    <button type="submit" className="btn-primary px-5 py-2 rounded-xl font-bold">
+                      Publish & Notify Students
+                    </button>
+                  </div>
+                </form>
+              </div>
+            </div>
+          )}
+        </div>
+      )}
 
       {/* TAB 1: DASHBOARD OVERVIEW */}
       {activeTab === "overview" && (
@@ -1995,6 +3213,285 @@ export const AdminDashboardPage: React.FC<AdminDashboardPageProps> = ({ user }) 
             fetchVerifications();
           }}
         />
+      )}
+
+      {/* MODAL 7: EMERGENCY RESPONDER NOTE & ACTION MODAL */}
+      {activeNoteModalEmergency && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-md p-4 animate-fadeIn">
+          <div className="glass-panel rounded-3xl border border-rose-300 max-w-md w-full p-6 shadow-2xl space-y-4">
+            <div className="flex items-center justify-between border-b border-campus-border pb-3">
+              <div className="flex items-center space-x-2 text-rose-600">
+                <Siren className="w-5 h-5" />
+                <h3 className="text-sm font-bold text-campus-text">
+                  Responder Action — Emergency #{activeNoteModalEmergency.alertNumber || activeNoteModalEmergency.id.slice(0, 8)}
+                </h3>
+              </div>
+              <button
+                onClick={() => {
+                  setActiveNoteModalEmergency(null);
+                  setResponderNoteText("");
+                }}
+                className="text-campus-muted hover:text-campus-text p-1"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            <div className="space-y-3 text-xs">
+              <div className="p-3 bg-white/70 rounded-2xl border border-campus-border space-y-1 font-mono text-[11px]">
+                <div className="flex justify-between">
+                  <span className="text-campus-muted">Category:</span>
+                  <strong className="text-rose-700">{activeNoteModalEmergency.category}</strong>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-campus-muted">Location:</span>
+                  <strong>{activeNoteModalEmergency.location}</strong>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-campus-muted">Student:</span>
+                  <strong>{activeNoteModalEmergency.student?.fullName} ({activeNoteModalEmergency.student?.phone})</strong>
+                </div>
+              </div>
+
+              <div>
+                <label className="block font-semibold text-campus-text mb-1">
+                  Update Target Status:
+                </label>
+                <select
+                  value={targetStatusForNote}
+                  onChange={(e) => setTargetStatusForNote(e.target.value)}
+                  className="w-full px-3 py-2 bg-white/80 border border-campus-border rounded-xl text-campus-text font-bold text-xs"
+                >
+                  <option value="ACTIVE">ACTIVE</option>
+                  <option value="ACKNOWLEDGED">ACKNOWLEDGED</option>
+                  <option value="RESPONDING">RESPONDING</option>
+                  <option value="RESOLVED">RESOLVED</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="block font-semibold text-campus-text mb-1">
+                  Responder Note / Action Log (Dispatched to Student):
+                </label>
+                <textarea
+                  rows={3}
+                  value={responderNoteText}
+                  onChange={(e) => setResponderNoteText(e.target.value)}
+                  placeholder="e.g. Chief Warden and campus medical staff reached the room. Treatment underway."
+                  className="w-full px-3 py-2 bg-white/80 border border-campus-border rounded-xl text-campus-text focus:outline-none focus:ring-1 focus:ring-rose-500"
+                />
+              </div>
+
+              <div className="flex justify-end space-x-2 pt-2 border-t border-campus-border">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setActiveNoteModalEmergency(null);
+                    setResponderNoteText("");
+                  }}
+                  className="px-3.5 py-1.5 bg-white/50 hover:bg-white/60 text-campus-muted hover:text-campus-text rounded-xl font-medium border border-campus-border transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="button"
+                  onClick={() => handleUpdateEmergencyStatus(activeNoteModalEmergency.id, targetStatusForNote, responderNoteText)}
+                  disabled={emergencyActionLoading}
+                  className="px-4 py-1.5 bg-rose-600 hover:bg-rose-700 text-white rounded-xl font-bold transition-all shadow-sm"
+                >
+                  {emergencyActionLoading ? "Updating..." : "Commit Status & Notify"}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* MODAL 8: ADD / EDIT COURSE PROGRAM */}
+      {showCourseModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/75 backdrop-blur-sm p-4">
+          <div className="glass-panel rounded-3xl border border-[rgba(77,42,0,0.1)] max-w-md w-full p-6 shadow-elevated space-y-4">
+            <div className="flex items-center justify-between border-b border-[rgba(77,42,0,0.1)] pb-2">
+              <h3 className="text-sm font-bold text-[#4D2A00]">
+                {editingCourse ? "Edit Degree / Course Program" : "Add New Academic Program"}
+              </h3>
+              <button
+                onClick={() => {
+                  setShowCourseModal(false);
+                  setEditingCourse(null);
+                }}
+                className="text-[#4D2A00]/60 hover:text-[#4D2A00]"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            <form onSubmit={handleSaveCourse} className="space-y-3.5 text-xs">
+              <div className="grid grid-cols-2 gap-2.5">
+                <div>
+                  <label className="block font-semibold text-[#4D2A00]/70 mb-1">Course Code *</label>
+                  <input
+                    type="text"
+                    required
+                    disabled={!!editingCourse}
+                    placeholder="e.g. B.Tech, MCA, MBA"
+                    value={courseForm.code}
+                    onChange={(e) => setCourseForm({ ...courseForm, code: e.target.value.toUpperCase() })}
+                    className="w-full px-3 py-2 bg-white/50 border border-[rgba(77,42,0,0.1)] text-[#4D2A00] font-mono font-bold rounded-xl focus:outline-none focus:border-[#CC6F00] disabled:opacity-50"
+                  />
+                </div>
+
+                <div>
+                  <label className="block font-semibold text-[#4D2A00]/70 mb-1">Duration (Years) *</label>
+                  <select
+                    value={courseForm.durationYears}
+                    onChange={(e) => setCourseForm({ ...courseForm, durationYears: parseInt(e.target.value, 10) || 4 })}
+                    className="w-full px-3 py-2 bg-white/50 border border-[rgba(77,42,0,0.1)] text-[#4D2A00] rounded-xl focus:outline-none focus:border-[#CC6F00]"
+                  >
+                    <option value={1}>1 Year (2 Semesters)</option>
+                    <option value={2}>2 Years (4 Semesters)</option>
+                    <option value={3}>3 Years (6 Semesters)</option>
+                    <option value={4}>4 Years (8 Semesters)</option>
+                    <option value={5}>5 Years (10 Semesters)</option>
+                  </select>
+                </div>
+              </div>
+
+              <div>
+                <label className="block font-semibold text-[#4D2A00]/70 mb-1">Full Program Name *</label>
+                <input
+                  type="text"
+                  required
+                  placeholder="e.g. Bachelor of Technology"
+                  value={courseForm.name}
+                  onChange={(e) => setCourseForm({ ...courseForm, name: e.target.value })}
+                  className="w-full px-3 py-2 bg-white/50 border border-[rgba(77,42,0,0.1)] text-[#4D2A00] rounded-xl focus:outline-none focus:border-[#CC6F00]"
+                />
+              </div>
+
+              <div>
+                <label className="block font-semibold text-[#4D2A00]/70 mb-1">Academic Calendar Type</label>
+                <select
+                  value={courseForm.type}
+                  onChange={(e) => setCourseForm({ ...courseForm, type: e.target.value })}
+                  className="w-full px-3 py-2 bg-white/50 border border-[rgba(77,42,0,0.1)] text-[#4D2A00] rounded-xl focus:outline-none focus:border-[#CC6F00]"
+                >
+                  <option value="SEMESTER">Semester Based</option>
+                  <option value="ANNUAL">Annual Based</option>
+                  <option value="TRIMESTER">Trimester Based</option>
+                </select>
+              </div>
+
+              <div className="flex justify-end space-x-2 pt-3 border-t border-[rgba(77,42,0,0.1)]">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShowCourseModal(false);
+                    setEditingCourse(null);
+                  }}
+                  className="px-3.5 py-1.5 bg-white/50 hover:bg-white/60 text-[#4D2A00]/70 hover:text-[#4D2A00] rounded font-medium border border-[rgba(77,42,0,0.1)] transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={courseActionLoading}
+                  className="px-4 py-1.5 bg-[#FDB773] hover:bg-[#FED3A2] text-[#4D2A00] rounded font-bold transition-colors shadow-sm disabled:opacity-50"
+                >
+                  {courseActionLoading ? "Saving..." : editingCourse ? "Update Program" : "Create Program"}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* MODAL 9: ADD / EDIT BRANCH */}
+      {showBranchModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/75 backdrop-blur-sm p-4">
+          <div className="glass-panel rounded-3xl border border-[rgba(77,42,0,0.1)] max-w-md w-full p-6 shadow-elevated space-y-4">
+            <div className="flex items-center justify-between border-b border-[rgba(77,42,0,0.1)] pb-2">
+              <h3 className="text-sm font-bold text-[#4D2A00]">
+                {editingBranch ? "Edit Branch" : `Add Branch to ${selectedCourseForBranch ? selectedCourseForBranch.code : "Course"}`}
+              </h3>
+              <button
+                onClick={() => {
+                  setShowBranchModal(false);
+                  setEditingBranch(null);
+                  setSelectedCourseForBranch(null);
+                }}
+                className="text-[#4D2A00]/60 hover:text-[#4D2A00]"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            <form onSubmit={handleSaveBranch} className="space-y-3.5 text-xs">
+              <div>
+                <label className="block font-semibold text-[#4D2A00]/70 mb-1">Parent Degree Program *</label>
+                <select
+                  required
+                  disabled={!!editingBranch || !!selectedCourseForBranch}
+                  value={branchForm.courseId}
+                  onChange={(e) => setBranchForm({ ...branchForm, courseId: e.target.value })}
+                  className="w-full px-3 py-2 bg-white/50 border border-[rgba(77,42,0,0.1)] text-[#4D2A00] rounded-xl focus:outline-none focus:border-[#CC6F00] disabled:opacity-60"
+                >
+                  <option value="">-- Choose Degree Program --</option>
+                  {courses.map((c) => (
+                    <option key={c.id} value={c.id}>
+                      {c.code} — {c.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div>
+                <label className="block font-semibold text-[#4D2A00]/70 mb-1">Branch / Specialization Code *</label>
+                <input
+                  type="text"
+                  required
+                  placeholder="e.g. CSE, ECE, MCA, Data Science"
+                  value={branchForm.code}
+                  onChange={(e) => setBranchForm({ ...branchForm, code: e.target.value.toUpperCase() })}
+                  className="w-full px-3 py-2 bg-white/50 border border-[rgba(77,42,0,0.1)] text-[#4D2A00] font-mono font-bold rounded-xl focus:outline-none focus:border-[#CC6F00]"
+                />
+              </div>
+
+              <div>
+                <label className="block font-semibold text-[#4D2A00]/70 mb-1">Full Branch Name *</label>
+                <input
+                  type="text"
+                  required
+                  placeholder="e.g. Computer Science & Engineering"
+                  value={branchForm.name}
+                  onChange={(e) => setBranchForm({ ...branchForm, name: e.target.value })}
+                  className="w-full px-3 py-2 bg-white/50 border border-[rgba(77,42,0,0.1)] text-[#4D2A00] rounded-xl focus:outline-none focus:border-[#CC6F00]"
+                />
+              </div>
+
+              <div className="flex justify-end space-x-2 pt-3 border-t border-[rgba(77,42,0,0.1)]">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShowBranchModal(false);
+                    setEditingBranch(null);
+                    setSelectedCourseForBranch(null);
+                  }}
+                  className="px-3.5 py-1.5 bg-white/50 hover:bg-white/60 text-[#4D2A00]/70 hover:text-[#4D2A00] rounded font-medium border border-[rgba(77,42,0,0.1)] transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={courseActionLoading || !branchForm.courseId}
+                  className="px-4 py-1.5 bg-[#FDB773] hover:bg-[#FED3A2] text-[#4D2A00] rounded font-bold transition-colors shadow-sm disabled:opacity-50"
+                >
+                  {courseActionLoading ? "Saving..." : editingBranch ? "Update Branch" : "Add Branch"}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
       )}
     </div>
   );

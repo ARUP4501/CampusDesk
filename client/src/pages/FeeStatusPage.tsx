@@ -173,14 +173,14 @@ export const FeeStatusPage: React.FC<{ user: UserProfile | null }> = ({ user }) 
 
           <div className="glass-panel rounded-3xl overflow-hidden border border-[rgba(77,42,0,0.1)] shadow-glass">
             <div className="p-4 border-b border-[rgba(77,42,0,0.1)] bg-[#FDB773]/30 flex items-center justify-between">
-              <div className="relative w-full max-w-sm">
-                <Search className="w-4 h-4 text-[#4D2A00]/40 absolute left-3 top-1/2 -translate-y-1/2" />
+              <div className="relative w-full max-w-sm flex items-center">
+                <Search className="w-4 h-4 text-[#4D2A00]/40 absolute left-3.5 pointer-events-none" />
                 <input
                   type="text"
                   placeholder="Search student or roll number..."
                   value={search}
                   onChange={(e) => setSearch(e.target.value)}
-                  className="w-full pl-9 pr-3.5 py-1.5 text-xs bg-white/60 border border-[rgba(77,42,0,0.12)] rounded-xl text-[#4D2A00] placeholder-[#4D2A00]/40 focus:outline-none focus:border-[#CC6F00]"
+                  className="w-full pl-10 pr-3.5 py-1.5 text-xs bg-white/60 border border-[rgba(77,42,0,0.12)] rounded-xl text-[#4D2A00] placeholder-[#4D2A00]/40 focus:outline-none focus:border-[#CC6F00]"
                 />
               </div>
             </div>
