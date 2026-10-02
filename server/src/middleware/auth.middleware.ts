@@ -7,13 +7,16 @@ export interface AuthenticatedUser {
   id: string;
   email: string;
   fullName: string;
-  role: "STUDENT" | "WARDEN" | "STAFF" | "ADMIN";
+  role: "STUDENT" | "FACULTY" | "WARDEN" | "STAFF" | "ADMIN";
   rollNumber?: string | null;
   hostelBlock?: string | null;
   roomNumber?: string | null;
   department?: string | null;
+  course?: string | null;
   branch?: string | null;
   year?: number | null;
+  semester?: number | null;
+  section?: string | null;
 }
 
 declare global {
@@ -52,13 +55,16 @@ export async function requireAuth(req: Request, res: Response, next: NextFunctio
       id: user.id,
       email: user.email,
       fullName: user.fullName,
-      role: user.role as "STUDENT" | "WARDEN" | "STAFF" | "ADMIN",
+      role: user.role as "STUDENT" | "FACULTY" | "WARDEN" | "STAFF" | "ADMIN",
       rollNumber: user.rollNumber,
       hostelBlock: user.hostelBlock,
       roomNumber: user.roomNumber,
       department: user.department,
+      course: user.course,
       branch: user.branch,
-      year: user.year
+      year: user.year,
+      semester: user.semester,
+      section: (user as any).section || "A"
     };
 
     next();
@@ -68,7 +74,7 @@ export async function requireAuth(req: Request, res: Response, next: NextFunctio
 }
 
 // Role authorization middleware
-export function requireRoles(allowedRoles: ("STUDENT" | "WARDEN" | "STAFF" | "ADMIN")[]) {
+export function requireRoles(allowedRoles: ("STUDENT" | "FACULTY" | "WARDEN" | "STAFF" | "ADMIN")[]) {
   return (req: Request, res: Response, next: NextFunction): void => {
     if (!req.user) {
       res.status(401).json({ error: "Authentication required." });

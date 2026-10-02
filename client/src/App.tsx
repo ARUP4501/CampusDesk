@@ -33,6 +33,8 @@ import { CampusHelpPage } from "./pages/CampusHelpPage.js";
 import { PrivacyPage } from "./pages/PrivacyPage.js";
 import { TermsPage } from "./pages/TermsPage.js";
 import { AdoptionPage } from "./pages/AdoptionPage.js";
+import { FacultyDashboardPage } from "./pages/FacultyDashboardPage.js";
+import { StudentResultsPage } from "./pages/StudentResultsPage.js";
 import { NotFoundPage } from "./pages/NotFoundPage.js";
 
 export const App: React.FC = () => {
@@ -148,7 +150,35 @@ export const App: React.FC = () => {
                 path="/dashboard"
                 element={
                   user ? (
-                    <DashboardPage key={user.id} user={user} />
+                    user.role === "FACULTY" ? (
+                      <Navigate to="/faculty" replace />
+                    ) : (
+                      <DashboardPage key={user.id} user={user} />
+                    )
+                  ) : (
+                    <Navigate to="/login" replace />
+                  )
+                }
+              />
+              <Route
+                path="/faculty"
+                element={
+                  user ? (
+                    user.role === "FACULTY" || user.role === "ADMIN" ? (
+                      <FacultyDashboardPage key={user.id} user={user} />
+                    ) : (
+                      <Navigate to="/dashboard" replace />
+                    )
+                  ) : (
+                    <Navigate to="/login" replace />
+                  )
+                }
+              />
+              <Route
+                path="/results"
+                element={
+                  user ? (
+                    <StudentResultsPage key={user.id} user={user} />
                   ) : (
                     <Navigate to="/login" replace />
                   )

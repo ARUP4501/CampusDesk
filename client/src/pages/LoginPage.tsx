@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { apiRequest, UserProfile, setAuthToken, broadcastAuthEvent } from "../api/client.js";
-import { ArrowRight, Mail, KeyRound, Sparkles, User, Shield, Wrench, Building, Eye, EyeOff } from "lucide-react";
+import { ArrowRight, Mail, KeyRound, Sparkles, User, Shield, Wrench, Building, Eye, EyeOff, GraduationCap } from "lucide-react";
 
 interface LoginPageProps {
   onLoginSuccess: (user: UserProfile) => void;
@@ -30,7 +30,11 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onLoginSuccess }) => {
       }
       onLoginSuccess(data.user);
       broadcastAuthEvent({ type: "LOGIN", user: data.user });
-      navigate("/dashboard", { replace: true });
+      if (data.user.role === "FACULTY") {
+        navigate("/faculty", { replace: true });
+      } else {
+        navigate("/dashboard", { replace: true });
+      }
     } catch (err: any) {
       setError(err.message || "Failed to log in.");
     } finally {
@@ -160,6 +164,18 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onLoginSuccess }) => {
                 <span>Dept Staff</span>
               </div>
               <span className="text-[10px] text-campus-muted font-mono block mt-0.5 truncate">staff@campusdesk.edu</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => handleDemoFill("faculty@campusdesk.edu")}
+              className="p-2.5 border border-campus-border bg-white/50 hover:bg-white/80 hover:border-campus-accent/50 text-campus-secondary hover:text-campus-text rounded-2xl text-left transition-all group shadow-sm"
+            >
+              <div className="flex items-center space-x-1.5 text-campus-text font-bold text-[11px]">
+                <GraduationCap className="w-3.5 h-3.5 text-campus-accent group-hover:scale-110 transition-transform" />
+                <span>Academic Faculty</span>
+              </div>
+              <span className="text-[10px] text-campus-muted font-mono block mt-0.5 truncate">faculty@campusdesk.edu</span>
             </button>
 
             <button

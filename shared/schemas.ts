@@ -1,7 +1,7 @@
 import { z } from "zod";
 
 // User roles
-export const UserRoleEnum = z.enum(["STUDENT", "WARDEN", "STAFF", "ADMIN"]);
+export const UserRoleEnum = z.enum(["STUDENT", "FACULTY", "WARDEN", "STAFF", "ADMIN"]);
 export type UserRole = z.infer<typeof UserRoleEnum>;
 
 // Living Types (Hosteller vs Day Scholar)
@@ -610,4 +610,124 @@ export const UpdateBranchSchema = z.object({
   isActive: z.boolean().optional()
 });
 export type UpdateBranchInput = z.infer<typeof UpdateBranchSchema>;
+
+// Academic Subject, Faculty Assignment, Timetable, Attendance & Marks Schemas
+export const SubjectTypeEnum = z.enum(["THEORY", "PRACTICAL", "LAB"]);
+export type SubjectType = z.infer<typeof SubjectTypeEnum>;
+
+export const CreateSubjectSchema = z.object({
+  name: z.string().min(2, "Subject name must be at least 2 characters").max(120),
+  code: z.string().min(1, "Subject code is required").max(30),
+  course: z.string().min(1, "Course is required").max(50),
+  branch: z.string().min(1, "Branch is required").max(50),
+  year: z.coerce.number().int().min(1).max(6),
+  semester: z.coerce.number().int().min(1).max(12),
+  section: z.string().max(10).optional().default("A"),
+  type: SubjectTypeEnum.default("THEORY"),
+  credits: z.coerce.number().min(0).max(20).default(3),
+  isActive: z.boolean().default(true)
+});
+export type CreateSubjectInput = z.infer<typeof CreateSubjectSchema>;
+
+export const UpdateSubjectSchema = CreateSubjectSchema.partial();
+export type UpdateSubjectInput = z.infer<typeof UpdateSubjectSchema>;
+
+export const CreateFacultyUserSchema = z.object({
+  email: z.string().email("Invalid email address"),
+  password: z.string().min(6, "Password must be at least 6 characters"),
+  fullName: z.string().min(2, "Full name is required").max(100),
+  department: z.string().min(1, "Department is required").max(100),
+  phone: z.string().min(10, "Phone number must be at least 10 digits").max(20),
+  employeeId: z.string().max(50).optional().nullable()
+});
+export type CreateFacultyUserInput = z.infer<typeof CreateFacultyUserSchema>;
+
+export const UpdateFacultyUserSchema = z.object({
+  fullName: z.string().min(2).max(100).optional(),
+  department: z.string().min(1).max(100).optional(),
+  phone: z.string().min(10).max(20).optional(),
+  employeeId: z.string().max(50).optional().nullable(),
+  isActive: z.boolean().optional()
+});
+export type UpdateFacultyUserInput = z.infer<typeof UpdateFacultyUserSchema>;
+
+export const CreateFacultyAssignmentSchema = z.object({
+  facultyId: z.string().min(1, "Faculty is required"),
+  subjectId: z.string().min(1, "Subject is required"),
+  course: z.string().min(1, "Course is required"),
+  branch: z.string().min(1, "Branch is required"),
+  year: z.coerce.number().int().min(1).max(6),
+  semester: z.coerce.number().int().min(1).max(12),
+  section: z.string().min(1, "Section is required").max(10),
+  academicYear: z.string().max(20).optional().default("2026-2027"),
+  isActive: z.boolean().default(true)
+});
+export type CreateFacultyAssignmentInput = z.infer<typeof CreateFacultyAssignmentSchema>;
+
+export const CreateTimetableEntrySchema = z.object({
+  dayOfWeek: z.coerce.number().int().min(1).max(6), // 1=Mon, 6=Sat
+  startTime: z.string().regex(/^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/, "Invalid start time (HH:MM)"),
+  endTime: z.string().regex(/^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/, "Invalid end time (HH:MM)"),
+  subjectId: z.string().min(1, "Subject is required"),
+  facultyId: z.string().min(1, "Faculty is required"),
+  course: z.string().min(1, "Course is required"),
+  branch: z.string().min(1, "Branch is required"),
+  year: z.coerce.number().int().min(1).max(6),
+  semester: z.coerce.number().int().min(1).max(12),
+  section: z.string().min(1).max(10).default("A"),
+  room: z.string().min(1, "Room/Lab is required").max(50),
+  isActive: z.boolean().default(true)
+});
+export type CreateTimetableEntryInput = z.infer<typeof CreateTimetableEntrySchema>;
+
+export const UpdateTimetableEntrySchema = CreateTimetableEntrySchema.partial();
+export type UpdateTimetableEntryInput = z.infer<typeof UpdateTimetableEntrySchema>;
+
+export const AttendanceItemSchema = z.object({
+  studentId: z.string().min(1),
+  status: z.enum(["PRESENT", "ABSENT", "LATE"]),
+  remarks: z.string().max(200).optional().nullable()
+});
+
+export const SubmitAttendanceSessionSchema = z.object({
+  timetableEntryId: z.string().optional().nullable(),
+  subjectId: z.string().min(1, "Subject is required"),
+  course: z.string().min(1, "Course is required"),
+  branch: z.string().min(1, "Branch is required"),
+  year: z.coerce.number().int().min(1).max(6),
+  semester: z.coerce.number().int().min(1).max(12),
+  section: z.string().min(1).max(10).default("A"),
+  date: z.string().min(1, "Date is required"),
+  startTime: z.string().min(1),
+  endTime: z.string().min(1),
+  records: z.array(AttendanceItemSchema).min(1, "At least one attendance record is required")
+});
+export type SubmitAttendanceSessionInput = z.infer<typeof SubmitAttendanceSessionSchema>;
+
+export const ResultStatusEnum = z.enum(["DRAFT", "PUBLISHED"]);
+export type ResultStatus = z.infer<typeof ResultStatusEnum>;
+
+export const MarkItemSchema = z.object({
+  studentId: z.string().min(1),
+  internalMarks: z.coerce.number().min(0).max(100).optional().nullable(),
+  assignmentMarks: z.coerce.number().min(0).max(100).optional().nullable(),
+  practicalMarks: z.coerce.number().min(0).max(100).optional().nullable(),
+  endSemMarks: z.coerce.number().min(0).max(100).optional().nullable(),
+  totalMarks: z.coerce.number().min(0).max(100).optional().nullable(),
+  grade: z.string().max(5).optional().nullable(),
+  credits: z.coerce.number().min(0).max(20).optional().nullable(),
+  status: ResultStatusEnum.optional()
+});
+
+export const SaveMarksBatchSchema = z.object({
+  subjectId: z.string().min(1, "Subject is required"),
+  course: z.string().min(1, "Course is required"),
+  branch: z.string().min(1, "Branch is required"),
+  year: z.coerce.number().int().min(1).max(6),
+  semester: z.coerce.number().int().min(1).max(12),
+  section: z.string().min(1).max(10).default("A"),
+  status: ResultStatusEnum.default("DRAFT"),
+  records: z.array(MarkItemSchema).min(1, "At least one student marks record is required")
+});
+export type SaveMarksBatchInput = z.infer<typeof SaveMarksBatchSchema>;
 

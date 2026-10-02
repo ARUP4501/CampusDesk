@@ -35,7 +35,12 @@ async function main() {
   await prisma.gatePass.deleteMany();
   await prisma.noticeRecipient.deleteMany();
   await prisma.notice.deleteMany();
+  await prisma.studentResult.deleteMany();
+  await prisma.attendanceRecordItem.deleteMany();
+  await prisma.attendanceSession.deleteMany();
   await prisma.courseSchedule.deleteMany();
+  await prisma.facultyAssignment.deleteMany();
+  await prisma.subject.deleteMany();
   await prisma.classCancellation.deleteMany();
   await prisma.attendanceRecord.deleteMany();
   await prisma.messFeedback.deleteMany();
@@ -326,6 +331,35 @@ async function main() {
       phone: "9876543206",
       department: "Electrical Maintenance",
       employeeId: "EMP-STF-002",
+      verificationStatus: "ACTIVE",
+      isActive: true
+    }
+  });
+
+  // 4b. Create Faculty
+  const facultyCse = await prisma.user.create({
+    data: {
+      email: "faculty@campusdesk.edu",
+      passwordHash: commonPassword,
+      fullName: "Prof. Rajesh Sharma",
+      role: "FACULTY",
+      phone: "9876543204",
+      department: "Computer Science & Engineering",
+      employeeId: "FAC-CSE-001",
+      verificationStatus: "ACTIVE",
+      isActive: true
+    }
+  });
+
+  const facultyMca = await prisma.user.create({
+    data: {
+      email: "faculty.mca@campusdesk.edu",
+      passwordHash: commonPassword,
+      fullName: "Dr. Ananya Patnaik",
+      role: "FACULTY",
+      phone: "9876543205",
+      department: "Computer Applications",
+      employeeId: "FAC-MCA-002",
       verificationStatus: "ACTIVE",
       isActive: true
     }
@@ -884,49 +918,203 @@ async function main() {
     });
   }
 
-  // 14. Create Course Schedule
-  await prisma.courseSchedule.createMany({
+  // 14. Create Academic Subjects & Faculty Assignments
+  console.log("Seeding Academic Subjects & Assignments...");
+  const subDbms = await prisma.subject.create({
+    data: {
+      code: "CS403",
+      name: "Database Engineering & SQL Internals",
+      course: "B.Tech",
+      branch: "CSE",
+      year: 2,
+      semester: 4,
+      type: "THEORY",
+      credits: 4,
+      isActive: true
+    }
+  });
+
+  const subCloud = await prisma.subject.create({
+    data: {
+      code: "CS401",
+      name: "Distributed Systems & Cloud Computing",
+      course: "B.Tech",
+      branch: "CSE",
+      year: 2,
+      semester: 4,
+      type: "THEORY",
+      credits: 3,
+      isActive: true
+    }
+  });
+
+  const subAlgo = await prisma.subject.create({
+    data: {
+      code: "CS402",
+      name: "Design & Analysis of Algorithms",
+      course: "B.Tech",
+      branch: "CSE",
+      year: 2,
+      semester: 4,
+      type: "THEORY",
+      credits: 4,
+      isActive: true
+    }
+  });
+
+  const subPythonLab = await prisma.subject.create({
+    data: {
+      code: "CS404L",
+      name: "Python Programming Lab",
+      course: "B.Tech",
+      branch: "CSE",
+      year: 2,
+      semester: 4,
+      type: "LAB",
+      credits: 2,
+      isActive: true
+    }
+  });
+
+  const subMcaDbms = await prisma.subject.create({
+    data: {
+      code: "MCA101",
+      name: "Advanced Database Management Systems",
+      course: "MCA",
+      branch: "CA",
+      year: 1,
+      semester: 1,
+      type: "THEORY",
+      credits: 4,
+      isActive: true
+    }
+  });
+
+  // Assign Faculty to Classes
+  await prisma.facultyAssignment.createMany({
     data: [
       {
+        facultyId: facultyCse.id,
+        subjectId: subDbms.id,
+        course: "B.Tech",
         branch: "CSE",
         year: 2,
-        batch: "2024",
-        subjectCode: "CS401",
-        subjectName: "Distributed Systems & Cloud Computing",
-        facultyName: "Dr. K. R. Mohapatra",
-        dayOfWeek: 1,
-        startTime: "09:00",
-        endTime: "10:30",
-        room: "LH-301"
+        semester: 4,
+        section: "A",
+        academicYear: "2026-2027",
+        isActive: true
       },
       {
+        facultyId: facultyCse.id,
+        subjectId: subPythonLab.id,
+        course: "B.Tech",
         branch: "CSE",
         year: 2,
-        batch: "2024",
-        subjectCode: "CS402",
-        subjectName: "Design & Analysis of Algorithms",
-        facultyName: "Prof. S. Swain",
-        dayOfWeek: 1,
-        startTime: "11:00",
-        endTime: "12:30",
-        room: "LH-302"
+        semester: 4,
+        section: "A",
+        academicYear: "2026-2027",
+        isActive: true
       },
       {
-        branch: "CSE",
-        year: 2,
-        batch: "2024",
-        subjectCode: "CS403",
-        subjectName: "Database Engineering & SQL Internals",
-        facultyName: "Dr. P. K. Sahoo",
-        dayOfWeek: 2,
-        startTime: "10:00",
-        endTime: "11:30",
-        room: "LH-301"
+        facultyId: facultyMca.id,
+        subjectId: subMcaDbms.id,
+        course: "MCA",
+        branch: "CA",
+        year: 1,
+        semester: 1,
+        section: "A",
+        academicYear: "2026-2027",
+        isActive: true
       }
     ]
   });
 
-  // 15. Create Attendance Records
+  // 14b. Create Course Schedule / Timetable connected to Subjects & Faculty
+  const sched1 = await prisma.courseSchedule.create({
+    data: {
+      course: "B.Tech",
+      branch: "CSE",
+      year: 2,
+      semester: 4,
+      section: "A",
+      batch: "2024",
+      subjectId: subCloud.id,
+      subjectCode: "CS401",
+      subjectName: "Distributed Systems & Cloud Computing",
+      facultyId: facultyCse.id,
+      facultyName: facultyCse.fullName,
+      dayOfWeek: 1, // Monday
+      startTime: "09:00",
+      endTime: "10:30",
+      room: "LH-301",
+      isActive: true
+    }
+  });
+
+  const sched2 = await prisma.courseSchedule.create({
+    data: {
+      course: "B.Tech",
+      branch: "CSE",
+      year: 2,
+      semester: 4,
+      section: "A",
+      batch: "2024",
+      subjectId: subAlgo.id,
+      subjectCode: "CS402",
+      subjectName: "Design & Analysis of Algorithms",
+      facultyName: "Prof. S. Swain",
+      dayOfWeek: 1, // Monday
+      startTime: "11:00",
+      endTime: "12:30",
+      room: "LH-302",
+      isActive: true
+    }
+  });
+
+  const sched3 = await prisma.courseSchedule.create({
+    data: {
+      course: "B.Tech",
+      branch: "CSE",
+      year: 2,
+      semester: 4,
+      section: "A",
+      batch: "2024",
+      subjectId: subDbms.id,
+      subjectCode: "CS403",
+      subjectName: "Database Engineering & SQL Internals",
+      facultyId: facultyCse.id,
+      facultyName: facultyCse.fullName,
+      dayOfWeek: 2, // Tuesday
+      startTime: "10:00",
+      endTime: "11:30",
+      room: "LH-301",
+      isActive: true
+    }
+  });
+
+  // Also add scheduled classes for Wednesday, Thursday, Friday
+  await prisma.courseSchedule.create({
+    data: {
+      course: "B.Tech",
+      branch: "CSE",
+      year: 2,
+      semester: 4,
+      section: "A",
+      batch: "2024",
+      subjectId: subPythonLab.id,
+      subjectCode: "CS404L",
+      subjectName: "Python Programming Lab",
+      facultyId: facultyCse.id,
+      facultyName: facultyCse.fullName,
+      dayOfWeek: 3, // Wednesday
+      startTime: "14:00",
+      endTime: "16:00",
+      room: "Lab-2",
+      isActive: true
+    }
+  });
+
+  // 15. Create Attendance Records & Live Attendance Session
   await prisma.attendanceRecord.createMany({
     data: [
       {
@@ -952,6 +1140,95 @@ async function main() {
         totalClasses: 38,
         attendedClasses: 35,
         semester: 4
+      }
+    ]
+  });
+
+  // Demo Attendance Session
+  const session1 = await prisma.attendanceSession.create({
+    data: {
+      date: new Date(),
+      timetableEntryId: sched1.id,
+      facultyId: facultyCse.id,
+      subjectId: subDbms.id,
+      course: "B.Tech",
+      branch: "CSE",
+      year: 2,
+      semester: 4,
+      section: "A",
+      startTime: "09:00",
+      endTime: "10:30",
+      topic: "Relational Algebra and B-Tree Indexes",
+      records: {
+        create: [
+          {
+            studentId: student.id,
+            status: "PRESENT"
+          }
+        ]
+      }
+    }
+  });
+
+  // 15b. Create Published Results for Demo Student
+  await prisma.studentResult.createMany({
+    data: [
+      {
+        studentId: student.id,
+        subjectId: subDbms.id,
+        facultyId: facultyCse.id,
+        course: "B.Tech",
+        branch: "CSE",
+        year: 2,
+        semester: 4,
+        section: "A",
+        internalMarks: 27,
+        assignmentMarks: 18,
+        practicalMarks: 25,
+        endSemMarks: 68,
+        totalMarks: 88,
+        grade: "E",
+        credits: 4,
+        status: "PUBLISHED",
+        publishedAt: new Date()
+      },
+      {
+        studentId: student.id,
+        subjectId: subCloud.id,
+        facultyId: facultyCse.id,
+        course: "B.Tech",
+        branch: "CSE",
+        year: 2,
+        semester: 4,
+        section: "A",
+        internalMarks: 25,
+        assignmentMarks: 17,
+        practicalMarks: 24,
+        endSemMarks: 60,
+        totalMarks: 81,
+        grade: "A",
+        credits: 3,
+        status: "PUBLISHED",
+        publishedAt: new Date()
+      },
+      {
+        studentId: student.id,
+        subjectId: subAlgo.id,
+        facultyId: facultyCse.id,
+        course: "B.Tech",
+        branch: "CSE",
+        year: 2,
+        semester: 4,
+        section: "A",
+        internalMarks: 28,
+        assignmentMarks: 19,
+        practicalMarks: 26,
+        endSemMarks: 72,
+        totalMarks: 91,
+        grade: "O",
+        credits: 4,
+        status: "PUBLISHED",
+        publishedAt: new Date()
       }
     ]
   });

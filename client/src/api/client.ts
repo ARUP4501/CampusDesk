@@ -4,7 +4,7 @@ export interface UserProfile {
   id: string;
   email: string;
   fullName: string;
-  role: "STUDENT" | "WARDEN" | "STAFF" | "ADMIN";
+  role: "STUDENT" | "FACULTY" | "WARDEN" | "STAFF" | "ADMIN";
   livingType?: "HOSTELLER" | "DAY_SCHOLAR";
   employeeId?: string | null;
   rollNumber?: string | null;
@@ -17,6 +17,7 @@ export interface UserProfile {
   branch?: string | null;
   year?: number | null;
   semester?: number | null;
+  section?: string | null;
   batch?: string | null;
   permanentAddress?: string | null;
   currentAddress?: string | null;

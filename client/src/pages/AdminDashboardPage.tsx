@@ -35,10 +35,12 @@ import {
   Volume2,
   VolumeX,
   Filter,
-  CheckCircle
+  CheckCircle,
+  BookOpen
 } from "lucide-react";
 import { apiRequest, UserProfile } from "../api/client.js";
 import { StudentProfileModal } from "../components/StudentProfileModal.js";
+import { AdminAcademicManagement } from "../components/AdminAcademicManagement.js";
 
 interface AdminDashboardPageProps {
   user: UserProfile | null;
@@ -49,7 +51,7 @@ export const AdminDashboardPage: React.FC<AdminDashboardPageProps> = ({ user }) 
   const isWarden = user?.role === "WARDEN";
 
   const [activeTab, setActiveTab] = useState<
-    "pulse" | "overview" | "emergencies" | "heatmap" | "maintenance" | "verifications" | "wardens" | "staff" | "students" | "hostels" | "transfers" | "audit" | "courses"
+    "pulse" | "overview" | "emergencies" | "heatmap" | "maintenance" | "verifications" | "wardens" | "staff" | "students" | "hostels" | "transfers" | "audit" | "courses" | "academics"
   >("pulse");
 
   // Campus Pulse State
@@ -929,6 +931,16 @@ export const AdminDashboardPage: React.FC<AdminDashboardPageProps> = ({ user }) 
               <GraduationCap className="w-3.5 h-3.5" />
               <span>Courses & Branches</span>
             </button>
+
+            <button
+              onClick={() => setActiveTab("academics")}
+              className={`py-3 px-3 text-xs font-medium border-b-2 flex items-center space-x-1.5 whitespace-nowrap transition-colors ${
+                activeTab === "academics" ? "border-[#CC6F00] text-[#CC6F00] font-bold" : "border-transparent text-[#4D2A00]/70 hover:text-[#4D2A00]"
+              }`}
+            >
+              <BookOpen className="w-3.5 h-3.5" />
+              <span>Academic Management</span>
+            </button>
           </>
         )}
       </div>
@@ -1582,6 +1594,11 @@ export const AdminDashboardPage: React.FC<AdminDashboardPageProps> = ({ user }) 
             </div>
           )}
         </div>
+      )}
+
+      {/* TAB: ACADEMIC MANAGEMENT (FACULTY, SUBJECTS, ASSIGNMENTS, TIMETABLE) */}
+      {activeTab === "academics" && isAdmin && (
+        <AdminAcademicManagement />
       )}
 
       {/* TAB: CAMPUS ISSUE HEATMAP */}

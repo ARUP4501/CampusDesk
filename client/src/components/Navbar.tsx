@@ -22,7 +22,9 @@ import {
   Sparkles,
   Bus,
   Package,
-  LifeBuoy
+  LifeBuoy,
+  GraduationCap,
+  BookOpen
 } from "lucide-react";
 import { UserProfile } from "../api/client.js";
 import { NotificationInbox } from "./NotificationInbox.js";
@@ -46,7 +48,8 @@ export interface RoleNavConfig {
 
 /**
  * Role-based navigation matrix strictly segregated by role permissions:
- * - STUDENT: Academics/attendance, complaints, gate pass, notices, mess, clubs, transport, parcels, documents, fees, help, FAQ, offline console.
+ * - STUDENT: Academics/attendance, complaints, gate pass, notices, mess, clubs, transport, parcels, documents, fees, help, FAQ, offline console, results.
+ * - FACULTY: Faculty Portal, Today's Classes, Timetable & Attendance, Circulars, Emergency Directory, FAQ, console.
  * - STAFF: Dashboard, assigned complaints/tickets, attendance cancellations/schedules, gate log, official notices, document approvals, courier parcels, fleet transport, help directory, FAQ, console.
  * - WARDEN: Hostel operations, gate pass reviews/approvals, complaints, mess ops, hostel notices, security gate log, resident parcel deliveries, help directory, FAQ, console.
  * - ADMIN: Central governance, complaints oversight, official notices, data ingestion, gate pass reviews, gate log, mess management, document issuance, fleet transport, courier logistics, help directory, FAQ, console.
@@ -56,6 +59,7 @@ const ROLE_NAV_CONFIG: Record<string, RoleNavConfig> = {
     main: [
       { to: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
       { to: "/academics", label: "Attendance", icon: CalendarDays },
+      { to: "/results", label: "Results & SGPA", icon: GraduationCap },
       { to: "/tickets", label: "Complaints", icon: Wrench },
       { to: "/gatepass", label: "Gate Pass", icon: DoorOpen }
     ],
@@ -68,6 +72,18 @@ const ROLE_NAV_CONFIG: Record<string, RoleNavConfig> = {
       { to: "/documents", label: "Certificates & Letters", icon: Files },
       { to: "/fees", label: "Fee Statement", icon: IndianRupee },
       { to: "/help", label: "Help & Directory", icon: LifeBuoy },
+      { to: "/faq", label: "Campus FAQ", icon: CircleHelp },
+      { to: "/console", label: "Offline Console", icon: Terminal }
+    ]
+  },
+  FACULTY: {
+    main: [
+      { to: "/faculty", label: "Faculty Portal", icon: LayoutDashboard },
+      { to: "/academics", label: "Schedule & Attendance", icon: CalendarDays },
+      { to: "/notices", label: "Circulars", icon: Megaphone }
+    ],
+    more: [
+      { to: "/help", label: "Emergency Directory", icon: LifeBuoy },
       { to: "/faq", label: "Campus FAQ", icon: CircleHelp },
       { to: "/console", label: "Offline Console", icon: Terminal }
     ]

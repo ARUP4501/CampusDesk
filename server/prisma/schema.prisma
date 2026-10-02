@@ -24,6 +24,7 @@ model User {
   branch                  String?           // CSE, ECE, MECH, CIVIL, EE
   year                    Int?              // 1, 2, 3, 4
   semester                Int?              // 1 - 8
+  section                 String?           @default("A") // Section A, B, C
   batch                   String?           // 2022-2026
 
   // Addresses
@@ -91,6 +92,12 @@ model User {
   clubMemberships         ClubMember[]      @relation("StudentClubMemberships")
   eventRegistrations      ClubEventRegistration[] @relation("StudentEventRegistrations")
   parcels                 Parcel[]          @relation("StudentParcels")
+  facultyAssignments      FacultyAssignment[]   @relation("FacultyUserAssignments")
+  facultyTimetableEntries CourseSchedule[]      @relation("FacultyTimetable")
+  facultyAttendanceSessions AttendanceSession[] @relation("FacultyAttendanceSessions")
+  studentAttendanceItems  AttendanceRecordItem[] @relation("StudentAttendanceItems")
+  facultySubmittedResults StudentResult[]       @relation("FacultySubmittedResults")
+  studentResults          StudentResult[]       @relation("StudentResults")
 
   @@index([role, hostelBlock, verificationStatus, livingType])
 }
@@ -328,20 +335,33 @@ model NoticeRecipient {
 }
 
 model CourseSchedule {
-  id          String   @id @default(uuid())
-  branch      String
-  year        Int
-  batch       String?
-  subjectCode String
-  subjectName String
-  facultyName String
-  dayOfWeek   Int
-  startTime   String
-  endTime     String
-  room        String
-  createdAt   DateTime @default(now())
+  id                 String              @id @default(uuid())
+  course             String              @default("B.Tech")
+  branch             String
+  year               Int
+  semester           Int                 @default(1)
+  section            String              @default("A")
+  batch              String?
+  subjectCode        String
+  subjectName        String
+  facultyName        String
+  facultyId          String?
+  faculty            User?               @relation("FacultyTimetable", fields: [facultyId], references: [id])
+  subjectId          String?
+  subject            Subject?            @relation(fields: [subjectId], references: [id], onDelete: SetNull)
+  dayOfWeek          Int
+  startTime          String
+  endTime            String
+  room               String
+  isActive           Boolean             @default(true)
+  createdAt          DateTime            @default(now())
+  updatedAt          DateTime?           @updatedAt
+
+  attendanceSessions AttendanceSession[]
 
   @@index([branch, year, dayOfWeek])
+  @@index([course, branch, semester, section])
+  @@index([facultyId, dayOfWeek])
 }
 
 model ClassCancellation {
@@ -714,5 +734,122 @@ model AcademicBranch {
 
   @@unique([courseId, code])
   @@index([courseId, isActive])
+}
+
+// ----------------------------------------------------
+// ACADEMIC SUBJECTS, FACULTY ASSIGNMENTS, ATTENDANCE & RESULTS
+// ----------------------------------------------------
+model Subject {
+  id          String   @id @default(uuid())
+  code        String   // e.g. "CS301", "MCA101"
+  name        String   // e.g. "Database Management Systems"
+  course      String   // e.g. "MCA", "B.Tech"
+  branch      String   // e.g. "CA", "CSE"
+  year        Int      @default(1)
+  semester    Int      @default(1)
+  type        String   @default("THEORY") // THEORY, PRACTICAL, LAB
+  credits     Int      @default(3)
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  facultyAssignments FacultyAssignment[]
+  timetableEntries   CourseSchedule[]
+  attendanceSessions AttendanceSession[]
+  results            StudentResult[]
+
+  @@unique([course, branch, semester, code])
+  @@index([course, branch, semester, isActive])
+}
+
+model FacultyAssignment {
+  id           String   @id @default(uuid())
+  facultyId    String
+  faculty      User     @relation("FacultyUserAssignments", fields: [facultyId], references: [id], onDelete: Cascade)
+  subjectId    String
+  subject      Subject  @relation(fields: [subjectId], references: [id], onDelete: Cascade)
+  course       String
+  branch       String
+  year         Int      @default(1)
+  semester     Int      @default(1)
+  section      String   @default("A")
+  academicYear String?  @default("2024-2025")
+  isActive     Boolean  @default(true)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@unique([facultyId, subjectId, section, semester])
+  @@index([facultyId, isActive])
+  @@index([course, branch, semester, section])
+}
+
+model AttendanceSession {
+  id               String                 @id @default(uuid())
+  date             DateTime               // lecture date
+  timetableEntryId String?
+  timetableEntry   CourseSchedule?        @relation(fields: [timetableEntryId], references: [id], onDelete: SetNull)
+  facultyId        String
+  faculty          User                   @relation("FacultyAttendanceSessions", fields: [facultyId], references: [id])
+  subjectId        String
+  subject          Subject                @relation(fields: [subjectId], references: [id], onDelete: Cascade)
+  course           String
+  branch           String
+  year             Int
+  semester         Int
+  section          String                 @default("A")
+  topic            String?
+  startTime        String?
+  endTime          String?
+  createdAt        DateTime               @default(now())
+
+  records          AttendanceRecordItem[]
+
+  @@index([facultyId, date])
+  @@index([course, branch, semester, section, date])
+}
+
+model AttendanceRecordItem {
+  id        String            @id @default(uuid())
+  sessionId String
+  session   AttendanceSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  studentId String
+  student   User              @relation("StudentAttendanceItems", fields: [studentId], references: [id], onDelete: Cascade)
+  status    String            @default("PRESENT") // PRESENT, ABSENT, LATE
+  remarks   String?
+  createdAt DateTime          @default(now())
+
+  @@unique([sessionId, studentId])
+  @@index([studentId, status])
+}
+
+model StudentResult {
+  id              String    @id @default(uuid())
+  studentId       String
+  student         User      @relation("StudentResults", fields: [studentId], references: [id], onDelete: Cascade)
+  subjectId       String
+  subject         Subject   @relation(fields: [subjectId], references: [id], onDelete: Cascade)
+  facultyId       String
+  faculty         User      @relation("FacultySubmittedResults", fields: [facultyId], references: [id])
+  course          String
+  branch          String
+  year            Int
+  semester        Int
+  section         String    @default("A")
+  internalMarks   Float?    // e.g. 26
+  assignmentMarks Float?    // e.g. 18
+  practicalMarks  Float?    // e.g. 24
+  endSemMarks     Float?    // e.g. 68
+  totalMarks      Float?    // e.g. 86
+  maxMarks        Float?    @default(100)
+  grade           String?   // e.g. "O", "E", "A", "B", "C", "D", "F"
+  credits         Int       @default(3)
+  status          String    @default("DRAFT") // DRAFT, PUBLISHED
+  publishedAt     DateTime?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  @@unique([studentId, subjectId, semester])
+  @@index([studentId, status])
+  @@index([subjectId, section, semester])
 }
 
