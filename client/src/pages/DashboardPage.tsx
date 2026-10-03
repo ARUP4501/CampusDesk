@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { Link, Navigate } from "react-router-dom";
+import { Link } from "react-router-dom";
 import {
   Wrench,
   DoorOpen,
@@ -13,34 +13,43 @@ import {
   Plus,
   ChevronRight,
   Clock,
-  Sparkles,
   CheckCircle2,
-  Bell,
   Bus,
-  Car,
-  Users,
   Package,
-  LifeBuoy,
   PhoneCall,
   Siren,
   ShieldAlert,
   Flame,
-  Zap,
   Building,
   Radio,
-  MapPin
+  MapPin,
+  ExternalLink,
+  ShieldCheck,
+  Compass,
+  LifeBuoy,
+  Phone
 } from "lucide-react";
 import { apiRequest, UserProfile } from "../api/client.js";
+import { StaffOperationsDesk } from "../components/StaffOperationsDesk.js";
 
 export const DashboardPage: React.FC<{ user: UserProfile | null }> = ({ user }) => {
+  const [loading, setLoading] = useState<boolean>(true);
   const [studentStats, setStudentStats] = useState<any>(null);
   const [staffStats, setStaffStats] = useState<any>(null);
-  const [loading, setLoading] = useState<boolean>(true);
   const [recentNotices, setRecentNotices] = useState<any[]>([]);
   const [recentTickets, setRecentTickets] = useState<any[]>([]);
   const [activeMaintenance, setActiveMaintenance] = useState<any[]>([]);
-  const [upcomingEvents, setUpcomingEvents] = useState<any[]>([]);
   const [activeParcelsCount, setActiveParcelsCount] = useState<number>(0);
+
+  // Academic & Schedule data
+  const [academicAttendance, setAcademicAttendance] = useState<any>(null);
+  const [todayClasses, setTodayClasses] = useState<any[]>([]);
+
+  // Hostel Evening Return & Directory
+  const [hostelDossier, setHostelDossier] = useState<any>(null);
+
+  // Mess Menu
+  const [todayMess, setTodayMess] = useState<any>(null);
 
   // Modals
   const [showTransferModal, setShowTransferModal] = useState<boolean>(false);
@@ -67,31 +76,57 @@ export const DashboardPage: React.FC<{ user: UserProfile | null }> = ({ user }) 
 
   const isHosteller = user?.livingType === "HOSTELLER" || !user?.livingType;
 
+  // Determine current day of week (1=Mon, 2=Tue ... 7=Sun)
+  const currentDayNumber = new Date().getDay() === 0 ? 7 : new Date().getDay();
+
   useEffect(() => {
     const fetchDashboard = async () => {
       try {
         setLoading(true);
         if (user?.role === "STUDENT") {
-          const [tickets, passes, notices, maintenanceRes, eventsRes, parcelsRes] = await Promise.all([
-            apiRequest<{ tickets: any[] }>("/api/tickets"),
-            apiRequest<{ passes: any[] }>("/api/gatepass"),
-            apiRequest<{ notices: any[] }>("/api/notices"),
+          const [
+            tickets,
+            passes,
+            notices,
+            maintenanceRes,
+            parcelsRes,
+            attRes,
+            todaySchedRes,
+            hostelRes,
+            messRes
+          ] = await Promise.all([
+            apiRequest<{ tickets: any[] }>("/api/tickets").catch(() => ({ tickets: [] })),
+            apiRequest<{ passes: any[] }>("/api/gatepass").catch(() => ({ passes: [] })),
+            apiRequest<{ notices: any[] }>("/api/notices").catch(() => ({ notices: [] })),
             apiRequest<{ maintenance: any[] }>("/api/maintenance").catch(() => ({ maintenance: [] })),
-            apiRequest<{ events: any[] }>("/api/clubs/events").catch(() => ({ events: [] })),
-            apiRequest<{ parcels: any[] }>("/api/parcels").catch(() => ({ parcels: [] }))
+            apiRequest<{ parcels: any[] }>("/api/parcels").catch(() => ({ parcels: [] })),
+            apiRequest<any>("/api/academic/attendance/student").catch(() => null),
+            apiRequest<{ todayClasses: any[] }>("/api/academic/timetable/today").catch(() => ({ todayClasses: [] })),
+            apiRequest<any>("/api/hostels/evening-return/my-status").catch(() => null),
+            apiRequest<{ menu: any[] }>("/api/mess/menu").catch(() => ({ menu: [] }))
           ]);
 
           setStudentStats({
-            openTickets: tickets.tickets.filter((t) => t.status !== "CLOSED" && t.status !== "RESOLVED").length,
-            activePasses: passes.passes.filter((p) => p.status === "APPROVED" || p.status === "PENDING" || p.status === "EXITED").length,
-            unreadNotices: notices.notices.filter((n) => !n.isRead).length,
-            latestPass: passes.passes[0] || null
+            openTickets: (tickets.tickets || []).filter((t: any) => t.status !== "CLOSED" && t.status !== "RESOLVED").length,
+            activePasses: (passes.passes || []).filter((p: any) => p.status === "APPROVED" || p.status === "PENDING" || p.status === "EXITED").length,
+            unreadNotices: (notices.notices || []).filter((n: any) => !n.isRead).length,
+            latestPass: (passes.passes || [])[0] || null
           });
-          setRecentNotices(notices.notices.slice(0, 3));
-          setRecentTickets(tickets.tickets.slice(0, 3));
+
+          setRecentNotices((notices.notices || []).slice(0, 3));
+          setRecentTickets((tickets.tickets || []).slice(0, 3));
           setActiveMaintenance(maintenanceRes.maintenance?.slice(0, 2) || []);
-          setUpcomingEvents(eventsRes.events?.slice(0, 2) || []);
-          setActiveParcelsCount(parcelsRes.parcels?.filter((p: any) => p.status === "ARRIVED").length || 0);
+          setActiveParcelsCount((parcelsRes.parcels || []).filter((p: any) => p.status === "ARRIVED").length);
+
+          setAcademicAttendance(attRes);
+          setTodayClasses(todaySchedRes.todayClasses || []);
+          setHostelDossier(hostelRes);
+
+          // Find today's mess menu
+          if (messRes.menu && messRes.menu.length > 0) {
+            const match = messRes.menu.find((m: any) => m.dayOfWeek === currentDayNumber) || messRes.menu[0];
+            setTodayMess(match);
+          }
 
           // Prepopulate SOS location
           if (isHosteller) {
@@ -110,37 +145,21 @@ export const DashboardPage: React.FC<{ user: UserProfile | null }> = ({ user }) 
             .catch(() => {});
         } else if (user?.role === "STAFF") {
           const [tickets, notices] = await Promise.all([
-            apiRequest<{ tickets: any[] }>("/api/tickets"),
-            apiRequest<{ notices: any[] }>("/api/notices")
+            apiRequest<{ tickets: any[] }>("/api/tickets").catch(() => ({ tickets: [] })),
+            apiRequest<{ notices: any[] }>("/api/notices").catch(() => ({ notices: [] }))
           ]);
-          const myAssigned = tickets.tickets.filter((t) => t.assignedStaff?.id === user.id || t.assignedStaffId === user.id);
-          const activePending = myAssigned.filter((t) => t.status !== "RESOLVED" && t.status !== "CLOSED");
+          const myAssigned = (tickets.tickets || []).filter((t: any) => t.assignedStaff?.id === user.id || t.assignedStaffId === user.id);
+          const activePending = myAssigned.filter((t: any) => t.status !== "RESOLVED" && t.status !== "CLOSED");
           setStaffStats({
             assignedCount: myAssigned.length,
             pendingCount: activePending.length,
-            totalNotices: notices.notices.length
+            totalNotices: (notices.notices || []).length
           });
-          setRecentNotices(notices.notices.slice(0, 3));
-          setRecentTickets(myAssigned.slice(0, 3));
-        } else {
-          // ADMIN and WARDEN overview
-          const [tickets, passes, notices] = await Promise.all([
-            apiRequest<{ tickets: any[] }>("/api/tickets").catch(() => ({ tickets: [] })),
-            apiRequest<{ passes: any[] }>("/api/gatepass").catch(() => ({ passes: [] })),
-            apiRequest<{ notices: any[] }>("/api/notices").catch(() => ({ notices: [] }))
-          ]);
-
-          setStudentStats({
-            openTickets: (tickets.tickets || []).filter((t: any) => t.status !== "CLOSED" && t.status !== "RESOLVED").length,
-            activePasses: (passes.passes || []).filter((p: any) => p.status === "APPROVED" || p.status === "PENDING" || p.status === "EXITED").length,
-            unreadNotices: (notices.notices || []).filter((n: any) => !n.isRead).length,
-            latestPass: (passes.passes || [])[0] || null
-          });
-          setRecentNotices((notices.notices || []).slice(0, 3));
-          setRecentTickets((tickets.tickets || []).slice(0, 3));
+          setRecentNotices((notices.notices || []).slice(0, 4));
+          setRecentTickets(myAssigned.slice(0, 4));
         }
       } catch (err) {
-        console.error(err);
+        console.error("Dashboard data load error:", err);
       } finally {
         setLoading(false);
       }
@@ -160,7 +179,6 @@ export const DashboardPage: React.FC<{ user: UserProfile | null }> = ({ user }) 
         if (res.emergency) {
           setSosActiveEmergency(res.emergency);
         } else {
-          // Alert has been resolved by responder
           setSosActiveEmergency((prev: any) => (prev ? { ...prev, status: "RESOLVED" } : null));
         }
       } catch (e) {
@@ -188,7 +206,7 @@ export const DashboardPage: React.FC<{ user: UserProfile | null }> = ({ user }) 
   const startSosCountdown = (category: string) => {
     setSosCategory(category);
     setSosError(null);
-    setSosCountdown(3); // 3-second safety grace period
+    setSosCountdown(3);
   };
 
   const cancelSosCountdown = () => {
@@ -240,796 +258,917 @@ export const DashboardPage: React.FC<{ user: UserProfile | null }> = ({ user }) 
 
   if (!user) return null;
 
+  if (user.role === "STAFF") {
+    return <StaffOperationsDesk user={user} />;
+  }
+
+  // Resolve dynamic greeting
+  const getGreeting = () => {
+    const hour = new Date().getHours();
+    if (hour < 12) return "GOOD MORNING";
+    if (hour < 17) return "GOOD AFTERNOON";
+    return "GOOD EVENING";
+  };
+
+  // Determine return curfew semantic state
+  const getCurfewStatus = () => {
+    if (!hostelDossier) {
+      return {
+        label: "NOT CHECKED",
+        subtext: "Roll-call begins 07:30 PM",
+        pill: "bg-[var(--bg-elevated)] text-[var(--text-muted)] border-[var(--border-subtle)]"
+      };
+    }
+    if (hostelDossier.hasApprovedPass) {
+      return {
+        label: "ON APPROVED LEAVE",
+        subtext: `Gate Pass #${hostelDossier.activePassNumber || "GP-ACTIVE"} · Curfew exempt`,
+        pill: "bg-blue-900/30 text-blue-300 border-blue-500/40"
+      };
+    }
+    if (hostelDossier.record?.status === "RETURNED") {
+      const timeStr = hostelDossier.record.returnTime
+        ? new Date(hostelDossier.record.returnTime).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })
+        : "Verified";
+      return {
+        label: "RETURNED",
+        subtext: `${timeStr} · Warden check confirmed`,
+        pill: "bg-emerald-950/40 text-emerald-300 border-emerald-500/40"
+      };
+    }
+    if (hostelDossier.record?.status === "ON_LEAVE") {
+      return {
+        label: "ON APPROVED LEAVE",
+        subtext: "Sanctioned leave on record · No penalty",
+        pill: "bg-blue-900/30 text-blue-300 border-blue-500/40"
+      };
+    }
+    return {
+      label: "NOT RETURNED",
+      subtext: "Curfew check pending · Turnstile alert",
+      pill: "bg-[#FF6D1F]/15 text-[#FF6D1F] border-[#FF6D1F]/40"
+    };
+  };
+
+  const curfew = getCurfewStatus();
+
   return (
-    <div className="max-w-6xl mx-auto space-y-6 pb-12">
-      {/* Admin / Warden Governance Banner */}
-      {(user.role === "ADMIN" || user.role === "WARDEN") && (
-        <div className="glass-card rounded-2xl p-4 border border-campus-border flex items-center justify-between flex-wrap gap-3 bg-white/70 shadow-sm animate-fadeIn">
-          <div className="flex items-center space-x-3">
-            <div className="w-8 h-8 rounded-xl bg-campus-accent/10 border border-campus-accent/30 text-campus-accent flex items-center justify-center font-bold">
-              <ShieldAlert className="w-4 h-4" />
-            </div>
-            <div>
-              <p className="text-xs font-bold text-campus-text">
-                {user.role === "ADMIN" ? "Central Admin Oversight Active" : `Hostel Warden Portal (${user.hostelBlock || "Assigned Block"})`}
-              </p>
-              <p className="text-[11px] text-campus-muted">
-                Student directory, 2-step verification queue, hostel allocation, and system audit logs.
-              </p>
-            </div>
-          </div>
-          <Link
-            to="/admin"
-            className="btn-primary text-xs font-bold py-2 px-3.5 rounded-xl flex items-center space-x-1.5 shadow-sm"
-          >
-            <span>Open Governance Console</span>
-            <ChevronRight className="w-3.5 h-3.5" />
-          </Link>
-        </div>
-      )}
-
-      {/* 1. Verification Alert (When not ACTIVE) */}
-      {user.role === "STUDENT" && user.verificationStatus !== "ACTIVE" && (
-        <div className="status-badge-warning rounded-2xl p-4 flex items-start space-x-3 text-xs shadow-xs animate-fadeIn">
-          <AlertTriangle className="w-5 h-5 text-campus-accent shrink-0 mt-0.5" />
-          <div>
-            <div className="font-bold text-campus-text">
-              {user.verificationStatus === "PENDING_WARDEN_VERIFICATION" && "Pending Warden Verification"}
-              {user.verificationStatus === "PENDING_ADMIN_APPROVAL" && "Warden Approved — Pending Admin Activation"}
-              {(user.verificationStatus === "REJECTED_BY_WARDEN" || user.verificationStatus === "REJECTED_BY_ADMIN") && "Registration Application Rejected"}
-            </div>
-            <p className="text-campus-muted mt-0.5 leading-relaxed">
-              {user.verificationStatus === "PENDING_WARDEN_VERIFICATION" && "Your hostel room allocation is currently being verified by your Warden."}
-              {user.verificationStatus === "PENDING_ADMIN_APPROVAL" && "Warden verified. Awaiting central registry confirmation."}
-              {user.rejectionReason && `Note: ${user.rejectionReason}`}
-            </p>
-          </div>
-        </div>
-      )}
-
-      {/* 2. Planned Maintenance Outage Alert Banner */}
+    <div className="space-y-8 pb-16 font-mono">
+      {/* 1. Planned Maintenance Alert (if active) */}
       {activeMaintenance.length > 0 && (
-        <div className="p-4 rounded-2xl bg-amber-500/15 border border-amber-500/30 space-y-2 animate-fadeIn">
-          <div className="flex items-center space-x-2">
-            <Radio className="w-4 h-4 text-amber-700 animate-pulse" />
-            <span className="text-xs font-mono font-bold uppercase text-amber-800">
-              Active Planned Maintenance
-            </span>
+        <div className="p-4 rounded-xl bg-[var(--bg-elevated)] border border-amber-500/30 text-xs text-[var(--text-primary)] flex items-center justify-between gap-3 animate-fadeIn">
+          <div className="flex items-center space-x-3">
+            <Radio className="w-4 h-4 text-amber-400 shrink-0 animate-pulse" />
+            <div>
+              <span className="font-mono uppercase text-[10px] text-amber-400 font-bold tracking-wider block">
+                Active Campus Outage
+              </span>
+              <span className="text-xs text-[var(--text-primary)]">
+                {activeMaintenance[0].title} — {activeMaintenance[0].location} ({activeMaintenance[0].affectedAudience})
+              </span>
+            </div>
           </div>
-          <div className="space-y-1 text-xs text-campus-text">
-            {activeMaintenance.map((m) => (
-              <div key={m.id} className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1">
-                <div>
-                  <strong className="font-semibold">{m.title}</strong> — {m.location} ({m.affectedAudience})
-                </div>
-                <span className="text-[11px] font-mono text-campus-secondary">
-                  {new Date(m.startTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })} to {new Date(m.endTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                </span>
-              </div>
-            ))}
-          </div>
+          <span className="text-[11px] font-mono text-[var(--text-muted)] shrink-0">
+            {new Date(activeMaintenance[0].startTime).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
+          </span>
         </div>
       )}
 
-      {/* Real-time SOS Active Emergency Beacon Banner */}
+      {/* 2. Active SOS Emergency Beacon (Student) */}
       {user.role === "STUDENT" && sosActiveEmergency && (
         <div
-          className={`p-4 rounded-3xl border-2 transition-all duration-300 shadow-md ${
+          className={`p-4 rounded-xl border flex items-center justify-between gap-4 animate-pulse ${
             sosActiveEmergency.status === "RESOLVED"
-              ? "bg-emerald-500/10 border-emerald-500/30 text-emerald-950"
-              : "bg-rose-500/10 border-rose-500/50 text-rose-950 animate-pulse"
+              ? "bg-emerald-950/30 border-emerald-500/40 text-emerald-200"
+              : "bg-rose-950/40 border-rose-500/50 text-rose-200"
           }`}
         >
-          <div className="flex items-start justify-between gap-3">
-            <div className="flex items-start space-x-3.5">
-              <div
-                className={`w-10 h-10 rounded-2xl flex items-center justify-center shrink-0 shadow-sm ${
-                  sosActiveEmergency.status === "RESOLVED"
-                    ? "bg-emerald-100 text-emerald-700"
-                    : "bg-rose-600 text-white animate-bounce"
-                }`}
-              >
-                <Siren className="w-5 h-5" />
+          <div className="flex items-center space-x-3">
+            <Siren className="w-5 h-5 text-rose-400 shrink-0" />
+            <div>
+              <div className="flex items-center space-x-2">
+                <span className="font-mono text-xs font-black uppercase tracking-wider text-rose-300">
+                  {sosActiveEmergency.status === "RESOLVED" ? "EMERGENCY RESOLVED" : "EMERGENCY SOS BEACON ACTIVE"}
+                </span>
+                <span className="font-mono text-[10px] px-1.5 py-0.5 rounded bg-rose-500/20 text-rose-300">
+                  #{sosActiveEmergency.alertNumber || sosActiveEmergency.id.slice(0, 8)}
+                </span>
               </div>
-              <div className="space-y-1">
-                <div className="flex items-center space-x-2 flex-wrap gap-y-1">
-                  <span className="text-xs font-bold uppercase tracking-wider text-rose-900">
-                    {sosActiveEmergency.status === "RESOLVED"
-                      ? "Emergency Beacon Resolved"
-                      : "🚨 Emergency SOS Beacon Active"}
-                  </span>
-                  <span
-                    className={`px-2.5 py-0.5 rounded-full text-[10px] font-mono font-bold ${
-                      sosActiveEmergency.status === "RESOLVED"
-                        ? "bg-emerald-200 text-emerald-900"
-                        : sosActiveEmergency.status === "ACKNOWLEDGED"
-                        ? "bg-amber-200 text-amber-900"
-                        : sosActiveEmergency.status === "RESPONDING"
-                        ? "bg-blue-200 text-blue-900"
-                        : "bg-rose-600 text-white"
-                    }`}
-                  >
-                    {sosActiveEmergency.status === "NEW" ? "ACTIVE" : sosActiveEmergency.status}
-                  </span>
-                  <span className="text-[11px] font-mono text-campus-muted">
-                    #{sosActiveEmergency.alertNumber || (sosActiveEmergency.id ? sosActiveEmergency.id.slice(0, 8) : "SOS")}
-                  </span>
-                </div>
-
-                <p className="text-xs font-medium text-campus-text">
-                  Category: <strong className="text-rose-800">{sosActiveEmergency.category}</strong> • Location:{" "}
-                  <strong>{sosActiveEmergency.location}</strong>
-                </p>
-
-                {sosActiveEmergency.responderNotes && (
-                  <div className="text-xs bg-white/80 p-2.5 rounded-xl border border-campus-border text-campus-text font-sans">
-                    <span className="font-bold text-rose-700">Responder Note: </span>
-                    {sosActiveEmergency.responderNotes}
-                  </div>
-                )}
-
-                <p className="text-[11px] text-campus-secondary">
-                  {isHosteller
-                    ? "Targeted responders: Hostel Warden & Security Control Room"
-                    : "Targeted responders: Campus Security & Central Administration"}
-                </p>
-              </div>
+              <p className="text-xs text-rose-100 mt-0.5">
+                {sosActiveEmergency.category} · Location: {sosActiveEmergency.location}
+              </p>
             </div>
-
-            <div className="flex items-center space-x-2 shrink-0">
-              <a
-                href="tel:1800CAMPUS"
-                className="px-3.5 py-2 rounded-xl text-xs font-bold bg-rose-600 hover:bg-rose-700 text-white flex items-center space-x-1.5 shadow-sm"
+          </div>
+          <div className="flex items-center space-x-2 shrink-0">
+            <a
+              href="tel:1800CAMPUS"
+              className="px-3 py-1.5 rounded-lg bg-rose-600 hover:bg-rose-700 text-white text-xs font-mono font-bold flex items-center space-x-1.5 transition-colors"
+            >
+              <PhoneCall className="w-3.5 h-3.5" />
+              <span>1800-CAMPUS</span>
+            </a>
+            {sosActiveEmergency.status === "RESOLVED" && (
+              <button
+                onClick={() => setSosActiveEmergency(null)}
+                className="p-1.5 rounded-lg bg-white/10 text-rose-100 hover:text-white hover:bg-white/20"
               >
-                <PhoneCall className="w-3.5 h-3.5" />
-                <span>Call Helpline</span>
-              </a>
-              {sosActiveEmergency.status === "RESOLVED" && (
-                <button
-                  onClick={() => setSosActiveEmergency(null)}
-                  className="p-2 rounded-xl text-campus-muted hover:text-campus-text bg-white/60 hover:bg-white"
-                  title="Dismiss banner"
-                >
-                  <X className="w-4 h-4" />
-                </button>
-              )}
-            </div>
+                <X className="w-4 h-4" />
+              </button>
+            )}
           </div>
         </div>
       )}
 
-      {/* 3. Top Greeting & Context Header with Living Type Badge & SOS Trigger */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pb-4 border-b border-campus-border">
-        <div>
-          <div className="flex items-center space-x-2">
-            <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-campus-text">
-              Welcome back, {user.fullName.split(" ")[0]}
+      {/* 3. HERO AREA (Section 13) */}
+      <section className="border-b border-[var(--border-subtle)] pb-8">
+        <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-6">
+          <div>
+            <span className="editorial-eyebrow text-[#FF6D1F] block mb-2">
+              01 // CAMPUS OPERATING SYSTEM
+            </span>
+            <h1 className="editorial-title text-xl sm:text-2xl text-[var(--text-primary)]">
+              {getGreeting()}, {user.fullName.split(" ")[0].toUpperCase()}
             </h1>
-            {user.role === "STUDENT" && (
-              <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-mono font-bold border ${
-                isHosteller
-                  ? "bg-amber-100 text-amber-900 border-amber-300"
-                  : "bg-blue-100 text-blue-900 border-blue-300"
-              }`}>
-                {isHosteller ? "Hosteller" : "Day Scholar"}
+            <p className="text-xs sm:text-sm text-[var(--text-secondary)] mt-2 font-mono tracking-tight flex items-center space-x-2 flex-wrap">
+              <span>{user.role} WORKSPACE</span>
+              <span>·</span>
+              <span>{user.course || "B.TECH"} {user.branch || "CSE"}</span>
+              <span>·</span>
+              <span>YEAR {user.year || 2} SEM {user.semester || 4}</span>
+              <span>·</span>
+              <span className="text-[#FF6D1F] font-bold">
+                {isHosteller ? `${user.hostelBlock || "HOSTEL"} RESIDENT` : `TRANSIT: ${user.busRoute || "ROUTE 01"}`}
               </span>
+            </p>
+          </div>
+
+          {/* Quick Shortcuts */}
+          <div className="flex items-center space-x-3 shrink-0">
+            {user.role === "STUDENT" && (
+              <>
+                <button
+                  onClick={() => setShowSosModal(true)}
+                  className="px-3.5 py-2 rounded-lg bg-rose-500/15 hover:bg-rose-500/25 text-rose-300 border border-rose-500/40 text-xs font-mono font-bold flex items-center space-x-2 transition-colors shadow-sm"
+                >
+                  <ShieldAlert className="w-3.5 h-3.5 text-rose-400" />
+                  <span>EMERGENCY SOS</span>
+                </button>
+
+                <button
+                  onClick={() => setShowIdModal(true)}
+                  className="px-3.5 py-2 rounded-lg bg-[var(--bg-elevated)] hover:bg-[var(--bg-hover)] text-[var(--text-primary)] border border-[var(--border-subtle)] text-xs font-mono font-medium flex items-center space-x-1.5 transition-colors"
+                >
+                  <QrCode className="w-3.5 h-3.5 text-[#FF6D1F]" />
+                  <span>DIGITAL ID</span>
+                </button>
+
+                <Link
+                  to="/help"
+                  className="hidden sm:flex items-center space-x-1.5 px-3.5 py-2 rounded-lg bg-[var(--bg-elevated)] hover:bg-[var(--bg-hover)] text-[var(--text-primary)] border border-[var(--border-subtle)] text-xs font-mono font-medium transition-colors"
+                  title="Campus Emergency & Department Directory"
+                >
+                  <LifeBuoy className="w-3.5 h-3.5 text-[#FF6D1F]" />
+                  <span>EMERGENCY DIRECTORY</span>
+                </Link>
+
+                {isHosteller && (
+                  <button
+                    onClick={() => setShowTransferModal(true)}
+                    className="hidden sm:flex items-center space-x-1.5 px-3.5 py-2 rounded-lg bg-[var(--bg-elevated)] hover:bg-[var(--bg-hover)] text-[var(--text-primary)] border border-[var(--border-subtle)] text-xs font-mono font-medium transition-colors"
+                  >
+                    <ArrowRightLeft className="w-3.5 h-3.5 text-[#FF6D1F]" />
+                    <span>TRANSFER</span>
+                  </button>
+                )}
+              </>
             )}
           </div>
-          <p className="text-xs sm:text-sm text-campus-secondary mt-1">
-            {user.role === "STUDENT" ? (
-              <span>
-                Roll: <strong className="text-campus-accent font-mono font-semibold">{user.rollNumber || "2024CS101"}</strong> • {isHosteller ? `${user.hostelBlock || "Hostel"} (Room ${user.roomNumber || "N/A"})` : `Transit: ${user.busRoute || "Route 1"}`} • {user.course || "B.Tech"} {user.branch || "CSE"}
-              </span>
-            ) : (
-              <span>{user.role} Workspace • {user.department || "Campus Operations"}</span>
-            )}
-          </p>
         </div>
+      </section>
 
-        {/* Action Controls */}
-        <div className="flex items-center space-x-2">
-          {user.role === "STUDENT" && (
-            <>
-              {/* Emergency SOS Button */}
-              <button
-                onClick={() => setShowSosModal(true)}
-                className="px-3.5 py-2 rounded-xl text-xs font-bold bg-rose-600 hover:bg-rose-700 text-white flex items-center space-x-1.5 shadow-sm hover:shadow-md transition-all animate-pulse"
+      {/* 4. ASYMMETRIC SPLIT: ATTENDANCE METRIC + TODAY'S SCHEDULE (Section 13) */}
+      {user.role === "STUDENT" && (
+        <section className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-stretch">
+          {/* Left Column: Massive Attendance Metric (5 cols) */}
+          <div className="lg:col-span-5 campus-block p-6 sm:p-8 flex flex-col justify-between">
+            <div>
+              <div className="flex items-center justify-between mb-4">
+                <span className="editorial-eyebrow text-[#F5E7C6]/60">
+                  02 // ACADEMIC COMPLIANCE
+                </span>
+                <span className={`text-[10px] font-mono uppercase px-2 py-0.5 rounded border ${
+                  (academicAttendance?.overall?.percentage ?? 87.4) >= 75
+                    ? "bg-emerald-950/40 text-emerald-300 border-emerald-500/30"
+                    : "bg-rose-950/40 text-rose-300 border-rose-500/30"
+                }`}>
+                  {(academicAttendance?.overall?.percentage ?? 87.4) >= 75 ? "COMPLIANT" : "SHORTAGE"}
+                </span>
+              </div>
+
+              <div className="flex items-baseline space-x-2 mt-2">
+                <span className="editorial-numeral text-6xl sm:text-7xl font-black text-[var(--text-primary)]">
+                  {academicAttendance?.overall?.percentage ?? 87.4}%
+                </span>
+              </div>
+
+              <p className="text-xs font-mono text-[var(--text-secondary)] mt-3 leading-relaxed">
+                Attended <strong className="text-[var(--text-primary)]">{academicAttendance?.overall?.attendedClasses ?? 42}</strong> out of{" "}
+                <strong className="text-[var(--text-primary)]">{academicAttendance?.overall?.totalClasses ?? 48}</strong> scheduled sessions across current semester.
+              </p>
+            </div>
+
+            <div className="pt-6 mt-6 border-t border-[var(--border-subtle)] flex items-center justify-between">
+              <span className="text-[11px] font-mono text-[var(--text-muted)]">
+                Min 75% university rule
+              </span>
+              <Link
+                to="/academics"
+                className="text-xs font-mono font-bold text-[#FF6D1F] hover:underline flex items-center space-x-1"
               >
-                <Siren className="w-3.5 h-3.5" />
-                <span>Emergency SOS</span>
-              </button>
+                <span>SUBJECT BREAKDOWN</span>
+                <ChevronRight className="w-3.5 h-3.5" />
+              </Link>
+            </div>
+          </div>
 
-              <button
-                onClick={() => setShowIdModal(true)}
-                className="btn-secondary px-3.5 py-2 text-xs font-semibold rounded-xl flex items-center space-x-1.5 shadow-sm group"
-              >
-                <QrCode className="w-3.5 h-3.5 text-campus-accent group-hover:scale-105 transition-transform" />
-                <span>Digital ID</span>
-              </button>
+          {/* Right Column: Today's Schedule Timeline (7 cols) */}
+          <div className="lg:col-span-7 campus-block p-6 sm:p-8 flex flex-col justify-between">
+            <div>
+              <div className="flex items-center justify-between mb-4">
+                <span className="editorial-eyebrow text-[var(--text-muted)]">
+                  03 // TODAY'S LECTURE TIMELINE
+                </span>
+                <span className="text-[11px] font-mono text-[var(--text-muted)]">
+                  {new Date().toLocaleDateString(undefined, { weekday: "long", month: "short", day: "numeric" })}
+                </span>
+              </div>
 
-              {isHosteller && (
-                <button
-                  onClick={() => setShowTransferModal(true)}
-                  className="btn-secondary px-3.5 py-2 text-xs font-semibold rounded-xl flex items-center space-x-1.5 shadow-sm group"
-                >
-                  <ArrowRightLeft className="w-3.5 h-3.5 text-campus-accent group-hover:rotate-180 transition-transform duration-300" />
-                  <span>Hostel Transfer</span>
-                </button>
+              {todayClasses.length === 0 ? (
+                <div className="py-8 text-center">
+                  <CalendarDays className="w-8 h-8 text-[var(--text-muted)] opacity-30 mx-auto mb-2" />
+                  <p className="text-xs font-mono text-[var(--text-muted)] uppercase tracking-wider">
+                    No scheduled lectures today — studio & lab hours
+                  </p>
+                </div>
+              ) : (
+                <div className="space-y-3 mt-4">
+                  {todayClasses.slice(0, 3).map((cls, idx) => (
+                    <div
+                      key={cls.id || idx}
+                      className="p-3.5 rounded-lg bg-[var(--bg-elevated)] border border-[var(--border-subtle)] flex items-center justify-between hover:border-[var(--border-medium)] transition-colors"
+                    >
+                      <div className="flex items-center space-x-4">
+                        <div className="w-16 shrink-0 text-left font-mono">
+                          <span className="text-xs font-bold text-[var(--text-primary)] block">
+                            {cls.startTime || "10:30"}
+                          </span>
+                          <span className="text-[10px] text-[var(--text-muted)] block">
+                            {cls.endTime || "11:30"}
+                          </span>
+                        </div>
+
+                        <div className="border-l border-[var(--border-subtle)] pl-4">
+                          <h4 className="text-xs font-bold text-[var(--text-primary)] tracking-tight">
+                            {cls.subject?.name || cls.subjectName || "Core Lecture"}
+                          </h4>
+                          <p className="text-[11px] font-mono text-[var(--text-muted)] mt-0.5">
+                            {cls.roomNumber ? `Rm ${cls.roomNumber}` : "Main Block"} · {cls.faculty?.fullName || cls.facultyName || "Department Faculty"}
+                          </p>
+                        </div>
+                      </div>
+
+                      <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-[var(--bg-surface)] text-[var(--text-muted)] border border-[var(--border-subtle)]">
+                        {cls.subject?.code || cls.subjectCode || "L-01"}
+                      </span>
+                    </div>
+                  ))}
+                </div>
               )}
-            </>
-          )}
+            </div>
+
+            <div className="pt-4 mt-4 border-t border-[var(--border-subtle)] flex items-center justify-between">
+              <span className="text-[11px] font-mono text-[var(--text-muted)]">
+                {todayClasses.length} sessions listed today
+              </span>
+              <Link
+                to="/academics"
+                className="text-xs font-mono font-bold text-[#FF6D1F] hover:underline flex items-center space-x-1"
+              >
+                <span>FULL TIMETABLE</span>
+                <ChevronRight className="w-3.5 h-3.5" />
+              </Link>
+            </div>
+          </div>
+        </section>
+      )}
+
+      {/* 5. RESIDENCY / CURFEW DIRECTORY vs TRANSIT HUB (Sections 15 & 16) */}
+      <section className="campus-block p-6 sm:p-8">
+        <div className="flex items-center justify-between mb-6 pb-4 border-b border-[var(--border-subtle)]">
+          <div>
+            <span className="editorial-eyebrow text-[#FF6D1F]">
+              04 // {isHosteller ? "DIGITAL BUILDING DIRECTORY" : "TRANSIT & PARKING NETWORK"}
+            </span>
+            <h2 className="editorial-title text-xl text-[var(--text-primary)] mt-1">
+              {isHosteller ? `${user.hostelBlock || "HOSTEL-A"} RESIDENT DOSSIER` : "DAY SCHOLAR COMMUTE HUB"}
+            </h2>
+          </div>
+
+          <span className="text-xs font-mono px-2.5 py-1 rounded bg-[var(--bg-elevated)] text-[var(--text-secondary)] border border-[var(--border-subtle)]">
+            {isHosteller ? "ON-CAMPUS LIVING" : "OFF-CAMPUS COMMUTER"}
+          </span>
         </div>
-      </div>
 
-      {/* 4. Primary Metrics Hierarchy (Living-Type Context Aware) */}
-      {user.role === "STUDENT" ? (
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3.5 sm:gap-4">
-          <Link
-            to="/tickets"
-            className="p-5 rounded-2xl card-stat flex flex-col justify-between group hover:border-campus-accent/30 transition-all"
-          >
-            <div className="flex items-center justify-between">
-              <span className="text-xs font-medium text-campus-muted">Complaints / Issues</span>
-              <div className="p-2 rounded-xl bg-white/60 text-campus-accent border border-campus-border shadow-xs group-hover:scale-105 transition-transform">
-                <Wrench className="w-4 h-4" />
+        {isHosteller ? (
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+            {/* Room & Bed */}
+            <div className="space-y-1">
+              <span className="text-[10px] font-mono uppercase tracking-widest text-[var(--text-muted)]">
+                Assigned Allocation
+              </span>
+              <div className="text-xl font-mono font-bold text-[var(--text-primary)]">
+                ROOM {user.roomNumber || hostelDossier?.roomNumber || "101"}
+              </div>
+              <div className="text-xs font-mono text-[var(--text-secondary)]">
+                BED {user.bedNumber || hostelDossier?.bedNumber || "01"} // FLOOR 1
               </div>
             </div>
-            <div className="mt-4">
-              <span className="text-3xl font-bold text-campus-accent font-mono block">
-                {studentStats?.openTickets ?? 0}
-              </span>
-              <span className="text-[11px] text-campus-muted group-hover:text-campus-accent transition-colors flex items-center space-x-1 mt-1 font-medium">
-                <span>{isHosteller ? "Hostel & room repairs" : "Campus & lab issues"}</span>
-                <ChevronRight className="w-3.5 h-3.5 text-campus-accent group-hover:translate-x-0.5 transition-transform" />
-              </span>
-            </div>
-          </Link>
 
-          {/* Context-aware second metric: Gate Pass for Hosteller, Transport for Day Scholar */}
-          {isHosteller ? (
-            <Link
-              to="/gatepass"
-              className="p-5 rounded-2xl card-stat flex flex-col justify-between group hover:border-campus-accent/30 transition-all"
-            >
-              <div className="flex items-center justify-between">
-                <span className="text-xs font-medium text-campus-muted">Gate Passes</span>
-                <div className="p-2 rounded-xl bg-white/60 text-campus-accent border border-campus-border shadow-xs group-hover:scale-105 transition-transform">
-                  <DoorOpen className="w-4 h-4" />
+            {/* Assigned Warden */}
+            <div className="space-y-1">
+              <span className="text-[10px] font-mono uppercase tracking-widest text-[var(--text-muted)]">
+                Hostel Warden
+              </span>
+              <div className="text-sm font-bold text-[var(--text-primary)] truncate">
+                {hostelDossier?.warden || "Assigned Warden"}
+              </div>
+              <div className="text-xs font-mono text-[var(--text-muted)]">
+                {hostelDossier?.wardenPhone ? `Ph: ${hostelDossier.wardenPhone}` : "Warden Command Desk"}
+              </div>
+            </div>
+
+            {/* Curfew Roll-Call Return Status */}
+            <div className="space-y-1 md:col-span-2">
+              <span className="text-[10px] font-mono uppercase tracking-widest text-[var(--text-muted)]">
+                Tonight's Return & Curfew Status
+              </span>
+              <div className="flex items-center space-x-3 mt-1">
+                <span className={`px-2.5 py-1 rounded-md text-xs font-mono font-bold border ${curfew.pill}`}>
+                  {curfew.label}
+                </span>
+                <span className="text-xs font-mono text-[var(--text-secondary)]">
+                  {curfew.subtext}
+                </span>
+              </div>
+            </div>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div className="space-y-1">
+              <span className="text-[10px] font-mono uppercase tracking-widest text-[var(--text-muted)]">
+                Designated Fleet Route
+              </span>
+              <div className="text-lg font-mono font-bold text-[var(--text-primary)]">
+                {user.busRoute || "ROUTE 01 — URBAN EXPRESS"}
+              </div>
+              <div className="text-xs font-mono text-[var(--text-muted)]">
+                Pickup: Master Canteen Gate // 07:45 AM
+              </div>
+            </div>
+
+            <div className="space-y-1">
+              <span className="text-[10px] font-mono uppercase tracking-widest text-[var(--text-muted)]">
+                Return Departure
+              </span>
+              <div className="text-lg font-mono font-bold text-[var(--text-primary)]">
+                05:30 PM
+              </div>
+              <div className="text-xs font-mono text-[var(--text-muted)]">
+                Bay 2 · Academic Block North
+              </div>
+            </div>
+
+            <div className="flex items-center justify-end">
+              <Link
+                to="/transport"
+                className="btn-secondary px-4 py-2 rounded-lg text-xs font-mono font-bold flex items-center space-x-1.5"
+              >
+                <Bus className="w-3.5 h-3.5 text-[#FF6D1F]" />
+                <span>VIEW BUS STOPS</span>
+              </Link>
+            </div>
+          </div>
+        )}
+      </section>
+
+      {/* 6. MESS MENU & COURIER PARCELS (Section 25 & 29) */}
+      <section className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-stretch">
+        {/* Mess Menu: Editorial Bistro Format (8 cols) */}
+        <div className="lg:col-span-8 campus-block p-6 sm:p-8 flex flex-col justify-between">
+          <div>
+            <div className="flex items-center justify-between mb-4">
+              <span className="editorial-eyebrow text-[var(--text-muted)]">
+                05 // HOSTEL DINING
+              </span>
+              <Link to="/mess" className="text-xs font-mono text-[#FF6D1F] hover:underline">
+                WEEKLY MENU →
+              </Link>
+            </div>
+
+            <h3 className="editorial-title text-xl text-[var(--text-primary)] mb-4">
+              TODAY'S DINING DISPATCH
+            </h3>
+
+            {todayMess ? (
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mt-2">
+                <div className="p-3 rounded-lg bg-[var(--bg-elevated)] border border-[var(--border-subtle)]">
+                  <span className="text-[10px] font-mono uppercase tracking-wider text-[#FF6D1F] block mb-1">
+                    BREAKFAST
+                  </span>
+                  <p className="text-xs text-[var(--text-primary)] leading-relaxed">
+                    {todayMess.breakfast || "Poha · Boiled Egg / Banana · Chai"}
+                  </p>
+                </div>
+
+                <div className="p-3 rounded-lg bg-[var(--bg-elevated)] border border-[var(--border-subtle)]">
+                  <span className="text-[10px] font-mono uppercase tracking-wider text-[#FF6D1F] block mb-1">
+                    LUNCH
+                  </span>
+                  <p className="text-xs text-[var(--text-primary)] leading-relaxed">
+                    {todayMess.lunch || "Steamed Rice · Dal Tadka · Paneer"}
+                  </p>
+                </div>
+
+                <div className="p-3 rounded-lg bg-[var(--bg-elevated)] border border-[var(--border-subtle)]">
+                  <span className="text-[10px] font-mono uppercase tracking-wider text-[#FF6D1F] block mb-1">
+                    SNACKS
+                  </span>
+                  <p className="text-xs text-[var(--text-primary)] leading-relaxed">
+                    {todayMess.snacks || "Ginger Tea · Masala Biscuits"}
+                  </p>
+                </div>
+
+                <div className="p-3 rounded-lg bg-[var(--bg-elevated)] border border-[var(--border-subtle)]">
+                  <span className="text-[10px] font-mono uppercase tracking-wider text-[#FF6D1F] block mb-1">
+                    DINNER
+                  </span>
+                  <p className="text-xs text-[var(--text-primary)] leading-relaxed">
+                    {todayMess.dinner || "Phulka Roti · Mixed Veg · Dal Fry"}
+                  </p>
                 </div>
               </div>
-              <div className="mt-4">
-                <span className="text-3xl font-bold text-campus-text font-mono block">
-                  {studentStats?.activePasses ?? 0}
-                </span>
-                <span className="text-[11px] text-campus-muted group-hover:text-campus-accent transition-colors flex items-center space-x-1 mt-1 font-medium">
-                  <span>Digital QR gate pass</span>
-                  <ChevronRight className="w-3.5 h-3.5 text-campus-accent group-hover:translate-x-0.5 transition-transform" />
-                </span>
-              </div>
-            </Link>
-          ) : (
-            <Link
-              to="/transport"
-              className="p-5 rounded-2xl card-stat flex flex-col justify-between group hover:border-campus-accent/30 transition-all"
-            >
-              <div className="flex items-center justify-between">
-                <span className="text-xs font-medium text-campus-muted">Transit & Parking</span>
-                <div className="p-2 rounded-xl bg-white/60 text-campus-accent border border-campus-border shadow-xs group-hover:scale-105 transition-transform">
-                  <Bus className="w-4 h-4" />
-                </div>
-              </div>
-              <div className="mt-4">
-                <span className="text-2xl font-bold text-campus-text font-mono block">
-                  {user.busRoute || "Route 1"}
-                </span>
-                <span className="text-[11px] text-campus-muted group-hover:text-campus-accent transition-colors flex items-center space-x-1 mt-1 font-medium">
-                  <span>Live bus timings & parking</span>
-                  <ChevronRight className="w-3.5 h-3.5 text-campus-accent group-hover:translate-x-0.5 transition-transform" />
-                </span>
-              </div>
-            </Link>
-          )}
+            ) : (
+              <p className="text-xs font-mono text-[var(--text-muted)]">
+                Menu synchronized daily by Mess Committee.
+              </p>
+            )}
+          </div>
 
-          <Link
-            to="/clubs"
-            className="p-5 rounded-2xl card-stat flex flex-col justify-between group hover:border-campus-accent/30 transition-all"
-          >
-            <div className="flex items-center justify-between">
-              <span className="text-xs font-medium text-campus-muted">Clubs & Events</span>
-              <div className="p-2 rounded-xl bg-white/60 text-campus-accent border border-campus-border shadow-xs group-hover:scale-105 transition-transform">
-                <Users className="w-4 h-4" />
+          <div className="pt-4 mt-4 border-t border-[var(--border-subtle)] flex items-center justify-between text-[11px] font-mono text-[var(--text-muted)]">
+            <span>Dining Hall A · 07:30 PM — 09:30 PM</span>
+            <span>Hostel Food Committee Inspected</span>
+          </div>
+        </div>
+
+        {/* Courier Parcels & Quick Pass (4 cols) */}
+        <div className="lg:col-span-4 campus-block p-6 sm:p-8 flex flex-col justify-between">
+          <div>
+            <span className="editorial-eyebrow text-[var(--text-muted)] block mb-2">
+              06 // LOGISTICS
+            </span>
+            <h3 className="editorial-title text-xl text-[var(--text-primary)]">
+              COURIER DESK
+            </h3>
+
+            <div className="mt-4 p-4 rounded-lg bg-[var(--bg-elevated)] border border-[var(--border-subtle)] space-y-2">
+              <div className="flex items-center justify-between">
+                <span className="text-xs font-mono text-[var(--text-primary)]">Ready for Pickup:</span>
+                <span className="text-lg font-mono font-bold text-[#FF6D1F]">
+                  {activeParcelsCount}
+                </span>
               </div>
+              <p className="text-[11px] font-mono text-[var(--text-muted)] leading-normal">
+                {activeParcelsCount > 0
+                  ? "Arrived at Central Security Gate. Present OTP to claim."
+                  : "No pending parcel packages at security."}
+              </p>
             </div>
-            <div className="mt-4">
-              <span className="text-3xl font-bold text-campus-accent font-mono block">
-                {upcomingEvents.length}
-              </span>
-              <span className="text-[11px] text-campus-muted group-hover:text-campus-accent transition-colors flex items-center space-x-1 mt-1 font-medium">
-                <span>Join societies & events</span>
-                <ChevronRight className="w-3.5 h-3.5 text-campus-accent group-hover:translate-x-0.5 transition-transform" />
-              </span>
-            </div>
-          </Link>
+          </div>
 
           <Link
             to="/parcels"
-            className="p-5 rounded-2xl card-featured flex flex-col justify-between group"
+            className="w-full mt-4 btn-secondary py-2.5 rounded-lg text-xs font-mono font-bold flex items-center justify-center space-x-2 text-center"
           >
-            <div className="flex items-center justify-between">
-              <span className="text-xs font-bold text-campus-text">Courier Deliveries</span>
-              <div className="p-2 rounded-xl bg-white/70 text-campus-accent border border-campus-accent/20 shadow-xs group-hover:scale-105 transition-transform">
-                <Package className="w-4 h-4" />
-              </div>
-            </div>
-            <div className="mt-4">
-              <span className="text-2xl font-bold text-campus-text font-mono block">
-                {activeParcelsCount > 0 ? `${activeParcelsCount} Ready` : "No Parcels"}
-              </span>
-              <span className="text-[11px] text-campus-secondary group-hover:text-campus-accent transition-colors flex items-center space-x-1 mt-1 font-semibold">
-                <span>View pickup OTP</span>
-                <ChevronRight className="w-3.5 h-3.5 text-campus-accent group-hover:translate-x-0.5 transition-transform" />
-              </span>
-            </div>
+            <Package className="w-4 h-4 text-[#FF6D1F]" />
+            <span>OPEN PARCEL DESK</span>
           </Link>
         </div>
-      ) : (
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-          <Link
-            to="/tickets"
-            className="p-5 rounded-2xl card-stat group hover:border-campus-accent/30 transition-all"
-          >
-            <span className="text-xs font-medium text-campus-muted block">Assigned Work Orders</span>
-            <span className="text-3xl font-bold text-campus-accent font-mono mt-3 block">{staffStats?.assignedCount ?? 0}</span>
-            <span className="text-xs text-campus-muted group-hover:text-campus-accent transition-colors mt-2 flex items-center space-x-1 font-medium">
-              <span>Open tasks</span>
-              <ChevronRight className="w-3 h-3 text-campus-accent group-hover:translate-x-0.5 transition-transform" />
+      </section>
+
+      {/* 7. GAZETTE CIRCULARS & COMPLAINTS WORKFLOW (Section 27 & 28) */}
+      <section className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+        {/* Left Column: Official Campus Circulars (6 cols) */}
+        <div className="lg:col-span-6 campus-block p-6 sm:p-8">
+          <div className="flex items-center justify-between mb-4 pb-3 border-b border-[var(--border-subtle)]">
+            <span className="editorial-eyebrow text-[var(--text-muted)]">
+              07 // OFFICIAL GAZETTE
             </span>
-          </Link>
-
-          <Link
-            to="/tickets"
-            className="p-5 rounded-2xl card-stat group hover:border-campus-accent/30 transition-all"
-          >
-            <span className="text-xs font-medium text-campus-muted block">Pending Resolution Proof</span>
-            <span className="text-3xl font-bold text-campus-text font-mono mt-3 block">{staffStats?.pendingCount ?? 0}</span>
-            <span className="text-xs text-campus-muted group-hover:text-campus-accent transition-colors mt-2 flex items-center space-x-1 font-medium">
-              <span>Action required</span>
-              <ChevronRight className="w-3 h-3 text-campus-accent group-hover:translate-x-0.5 transition-transform" />
-            </span>
-          </Link>
-
-          <Link
-            to="/notices"
-            className="p-5 rounded-2xl card-stat group hover:border-campus-accent/30 transition-all"
-          >
-            <span className="text-xs font-medium text-campus-muted block">Institutional Circulars</span>
-            <span className="text-3xl font-bold text-campus-accent font-mono mt-3 block">{staffStats?.totalNotices ?? 0}</span>
-            <span className="text-xs text-campus-muted group-hover:text-campus-accent transition-colors mt-2 flex items-center space-x-1 font-medium">
-              <span>View announcements</span>
-              <ChevronRight className="w-3 h-3 text-campus-accent group-hover:translate-x-0.5 transition-transform" />
-            </span>
-          </Link>
-        </div>
-      )}
-
-      {/* 5. Context-Aware Quick Actions */}
-      <div className="space-y-3">
-        <div className="flex items-center justify-between">
-          <h2 className="text-xs font-mono uppercase tracking-widest text-campus-accent font-bold">
-            {isHosteller ? "Hostel & Campus Services" : "Day Scholar & Campus Services"}
-          </h2>
-          <span className="text-[11px] text-campus-muted font-mono">1-Click Launchpad</span>
-        </div>
-
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-          <Link
-            to="/tickets/new"
-            className="p-4 rounded-2xl btn-primary text-xs font-bold flex items-center space-x-3 group"
-          >
-            <div className="w-8 h-8 rounded-xl bg-white/40 flex items-center justify-center shrink-0 group-hover:scale-110 transition-transform">
-              <Plus className="w-4 h-4 text-campus-text" />
-            </div>
-            <span>Report Complaint</span>
-          </Link>
-
-          {isHosteller ? (
-            <>
-              <Link
-                to="/gatepass"
-                className="p-4 rounded-2xl card-action flex items-center space-x-3 text-xs font-semibold text-campus-text group"
-              >
-                <div className="w-8 h-8 rounded-xl bg-white/60 flex items-center justify-center text-campus-accent shrink-0 border border-campus-border group-hover:scale-110 transition-transform">
-                  <DoorOpen className="w-4 h-4" />
-                </div>
-                <span>Apply Gate Pass</span>
-              </Link>
-
-              <Link
-                to="/mess"
-                className="p-4 rounded-2xl card-action flex items-center space-x-3 text-xs font-semibold text-campus-text group"
-              >
-                <div className="w-8 h-8 rounded-xl bg-white/60 flex items-center justify-center text-campus-accent shrink-0 border border-campus-border group-hover:scale-110 transition-transform">
-                  <Utensils className="w-4 h-4" />
-                </div>
-                <span>Hostel Mess Menu</span>
-              </Link>
-            </>
-          ) : (
-            <>
-              <Link
-                to="/transport"
-                className="p-4 rounded-2xl card-action flex items-center space-x-3 text-xs font-semibold text-campus-text group"
-              >
-                <div className="w-8 h-8 rounded-xl bg-white/60 flex items-center justify-center text-campus-accent shrink-0 border border-campus-border group-hover:scale-110 transition-transform">
-                  <Bus className="w-4 h-4" />
-                </div>
-                <span>Bus Schedules</span>
-              </Link>
-
-              <Link
-                to="/transport"
-                className="p-4 rounded-2xl card-action flex items-center space-x-3 text-xs font-semibold text-campus-text group"
-              >
-                <div className="w-8 h-8 rounded-xl bg-white/60 flex items-center justify-center text-campus-accent shrink-0 border border-campus-border group-hover:scale-110 transition-transform">
-                  <Car className="w-4 h-4" />
-                </div>
-                <span>Parking Status</span>
-              </Link>
-            </>
-          )}
-
-          <Link
-            to="/help"
-            className="p-4 rounded-2xl card-action flex items-center space-x-3 text-xs font-semibold text-campus-text group"
-          >
-            <div className="w-8 h-8 rounded-xl bg-white/60 flex items-center justify-center text-campus-accent shrink-0 border border-campus-border group-hover:scale-110 transition-transform">
-              <LifeBuoy className="w-4 h-4" />
-            </div>
-            <span>Help Directory</span>
-          </Link>
-        </div>
-      </div>
-
-      {/* 6. Main Activity Grid: Recent Notices & Active Complaints */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Left Column: Official Notices */}
-        <div className="space-y-3">
-          <div className="flex items-center justify-between">
-            <h2 className="text-xs font-mono uppercase tracking-widest text-campus-accent font-bold">
-              Official Campus Circulars
-            </h2>
-            <Link to="/notices" className="text-xs text-campus-accent hover:text-campus-text transition-colors font-semibold flex items-center space-x-1">
-              <span>View all</span>
-              <ChevronRight className="w-3.5 h-3.5" />
+            <Link to="/notices" className="text-xs font-mono text-[#FF6D1F] hover:underline">
+              ALL NOTICES →
             </Link>
           </div>
 
           {recentNotices.length === 0 ? (
-            <div className="p-8 text-center text-xs text-campus-muted glass-card rounded-2xl border border-campus-border">
-              No recent campus circulars posted.
-            </div>
+            <p className="text-xs font-mono text-[var(--text-muted)] py-6 text-center">
+              No recent official notices published.
+            </p>
           ) : (
-            <div className="space-y-3">
+            <div className="divide-y divide-[var(--border-subtle)]">
               {recentNotices.map((n) => (
                 <Link
                   key={n.id}
                   to={`/notices/${n.id}`}
-                  className="p-4 sm:p-4.5 rounded-2xl glass-card flex items-start justify-between gap-3.5 block group min-w-0"
+                  className="py-3.5 block group first:pt-0 last:pb-0"
                 >
-                  <div className="space-y-1.5 min-w-0 flex-1">
-                    <div className="flex items-center space-x-2 flex-wrap gap-y-1 min-w-0">
-                      <span className="px-2.5 py-0.5 rounded-full text-[10px] font-mono font-bold bg-white/70 text-campus-accent border border-campus-border shrink-0">
-                        {n.category || "NOTICE"}
-                      </span>
-                      <h3 className="font-bold text-xs sm:text-[13px] text-campus-text group-hover:text-campus-accent transition-colors leading-snug break-words min-w-0">
-                        {n.title}
-                      </h3>
-                    </div>
-                    <p className="text-xs text-campus-secondary line-clamp-2 leading-[1.55] break-words">{n.content}</p>
+                  <div className="flex items-baseline justify-between gap-3">
+                    <span className="text-[10px] font-mono uppercase tracking-wider text-[#FF6D1F]">
+                      [{n.category || "NOTICE"}]
+                    </span>
+                    <span className="text-[10px] font-mono text-[var(--text-muted)]">
+                      {new Date(n.publishedAt || n.createdAt).toLocaleDateString()}
+                    </span>
                   </div>
-                  <span className="text-[11px] text-campus-muted font-mono shrink-0 pt-0.5 whitespace-nowrap">
-                    {new Date(n.publishedAt || n.createdAt).toLocaleDateString()}
-                  </span>
+                  <h4 className="text-xs font-bold text-[var(--text-primary)] group-hover:text-[#FF6D1F] transition-colors mt-1">
+                    {n.title}
+                  </h4>
+                  <p className="text-[11px] text-[var(--text-secondary)] line-clamp-2 mt-1 leading-normal">
+                    {n.content}
+                  </p>
                 </Link>
               ))}
             </div>
           )}
         </div>
 
-        {/* Right Column: Recent Complaints/Tickets with Priority & SLA badge */}
-        <div className="space-y-3">
-          <div className="flex items-center justify-between">
-            <h2 className="text-xs font-mono uppercase tracking-widest text-campus-accent font-bold">
-              Recent Maintenance Requests
-            </h2>
-            <Link to="/tickets" className="text-xs text-campus-accent hover:text-campus-text transition-colors font-semibold flex items-center space-x-1">
-              <span>View queue</span>
-              <ChevronRight className="w-3.5 h-3.5" />
+        {/* Right Column: Maintenance Tickets & SLAs (6 cols) */}
+        <div className="lg:col-span-6 campus-block p-6 sm:p-8">
+          <div className="flex items-center justify-between mb-4 pb-3 border-b border-[var(--border-subtle)]">
+            <span className="editorial-eyebrow text-[var(--text-muted)]">
+              08 // MAINTENANCE QUEUE
+            </span>
+            <Link to="/tickets" className="text-xs font-mono text-[#FF6D1F] hover:underline">
+              MY TICKETS →
             </Link>
           </div>
 
           {recentTickets.length === 0 ? (
-            <div className="p-8 text-center text-xs text-campus-muted glass-card rounded-2xl border border-campus-border">
-              No recent complaint tickets logged.
+            <div className="py-8 text-center">
+              <p className="text-xs font-mono text-[var(--text-muted)]">
+                No active complaints or repair work orders.
+              </p>
+              <Link
+                to="/tickets/new"
+                className="inline-block mt-3 px-3 py-1.5 rounded-lg bg-[var(--bg-elevated)] text-xs font-mono text-[#FF6D1F] border border-[var(--border-subtle)] hover:border-[#FF6D1F]/50 transition-colors"
+              >
+                + LODGE A COMPLAINT
+              </Link>
             </div>
           ) : (
-            <div className="space-y-3">
+            <div className="divide-y divide-[var(--border-subtle)]">
               {recentTickets.map((t) => (
                 <Link
                   key={t.id}
                   to={`/tickets/${t.id}`}
-                  className="p-4 sm:p-4.5 rounded-2xl glass-card flex items-center justify-between gap-3.5 block group min-w-0"
+                  className="py-3.5 block group first:pt-0 last:pb-0"
                 >
-                  <div className="space-y-1 min-w-0 flex-1">
-                    <div className="flex items-center space-x-2 min-w-0 flex-wrap">
-                      <span className="font-bold font-mono text-xs text-campus-accent shrink-0">
-                        #{t.ticketNumber}
-                      </span>
-                      <span className={`px-2 py-0.5 rounded-full text-[9px] font-mono font-bold ${
-                        t.priority === "CRITICAL" ? "bg-rose-100 text-rose-800 border border-rose-300" :
-                        t.priority === "HIGH" ? "bg-amber-100 text-amber-800 border border-amber-300" :
-                        "bg-white/80 text-campus-secondary border border-campus-border"
-                      }`}>
-                        {t.priority || "MEDIUM"}
-                      </span>
-                      <h3 className="font-semibold text-xs sm:text-[13px] text-campus-text group-hover:text-campus-accent transition-colors truncate min-w-0">
-                        {t.title}
-                      </h3>
-                    </div>
-                    <p className="text-xs text-campus-muted leading-normal truncate">
-                      {t.category} • {t.hostelBlock ? `${t.hostelBlock} (Rm ${t.roomNumber})` : (t.location || "Campus")}
-                    </p>
+                  <div className="flex items-center justify-between gap-3">
+                    <span className="text-xs font-mono font-bold text-[var(--text-primary)] group-hover:text-[#FF6D1F] transition-colors truncate">
+                      #{t.ticketNumber} · {t.title}
+                    </span>
+                    <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-[var(--bg-elevated)] text-[var(--text-primary)] border border-[var(--border-subtle)] shrink-0">
+                      {t.status}
+                    </span>
                   </div>
-
-                  <span className="px-2.5 py-1 text-[11px] font-mono font-semibold rounded-full bg-white/70 border border-campus-border text-campus-secondary shrink-0">
-                    {t.status}
-                  </span>
+                  <div className="flex items-center space-x-2 text-[11px] font-mono text-[var(--text-muted)] mt-1">
+                    <span>{t.category}</span>
+                    <span>·</span>
+                    <span>{t.hostelBlock ? `${t.hostelBlock} Rm ${t.roomNumber}` : "Campus"}</span>
+                  </div>
                 </Link>
               ))}
             </div>
           )}
         </div>
-      </div>
+      </section>
 
-      {/* EMERGENCY SOS MODAL */}
+      {/* 8. CAMPUS EMERGENCY & SAFETY DIRECTORY */}
+      {user.role === "STUDENT" && (
+        <section className="campus-block p-6 sm:p-8 space-y-4">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 pb-3 border-b border-[var(--border-subtle)]">
+            <div>
+              <span className="editorial-eyebrow text-[#FF6D1F] block mb-1">
+                08 // 24/7 CAMPUS RESILIENCE & SAFETY
+              </span>
+              <h3 className="editorial-title text-xl text-[var(--text-primary)]">
+                EMERGENCY & DEPARTMENT DIRECTORY
+              </h3>
+            </div>
+            <Link
+              to="/help"
+              className="text-xs font-mono text-[#FF6D1F] hover:underline flex items-center space-x-1 self-start sm:self-auto font-bold"
+            >
+              <span>FULL EMERGENCY DIRECTORY</span>
+              <ChevronRight className="w-3.5 h-3.5" />
+            </Link>
+          </div>
+
+          <p className="text-xs text-[var(--text-secondary)] leading-relaxed">
+            Immediate speed-dial hotlines for campus security, health emergencies, warden escalation, and utility breakdowns. Accessible 24/7 with zero network latency.
+          </p>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5 pt-1">
+            <div className="p-3.5 rounded-xl bg-[var(--bg-elevated)] border border-[var(--border-subtle)] flex flex-col justify-between space-y-2.5 hover:border-[#FF6D1F]/40 transition-colors">
+              <div>
+                <div className="flex items-center justify-between">
+                  <span className="text-[10px] font-mono uppercase tracking-wider text-[var(--text-muted)]">
+                    Perimeter & Gates
+                  </span>
+                  <span className="px-1.5 py-0.5 rounded text-[9px] font-mono font-bold bg-rose-500/15 text-rose-400 border border-rose-500/30">
+                    24/7 DESK
+                  </span>
+                </div>
+                <h4 className="text-xs font-bold text-[var(--text-primary)] mt-1">
+                  Campus Security Command
+                </h4>
+                <p className="text-[10px] text-[var(--text-muted)] mt-0.5">
+                  Main Gate & Perimeter Control
+                </p>
+              </div>
+              <a
+                href="tel:1800CAMPUS"
+                className="w-full py-1.5 px-3 rounded-lg bg-[var(--bg-surface)] hover:bg-[var(--bg-main)] text-[#FF6D1F] border border-[#FF6D1F]/30 text-xs font-mono font-bold flex items-center justify-center space-x-1.5 transition-colors"
+              >
+                <Phone className="w-3 h-3" />
+                <span>1800-CAMPUS</span>
+              </a>
+            </div>
+
+            <div className="p-3.5 rounded-xl bg-[var(--bg-elevated)] border border-[var(--border-subtle)] flex flex-col justify-between space-y-2.5 hover:border-[#FF6D1F]/40 transition-colors">
+              <div>
+                <div className="flex items-center justify-between">
+                  <span className="text-[10px] font-mono uppercase tracking-wider text-[var(--text-muted)]">
+                    Medical Dispatch
+                  </span>
+                  <span className="px-1.5 py-0.5 rounded text-[9px] font-mono font-bold bg-rose-500/15 text-rose-400 border border-rose-500/30">
+                    HEALTH
+                  </span>
+                </div>
+                <h4 className="text-xs font-bold text-[var(--text-primary)] mt-1">
+                  Health Center & Ambulance
+                </h4>
+                <p className="text-[10px] text-[var(--text-muted)] mt-0.5">
+                  Emergency Doctor on Duty
+                </p>
+              </div>
+              <a
+                href="tel:+919861100099"
+                className="w-full py-1.5 px-3 rounded-lg bg-[var(--bg-surface)] hover:bg-[var(--bg-main)] text-[#FF6D1F] border border-[#FF6D1F]/30 text-xs font-mono font-bold flex items-center justify-center space-x-1.5 transition-colors"
+              >
+                <Phone className="w-3 h-3" />
+                <span>Ext. 108 / Call</span>
+              </a>
+            </div>
+
+            <div className="p-3.5 rounded-xl bg-[var(--bg-elevated)] border border-[var(--border-subtle)] flex flex-col justify-between space-y-2.5 hover:border-[#FF6D1F]/40 transition-colors">
+              <div>
+                <div className="flex items-center justify-between">
+                  <span className="text-[10px] font-mono uppercase tracking-wider text-[var(--text-muted)]">
+                    Confidential Cell
+                  </span>
+                  <span className="px-1.5 py-0.5 rounded text-[9px] font-mono font-bold bg-purple-500/15 text-purple-400 border border-purple-500/30">
+                    SAFETY
+                  </span>
+                </div>
+                <h4 className="text-xs font-bold text-[var(--text-primary)] mt-1">
+                  Women's Safety Hotline
+                </h4>
+                <p className="text-[10px] text-[var(--text-muted)] mt-0.5">
+                  Internal Complaints & Anti-Ragging
+                </p>
+              </div>
+              <a
+                href="tel:+919861003001"
+                className="w-full py-1.5 px-3 rounded-lg bg-[var(--bg-surface)] hover:bg-[var(--bg-main)] text-[#FF6D1F] border border-[#FF6D1F]/30 text-xs font-mono font-bold flex items-center justify-center space-x-1.5 transition-colors"
+              >
+                <Phone className="w-3 h-3" />
+                <span>+91 98610 03001</span>
+              </a>
+            </div>
+
+            <div className="p-3.5 rounded-xl bg-[var(--bg-elevated)] border border-[var(--border-subtle)] flex flex-col justify-between space-y-2.5 hover:border-[#FF6D1F]/40 transition-colors">
+              <div>
+                <div className="flex items-center justify-between">
+                  <span className="text-[10px] font-mono uppercase tracking-wider text-[var(--text-muted)]">
+                    Residence Warden
+                  </span>
+                  <span className="px-1.5 py-0.5 rounded text-[9px] font-mono font-bold bg-amber-500/15 text-amber-400 border border-amber-500/30">
+                    HOSTEL
+                  </span>
+                </div>
+                <h4 className="text-xs font-bold text-[var(--text-primary)] mt-1">
+                  Chief Warden Operations
+                </h4>
+                <p className="text-[10px] text-[var(--text-muted)] mt-0.5">
+                  Curfew & Residency Office
+                </p>
+              </div>
+              <a
+                href="tel:+919861001001"
+                className="w-full py-1.5 px-3 rounded-lg bg-[var(--bg-surface)] hover:bg-[var(--bg-main)] text-[#FF6D1F] border border-[#FF6D1F]/30 text-xs font-mono font-bold flex items-center justify-center space-x-1.5 transition-colors"
+              >
+                <Phone className="w-3 h-3" />
+                <span>+91 98610 01001</span>
+              </a>
+            </div>
+          </div>
+        </section>
+      )}
+
+      {/* EMERGENCY SOS MODAL (Campus OS Standard) */}
       {showSosModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-md p-4 animate-fadeIn">
-          <div className="glass-modal rounded-3xl max-w-md w-full p-6 space-y-5 shadow-2xl border-2 border-rose-500/40">
-            <div className="flex items-center justify-between border-b border-campus-border pb-3">
-              <div className="flex items-center space-x-2 text-rose-600">
-                <Siren className="w-5 h-5 animate-bounce" />
-                <h3 className="text-base font-bold text-campus-text">Emergency SOS Response</h3>
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-md p-4 animate-fadeIn">
+          <div className="campus-panel max-w-md w-full p-6 space-y-5 border border-rose-500/40 shadow-2xl">
+            <div className="flex items-center justify-between border-b border-[var(--border-subtle)] pb-3">
+              <div className="flex items-center space-x-2 text-rose-400">
+                <Siren className="w-5 h-5 animate-pulse" />
+                <h3 className="text-sm font-mono font-bold uppercase tracking-wider text-[var(--text-primary)]">
+                  EMERGENCY SOS DISPATCH
+                </h3>
               </div>
               <button
                 onClick={() => {
                   setShowSosModal(false);
                   cancelSosCountdown();
                 }}
-                className="text-campus-muted hover:text-campus-text p-1"
+                className="text-[var(--text-muted)] hover:text-[var(--text-primary)] p-1"
               >
                 <X className="w-5 h-5" />
               </button>
             </div>
 
             {sosError && (
-              <div className="status-badge-error p-3 rounded-2xl text-xs flex items-center space-x-2 font-medium">
-                <AlertTriangle className="w-4 h-4 shrink-0" />
-                <span>{sosError}</span>
+              <div className="p-3 rounded-lg bg-rose-950/40 border border-rose-500/50 text-rose-200 text-xs font-mono">
+                {sosError}
               </div>
             )}
 
             {sosActiveEmergency && ["ACTIVE", "NEW", "ACKNOWLEDGED", "RESPONDING"].includes(sosActiveEmergency.status) ? (
-              /* Success / Live Active Beacon State */
-              <div className="space-y-4 text-center animate-fadeIn">
-                <div className="w-16 h-16 rounded-full bg-rose-100 text-rose-600 border border-rose-300 mx-auto flex items-center justify-center animate-pulse">
+              <div className="space-y-4 text-center">
+                <div className="w-16 h-16 rounded-full bg-rose-500/20 text-rose-400 border border-rose-500/50 mx-auto flex items-center justify-center animate-pulse">
                   <ShieldAlert className="w-8 h-8" />
                 </div>
                 <div>
-                  <h4 className="font-bold text-base text-campus-text">SOS Beacon Active & Dispatched</h4>
-                  <p className="text-xs text-campus-secondary mt-1">
-                    Emergency ID: <strong className="font-mono text-campus-accent">{sosActiveEmergency.alertNumber || sosActiveEmergency.id}</strong>
+                  <h4 className="font-mono font-bold text-sm text-[var(--text-primary)] uppercase">
+                    SOS Beacon Dispatched
+                  </h4>
+                  <p className="text-xs font-mono text-[#FF6D1F] mt-1">
+                    BEACON #{sosActiveEmergency.alertNumber || sosActiveEmergency.id.slice(0, 8)}
                   </p>
-                  <p className="text-xs text-campus-muted mt-0.5">
+                  <p className="text-[11px] font-mono text-[var(--text-muted)] mt-1">
                     {isHosteller
-                      ? "Your assigned Hostel Warden and Campus Command have been dispatched."
-                      : "Campus Security Command and Central Admin have received your alert."}
+                      ? "Assigned Warden and Security Control have been notified."
+                      : "Campus Command Security has been notified."}
                   </p>
                 </div>
 
-                <div className="p-3 bg-white/80 rounded-2xl border border-campus-border text-xs text-left space-y-1.5 font-mono">
+                <div className="p-3 bg-[var(--bg-elevated)] rounded-lg border border-[var(--border-subtle)] text-xs font-mono text-left space-y-1">
                   <div className="flex justify-between">
-                    <span className="text-campus-muted">Status:</span>
-                    <strong className="text-rose-600 font-bold">{sosActiveEmergency.status === "NEW" ? "ACTIVE" : sosActiveEmergency.status}</strong>
+                    <span className="text-[var(--text-muted)]">Status:</span>
+                    <strong className="text-rose-400">{sosActiveEmergency.status}</strong>
                   </div>
                   <div className="flex justify-between">
-                    <span className="text-campus-muted">Category:</span>
-                    <strong>{sosActiveEmergency.category}</strong>
+                    <span className="text-[var(--text-muted)]">Category:</span>
+                    <span className="text-[var(--text-primary)]">{sosActiveEmergency.category}</span>
                   </div>
                   <div className="flex justify-between">
-                    <span className="text-campus-muted">Location:</span>
-                    <strong>{sosActiveEmergency.location}</strong>
+                    <span className="text-[var(--text-muted)]">Location:</span>
+                    <span className="text-[var(--text-primary)]">{sosActiveEmergency.location}</span>
                   </div>
-                  {sosActiveEmergency.responderNotes && (
-                    <div className="pt-1.5 border-t border-campus-border font-sans text-campus-text">
-                      <span className="font-bold text-campus-accent">Responder Note: </span>
-                      {sosActiveEmergency.responderNotes}
-                    </div>
-                  )}
                 </div>
 
-                <div className="pt-2 border-t border-campus-border space-y-2">
+                <div className="pt-2 border-t border-[var(--border-subtle)] space-y-2">
                   <a
                     href="tel:1800CAMPUS"
-                    className="w-full py-2.5 rounded-xl text-xs font-bold bg-rose-600 text-white flex items-center justify-center space-x-2 shadow-md hover:bg-rose-700"
+                    className="w-full py-2.5 rounded-lg text-xs font-mono font-bold bg-rose-600 hover:bg-rose-700 text-white flex items-center justify-center space-x-2 transition-colors"
                   >
                     <PhoneCall className="w-4 h-4" />
-                    <span>Call Campus Security Dispatch (1800-CAMPUS)</span>
+                    <span>CALL SECURITY DISPATCH (1800-CAMPUS)</span>
                   </a>
                   <button
                     onClick={() => setShowSosModal(false)}
-                    className="w-full py-2 text-xs font-semibold text-campus-secondary hover:text-campus-text"
+                    className="w-full py-2 text-xs font-mono text-[var(--text-muted)] hover:text-[var(--text-primary)]"
                   >
-                    Keep Beacon Active & Close Dialog
+                    Close Modal & Maintain Active Beacon
                   </button>
                 </div>
               </div>
             ) : sosCountdown !== null ? (
-              /* 3-Second Confirmation Window */
-              <div className="text-center space-y-4 py-4 animate-fadeIn">
-                <div className="w-20 h-20 rounded-full bg-rose-600 text-white font-mono text-4xl font-extrabold mx-auto flex items-center justify-center animate-ping">
+              <div className="text-center space-y-4 py-4">
+                <div className="w-16 h-16 rounded-full bg-rose-600 text-white font-mono text-3xl font-black mx-auto flex items-center justify-center animate-ping">
                   {sosCountdown}
                 </div>
                 <div>
-                  <h4 className="font-bold text-lg text-campus-text">Confirming SOS Transmission...</h4>
-                  <p className="text-xs text-campus-secondary mt-1">
-                    Category: <strong>{sosCategory}</strong> • Location: <strong>{sosLocation}</strong>
-                  </p>
-                  <p className="text-[11px] text-rose-600 font-mono mt-1">
-                    Press Cancel below if this was pressed accidentally.
+                  <h4 className="font-mono font-bold text-sm text-[var(--text-primary)]">
+                    Transmitting SOS in {sosCountdown} seconds...
+                  </h4>
+                  <p className="text-[11px] font-mono text-[var(--text-muted)] mt-1">
+                    Category: {sosCategory} · Location: {sosLocation}
                   </p>
                 </div>
                 <button
                   onClick={cancelSosCountdown}
-                  className="w-full py-3 rounded-2xl text-xs font-bold bg-white text-rose-700 border-2 border-rose-300 hover:bg-rose-50 shadow-sm transition-all"
+                  className="w-full py-2.5 rounded-lg text-xs font-mono font-bold bg-[var(--bg-elevated)] text-rose-300 border border-rose-500/50 hover:bg-[var(--bg-hover)]"
                 >
                   Cancel SOS (False Alarm)
                 </button>
               </div>
             ) : (
-              /* Emergency Configuration & Confirmation */
               <div className="space-y-4">
-                {/* Student Context Summary */}
-                <div className="p-3 bg-rose-50/70 border border-rose-200/80 rounded-2xl text-xs space-y-1">
-                  <div className="flex justify-between items-center text-campus-text font-medium">
-                    <span>Student: <strong>{user.fullName}</strong></span>
-                    <span className="font-mono text-[11px] text-campus-muted">{user.rollNumber}</span>
+                <div className="p-3 bg-[var(--bg-elevated)] rounded-lg border border-[var(--border-subtle)] text-xs font-mono space-y-1">
+                  <div className="flex justify-between">
+                    <span className="text-[var(--text-muted)]">Student:</span>
+                    <strong className="text-[var(--text-primary)]">{user.fullName}</strong>
                   </div>
-                  <div className="flex justify-between items-center text-[11px] text-campus-secondary">
-                    <span>
-                      Type: <strong>{isHosteller ? "Hosteller" : "Day Scholar"}</strong>
-                      {isHosteller
-                        ? ` (${user.hostelBlock || "Block"} Rm ${user.roomNumber || "N/A"})`
-                        : user.busRoute ? ` (Bus: ${user.busRoute})` : ""}
-                    </span>
-                    <span>Contact: <strong>{user.guardianPhone || user.phone}</strong></span>
-                  </div>
-                  <div className="text-[10px] text-rose-700 font-medium pt-0.5">
-                    Target: {isHosteller ? "Assigned Warden + Security Command" : "Campus Security + Central Admin"}
+                  <div className="flex justify-between">
+                    <span className="text-[var(--text-muted)]">Roll / Transit:</span>
+                    <span className="text-[#FF6D1F]">{user.rollNumber || "2024CS101"}</span>
                   </div>
                 </div>
 
                 <div className="space-y-1.5">
-                  <label className="block text-[11px] font-mono font-semibold text-campus-secondary">
+                  <label className="block text-[11px] font-mono text-[var(--text-secondary)] uppercase">
                     Select Emergency Category:
                   </label>
                   <div className="grid grid-cols-2 gap-2">
-                    <button
-                      type="button"
-                      onClick={() => setSosCategory("MEDICAL")}
-                      className={`p-2.5 rounded-2xl text-left space-y-0.5 border transition-all ${
-                        sosCategory === "MEDICAL"
-                          ? "bg-rose-100 border-rose-500 shadow-sm"
-                          : "bg-rose-50/50 border-rose-200 hover:bg-rose-100/50"
-                      }`}
-                    >
-                      <div className="flex items-center space-x-1.5 text-rose-700 font-bold text-xs">
-                        <ShieldAlert className="w-3.5 h-3.5" />
-                        <span>Medical Issue</span>
-                      </div>
-                      <p className="text-[10px] text-campus-muted">Acute illness, injury, pain</p>
-                    </button>
-
-                    <button
-                      type="button"
-                      onClick={() => setSosCategory("FIRE_SMOKE")}
-                      className={`p-2.5 rounded-2xl text-left space-y-0.5 border transition-all ${
-                        sosCategory === "FIRE_SMOKE"
-                          ? "bg-orange-100 border-orange-500 shadow-sm"
-                          : "bg-orange-50/50 border-orange-200 hover:bg-orange-100/50"
-                      }`}
-                    >
-                      <div className="flex items-center space-x-1.5 text-orange-700 font-bold text-xs">
-                        <Flame className="w-3.5 h-3.5" />
-                        <span>Fire / Smoke</span>
-                      </div>
-                      <p className="text-[10px] text-campus-muted">Smoke detected, flame</p>
-                    </button>
-
-                    <button
-                      type="button"
-                      onClick={() => setSosCategory("LIFT_STUCK")}
-                      className={`p-2.5 rounded-2xl text-left space-y-0.5 border transition-all ${
-                        sosCategory === "LIFT_STUCK"
-                          ? "bg-amber-100 border-amber-500 shadow-sm"
-                          : "bg-amber-50/50 border-amber-200 hover:bg-amber-100/50"
-                      }`}
-                    >
-                      <div className="flex items-center space-x-1.5 text-amber-700 font-bold text-xs">
-                        <Building className="w-3.5 h-3.5" />
-                        <span>Lift Stuck</span>
-                      </div>
-                      <p className="text-[10px] text-campus-muted">Elevator malfunction</p>
-                    </button>
-
-                    <button
-                      type="button"
-                      onClick={() => setSosCategory("SECURITY")}
-                      className={`p-2.5 rounded-2xl text-left space-y-0.5 border transition-all ${
-                        sosCategory === "SECURITY"
-                          ? "bg-purple-100 border-purple-500 shadow-sm"
-                          : "bg-purple-50/50 border-purple-200 hover:bg-purple-100/50"
-                      }`}
-                    >
-                      <div className="flex items-center space-x-1.5 text-purple-700 font-bold text-xs">
-                        <Radio className="w-3.5 h-3.5" />
-                        <span>Security Threat</span>
-                      </div>
-                      <p className="text-[10px] text-campus-muted">Harassment, intrusion</p>
-                    </button>
+                    {[
+                      { key: "MEDICAL", label: "Medical Crisis", icon: ShieldAlert },
+                      { key: "FIRE_SMOKE", label: "Fire / Smoke", icon: Flame },
+                      { key: "LIFT_STUCK", label: "Elevator Malfunction", icon: Building },
+                      { key: "SECURITY", label: "Security Concern", icon: Radio }
+                    ].map((cat) => (
+                      <button
+                        key={cat.key}
+                        type="button"
+                        onClick={() => setSosCategory(cat.key)}
+                        className={`p-2.5 rounded-lg text-left border font-mono text-xs transition-colors ${
+                          sosCategory === cat.key
+                            ? "bg-rose-950/50 border-rose-500/80 text-rose-200"
+                            : "bg-[var(--bg-elevated)] border-[var(--border-subtle)] text-[var(--text-muted)] hover:border-[var(--border-medium)]"
+                        }`}
+                      >
+                        <div className="flex items-center space-x-1.5 mb-0.5">
+                          <cat.icon className="w-3.5 h-3.5" />
+                          <span className="font-bold">{cat.label}</span>
+                        </div>
+                      </button>
+                    ))}
                   </div>
                 </div>
 
-                <div>
-                  <label className="block text-[11px] font-mono text-campus-secondary mb-1">
+                <div className="space-y-1">
+                  <label className="block text-[11px] font-mono text-[var(--text-secondary)] uppercase">
                     Location / Landmark:
                   </label>
-                  <div className="relative flex items-center">
-                    <MapPin className="w-4 h-4 text-campus-muted absolute left-3.5 pointer-events-none" />
-                    <input
-                      type="text"
-                      value={sosLocation}
-                      onChange={(e) => setSosLocation(e.target.value)}
-                      placeholder="Room number, floor, or landmark..."
-                      className="w-full pl-10 pr-3 py-2 text-xs border border-campus-border rounded-xl bg-white/80 text-campus-text focus:outline-none focus:ring-1 focus:ring-rose-500"
-                    />
-                  </div>
+                  <input
+                    type="text"
+                    value={sosLocation}
+                    onChange={(e) => setSosLocation(e.target.value)}
+                    placeholder="Hostel, room, or building floor..."
+                    className="w-full px-3 py-2 text-xs rounded-lg bg-[var(--bg-input)] border border-[var(--bg-input-border)] text-[var(--text-primary)] font-mono focus:border-[#FF6D1F] outline-none"
+                  />
                 </div>
 
-                <div>
-                  <label className="block text-[11px] font-mono text-campus-secondary mb-1">
-                    Details (Optional):
+                <div className="space-y-1">
+                  <label className="block text-[11px] font-mono text-[var(--text-secondary)] uppercase">
+                    Description (Optional):
                   </label>
                   <input
                     type="text"
                     value={sosDescription}
                     onChange={(e) => setSosDescription(e.target.value)}
-                    placeholder="Brief description of the emergency..."
-                    className="w-full px-3 py-2 text-xs border border-campus-border rounded-xl bg-white/80 text-campus-text focus:outline-none focus:ring-1 focus:ring-rose-500"
+                    placeholder="Brief detail of incident..."
+                    className="w-full px-3 py-2 text-xs rounded-lg bg-[var(--bg-input)] border border-[var(--bg-input-border)] text-[var(--text-primary)] font-mono focus:border-[#FF6D1F] outline-none"
                   />
-                </div>
-
-                <div className="text-[10px] text-campus-muted font-mono bg-white/50 p-2 rounded-xl border border-campus-border">
-                  ℹ️ Anti-spam policy: Dispatches are tracked with high priority. A 30s cooldown applies between transmissions.
                 </div>
 
                 <button
                   type="button"
                   onClick={() => startSosCountdown(sosCategory)}
                   disabled={sosSending}
-                  className="w-full py-3 rounded-2xl text-xs font-bold bg-rose-600 hover:bg-rose-700 text-white flex items-center justify-center space-x-2 shadow-md hover:shadow-lg transition-all animate-pulse"
+                  className="w-full py-2.5 rounded-lg text-xs font-mono font-bold bg-rose-600 hover:bg-rose-700 text-white flex items-center justify-center space-x-2 transition-colors shadow-md"
                 >
                   <Siren className="w-4 h-4" />
-                  <span>{sosSending ? "Transmitting Beacon..." : "Confirm & Transmit SOS Beacon"}</span>
+                  <span>CONFIRM & TRANSMIT SOS BEACON</span>
                 </button>
               </div>
             )}
@@ -1037,106 +1176,118 @@ export const DashboardPage: React.FC<{ user: UserProfile | null }> = ({ user }) 
         </div>
       )}
 
-      {/* Student Digital ID Modal */}
+      {/* STUDENT DIGITAL ID MODAL */}
       {showIdModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-md p-4 animate-fadeIn">
-          <div className="glass-modal rounded-3xl max-w-sm w-full p-6 space-y-5 shadow-elevated">
-            <div className="flex items-center justify-between border-b border-campus-border pb-3">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-md p-4 animate-fadeIn">
+          <div className="campus-panel max-w-sm w-full p-6 space-y-5 border border-[var(--border-medium)] shadow-2xl">
+            <div className="flex items-center justify-between border-b border-[var(--border-subtle)] pb-3">
               <div className="flex items-center space-x-2">
-                <span className="w-6 h-6 rounded-lg bg-campus-btnPrimary text-campus-text font-extrabold flex items-center justify-center text-xs shadow-sm">CD</span>
-                <h3 className="text-sm font-bold text-campus-text">Student Digital ID</h3>
+                <span className="w-6 h-6 rounded bg-[var(--bg-elevated)] text-[#FF6D1F] border border-[var(--border-subtle)] font-mono font-black text-xs flex items-center justify-center">
+                  CD
+                </span>
+                <span className="text-xs font-mono font-bold text-[var(--text-primary)] uppercase">
+                  Digital Campus ID
+                </span>
               </div>
-              <button onClick={() => setShowIdModal(false)} className="text-campus-muted hover:text-campus-text p-1">
+              <button onClick={() => setShowIdModal(false)} className="text-[var(--text-muted)] hover:text-[var(--text-primary)] p-1">
                 <X className="w-5 h-5" />
               </button>
             </div>
 
             <div className="text-center space-y-2">
-              <div className="w-16 h-16 rounded-full bg-campus-btnPrimary text-campus-text border border-campus-accent/20 mx-auto flex items-center justify-center text-lg font-bold font-mono shadow-sm">
+              <div className="w-14 h-14 rounded-full bg-[var(--bg-elevated)] text-[var(--text-primary)] border border-[var(--border-subtle)] mx-auto flex items-center justify-center text-lg font-mono font-black">
                 {user.fullName.split(" ").map((n) => n[0]).slice(0, 2).join("")}
               </div>
               <div>
-                <p className="font-bold text-base text-campus-text">{user.fullName}</p>
-                <p className="text-xs text-campus-accent font-mono font-bold">Roll: {user.rollNumber || "2024CS101"}</p>
-                <p className="text-xs text-campus-secondary mt-0.5">{user.course || "B.Tech"} • {user.branch || "CSE"}</p>
-                <p className="text-xs text-campus-muted mt-1">
-                  {isHosteller ? `${user.hostelBlock || "Hostel"} • Room ${user.roomNumber || "N/A"}` : `Day Scholar • ${user.busRoute || "Transit"}`}
+                <p className="font-bold text-sm text-[var(--text-primary)]">{user.fullName}</p>
+                <p className="text-xs font-mono text-[#FF6D1F] font-bold">ROLL: {user.rollNumber || "2024CS101"}</p>
+                <p className="text-xs font-mono text-[var(--text-secondary)] mt-0.5">{user.course || "B.Tech"} {user.branch || "CSE"}</p>
+                <p className="text-[11px] font-mono text-[var(--text-muted)] mt-1">
+                  {isHosteller ? `${user.hostelBlock || "HOSTEL"} · RM ${user.roomNumber || "N/A"}` : `DAY SCHOLAR · ${user.busRoute || "TRANSIT"}`}
                 </p>
               </div>
             </div>
 
-            <div className="p-4 bg-white rounded-2xl flex items-center justify-center shadow-inner border border-campus-border">
-              <QrCode className="w-32 h-32 text-[#4D2A00]" />
+            <div className="p-4 bg-white rounded-xl flex items-center justify-center">
+              <QrCode className="w-36 h-36 text-black" />
             </div>
 
-            <p className="text-[11px] text-center text-campus-muted font-mono">
-              Emergency Contact: {user.fatherPhone || user.phone}
+            <p className="text-[10px] text-center font-mono text-[var(--text-muted)] uppercase">
+              Emergency Contact: {user.phone || user.guardianPhone || "1800-CAMPUS"}
             </p>
           </div>
         </div>
       )}
 
-      {/* Hostel Transfer Modal */}
+      {/* HOSTEL TRANSFER MODAL */}
       {showTransferModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-md p-4 animate-fadeIn">
-          <div className="glass-modal rounded-3xl max-w-md w-full p-6 space-y-4 text-xs shadow-elevated">
-            <div className="flex items-center justify-between border-b border-campus-border pb-3">
-              <h3 className="text-base font-bold text-campus-text">Request Hostel Transfer</h3>
-              <button onClick={() => setShowTransferModal(false)} className="text-campus-muted hover:text-campus-text p-1">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-md p-4 animate-fadeIn">
+          <div className="campus-panel max-w-md w-full p-6 space-y-4 text-xs font-mono border border-[var(--border-medium)] shadow-2xl">
+            <div className="flex items-center justify-between border-b border-[var(--border-subtle)] pb-3">
+              <h3 className="text-xs font-mono font-bold text-[var(--text-primary)] uppercase">
+                Request Hostel Transfer
+              </h3>
+              <button onClick={() => setShowTransferModal(false)} className="text-[var(--text-muted)] hover:text-[var(--text-primary)] p-1">
                 <X className="w-5 h-5" />
               </button>
             </div>
 
             {transferSuccess && (
-              <div className="status-badge-success p-3 rounded-xl font-medium">
+              <div className="p-3 rounded-lg bg-emerald-950/40 border border-emerald-500/40 text-emerald-300">
                 {transferSuccess}
               </div>
             )}
 
             {transferError && (
-              <div className="status-badge-error p-3 rounded-xl font-medium">
+              <div className="p-3 rounded-lg bg-rose-950/40 border border-rose-500/40 text-rose-300">
                 {transferError}
               </div>
             )}
 
             <form onSubmit={handleTransferSubmit} className="space-y-4">
               <div>
-                <label className="block text-campus-text mb-1.5 font-semibold">Target Hostel Block *</label>
+                <label className="block text-[var(--text-primary)] mb-1.5 uppercase tracking-wider text-[10px]">
+                  Target Hostel Block *
+                </label>
                 <select
                   required
                   value={transferForm.toHostel}
                   onChange={(e) => setTransferForm({ ...transferForm, toHostel: e.target.value })}
-                  className="w-full px-3.5 py-2.5 border border-campus-border rounded-xl bg-white/70 text-campus-text focus:outline-none focus:border-campus-accent"
+                  className="w-full px-3 py-2 rounded-lg bg-[var(--bg-input)] border border-[var(--bg-input-border)] text-[var(--text-primary)] font-mono focus:border-[#FF6D1F] outline-none"
                 >
                   <option value="Hostel-A">Hostel-A (Boys Senior)</option>
                   <option value="Hostel-B">Hostel-B (Boys Junior)</option>
                   <option value="Hostel-C">Hostel-C (Girls Campus)</option>
+                  <option value="Hostel-D">Hostel-D (PG & Research)</option>
+                  <option value="Hostel-E">Hostel-E (International)</option>
                 </select>
               </div>
 
               <div>
-                <label className="block text-campus-text mb-1.5 font-semibold">Reason for Transfer *</label>
+                <label className="block text-[var(--text-primary)] mb-1.5 uppercase tracking-wider text-[10px]">
+                  Reason for Transfer *
+                </label>
                 <textarea
                   required
                   rows={4}
                   value={transferForm.reason}
                   onChange={(e) => setTransferForm({ ...transferForm, reason: e.target.value })}
-                  placeholder="Explain why you are requesting a hostel transfer..."
-                  className="w-full px-3.5 py-2.5 border border-campus-border rounded-xl bg-white/70 text-campus-text focus:outline-none focus:border-campus-accent resize-none"
+                  placeholder="State academic, medical, or administrative reason..."
+                  className="w-full px-3 py-2 rounded-lg bg-[var(--bg-input)] border border-[var(--bg-input-border)] text-[var(--text-primary)] font-mono focus:border-[#FF6D1F] outline-none resize-none"
                 />
               </div>
 
-              <div className="flex justify-end space-x-2.5 pt-3 border-t border-campus-border">
+              <div className="flex justify-end space-x-2 pt-3 border-t border-[var(--border-subtle)]">
                 <button
                   type="button"
                   onClick={() => setShowTransferModal(false)}
-                  className="btn-secondary px-4 py-2 rounded-xl text-xs font-semibold"
+                  className="btn-secondary px-4 py-2 rounded-lg text-xs"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
-                  className="btn-primary px-5 py-2 rounded-xl text-xs font-bold"
+                  className="btn-primary px-4 py-2 rounded-lg text-xs"
                 >
                   Submit Request
                 </button>

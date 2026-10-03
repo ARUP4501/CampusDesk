@@ -2,6 +2,8 @@ import React, { useState, useEffect } from "react";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { apiRequest, UserProfile, clearAuthToken, subscribeAuthEvents, broadcastAuthEvent } from "./api/client.js";
 import { Navbar } from "./components/Navbar.js";
+import { Sidebar } from "./components/Sidebar.js";
+import { Topbar } from "./components/Topbar.js";
 import { Footer } from "./components/Footer.js";
 import { OfflineBanner } from "./components/OfflineBanner.js";
 import { StudentProfileModal } from "./components/StudentProfileModal.js";
@@ -41,6 +43,7 @@ export const App: React.FC = () => {
   const [user, setUser] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
   const [profileModalStudentId, setProfileModalStudentId] = useState<string | null>(null);
+  const [mobileDrawerOpen, setMobileDrawerOpen] = useState<boolean>(false);
 
   const checkAuth = async () => {
     try {
@@ -98,221 +101,296 @@ export const App: React.FC = () => {
 
   const isWardenOrAdmin = user?.role === "ADMIN" || user?.role === "WARDEN";
 
+  const appRoutes = (
+    <Routes>
+      {/* Home Landing vs Dashboard */}
+      <Route
+        path="/"
+        element={
+          user ? (
+            <DashboardPage key={user.id} user={user} />
+          ) : (
+            <LandingPage user={user} onLoginSuccess={(u) => setUser(u)} />
+          )
+        }
+      />
+
+      {/* Login / Registration */}
+      <Route
+        path="/login"
+        element={
+          user ? (
+            <Navigate to="/dashboard" replace />
+          ) : (
+            <LoginPage onLoginSuccess={(u) => setUser(u)} />
+          )
+        }
+      />
+      <Route
+        path="/register"
+        element={
+          user ? (
+            <Navigate to="/dashboard" replace />
+          ) : (
+            <RegisterPage onLoginSuccess={(u) => setUser(u)} />
+          )
+        }
+      />
+
+      {/* Authenticated Application Routes (Fresh key on user switch) */}
+      <Route
+        path="/dashboard"
+        element={
+          user ? (
+            user.role === "FACULTY" ? (
+              <Navigate to="/faculty" replace />
+            ) : user.role === "WARDEN" ? (
+              <Navigate to="/admin" replace />
+            ) : user.role === "ADMIN" ? (
+              <Navigate to="/admin" replace />
+            ) : user.role === "SECURITY" || user.department?.toLowerCase().includes("security") ? (
+              <Navigate to="/gate-log" replace />
+            ) : (
+              <DashboardPage key={user.id} user={user} />
+            )
+          ) : (
+            <Navigate to="/login" replace />
+          )
+        }
+      />
+      <Route
+        path="/faculty"
+        element={
+          user ? (
+            user.role === "FACULTY" || user.role === "ADMIN" ? (
+              <FacultyDashboardPage key={user.id} user={user} />
+            ) : (
+              <Navigate to="/dashboard" replace />
+            )
+          ) : (
+            <Navigate to="/login" replace />
+          )
+        }
+      />
+      <Route
+        path="/results"
+        element={
+          user ? (
+            <StudentResultsPage key={user.id} user={user} />
+          ) : (
+            <Navigate to="/login" replace />
+          )
+        }
+      />
+      <Route
+        path="/tickets"
+        element={user ? <TicketsPage key={user.id} user={user} /> : <Navigate to="/login" replace />}
+      />
+      <Route
+        path="/tickets/new"
+        element={user ? <NewTicketPage key={user.id} user={user} /> : <Navigate to="/login" replace />}
+      />
+      <Route
+        path="/tickets/:id"
+        element={user ? <TicketDetailPage key={user.id} user={user} /> : <Navigate to="/login" replace />}
+      />
+      <Route
+        path="/gatepass"
+        element={user ? <GatePassPage key={user.id} user={user} /> : <Navigate to="/login" replace />}
+      />
+      <Route
+        path="/gate-log"
+        element={
+          user ? (
+            user.role !== "STUDENT" ? (
+              <GateLogPage key={user.id} user={user} />
+            ) : (
+              <Navigate to="/dashboard" replace />
+            )
+          ) : (
+            <Navigate to="/login" replace />
+          )
+        }
+      />
+      <Route
+        path="/notices"
+        element={user ? <NoticesPage key={user.id} user={user} /> : <Navigate to="/login" replace />}
+      />
+      <Route
+        path="/notices/:id"
+        element={user ? <NoticeDetailPage key={user.id} user={user} /> : <Navigate to="/login" replace />}
+      />
+      <Route
+        path="/academics"
+        element={
+          user ? (
+            user.role === "STUDENT" || user.role === "FACULTY" || user.role === "ADMIN" ? (
+              <TimetableAttendancePage key={user.id} user={user} />
+            ) : (
+              <Navigate to={user.role === "WARDEN" ? "/admin" : (user.role === "SECURITY" || user.department?.toLowerCase().includes("security") ? "/gate-log" : "/dashboard")} replace />
+            )
+          ) : (
+            <Navigate to="/login" replace />
+          )
+        }
+      />
+      <Route
+        path="/attendance"
+        element={<Navigate to="/academics" replace />}
+      />
+      <Route
+        path="/timetable"
+        element={<Navigate to="/academics" replace />}
+      />
+      <Route
+        path="/mess"
+        element={user ? <MessPage key={user.id} user={user} /> : <Navigate to="/login" replace />}
+      />
+      <Route
+        path="/clubs"
+        element={user ? <ClubsPage key={user.id} user={user} /> : <Navigate to="/login" replace />}
+      />
+      <Route
+        path="/transport"
+        element={user ? <TransportPage key={user.id} user={user} /> : <Navigate to="/login" replace />}
+      />
+      <Route
+        path="/parcels"
+        element={user ? <ParcelsPage key={user.id} user={user} /> : <Navigate to="/login" replace />}
+      />
+      <Route
+        path="/help"
+        element={user ? <CampusHelpPage key={user.id} user={user} /> : <Navigate to="/login" replace />}
+      />
+      <Route
+        path="/documents"
+        element={user ? <DocumentRequestsPage key={user.id} user={user} /> : <Navigate to="/login" replace />}
+      />
+      <Route
+        path="/fees"
+        element={user ? <FeeStatusPage key={user.id} user={user} /> : <Navigate to="/login" replace />}
+      />
+      <Route
+        path="/faq"
+        element={user ? <FaqAssistantPage key={user.id} user={user} /> : <Navigate to="/login" replace />}
+      />
+      <Route
+        path="/console"
+        element={user ? <CommandConsolePage key={user.id} user={user} /> : <Navigate to="/login" replace />}
+      />
+      <Route
+        path="/admin"
+        element={
+          user ? (
+            isWardenOrAdmin ? (
+              <AdminDashboardPage key={user.id} user={user} />
+            ) : (
+              <Navigate to="/dashboard" replace />
+            )
+          ) : (
+            <Navigate to="/login" replace />
+          )
+        }
+      />
+      <Route
+        path="/import"
+        element={
+          user ? (
+            user.role === "ADMIN" ? (
+              <DataImportPage key={user.id} user={user} />
+            ) : (
+              <Navigate to="/dashboard" replace />
+            )
+          ) : (
+            <Navigate to="/login" replace />
+          )
+        }
+      />
+
+      {/* Public Policies & Guides */}
+      <Route path="/privacy" element={<PrivacyPage />} />
+      <Route path="/terms" element={<TermsPage />} />
+      <Route path="/adoption" element={<AdoptionPage />} />
+
+      {/* 404 Fallback */}
+      <Route path="*" element={<NotFoundPage />} />
+    </Routes>
+  );
+
   return (
     <BrowserRouter>
-      <div className="min-h-screen flex flex-col bg-campus-bg text-campus-text selection:bg-campus-peach selection:text-campus-text">
-        <OfflineBanner />
-        <Navbar
-          user={user}
-          onLogout={handleLogout}
-          onOpenDigitalId={user ? () => setProfileModalStudentId(user.id) : undefined}
-        />
+      {user ? (
+        <div className="min-h-screen flex bg-[var(--bg-main)] text-[var(--text-primary)] selection:bg-[#FF6D1F]/30 selection:text-[var(--text-primary)]">
+          <OfflineBanner />
 
-        <div className="flex-1 flex flex-col">
-          <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8 page-fade-in">
-            <Routes>
-              {/* Home Landing vs Dashboard */}
-              <Route
-                path="/"
-                element={
-                  user ? (
-                    <DashboardPage key={user.id} user={user} />
-                  ) : (
-                    <LandingPage user={user} onLoginSuccess={(u) => setUser(u)} />
-                  )
-                }
-              />
+          {/* Desktop Left Rail Navigation */}
+          <div className="hidden lg:block shrink-0 sticky top-0 h-screen z-40">
+            <Sidebar
+              user={user}
+              onLogout={handleLogout}
+              onOpenDigitalId={() => setProfileModalStudentId(user.id)}
+            />
+          </div>
 
-              {/* Login / Registration */}
-              <Route
-                path="/login"
-                element={
-                  user ? (
-                    <Navigate to="/dashboard" replace />
-                  ) : (
-                    <LoginPage onLoginSuccess={(u) => setUser(u)} />
-                  )
-                }
+          {/* Mobile Sliding Drawer */}
+          {mobileDrawerOpen && (
+            <div className="fixed inset-0 z-50 lg:hidden flex">
+              <div
+                className="fixed inset-0 bg-black/80 backdrop-blur-sm"
+                onClick={() => setMobileDrawerOpen(false)}
               />
-              <Route
-                path="/register"
-                element={
-                  user ? (
-                    <Navigate to="/dashboard" replace />
-                  ) : (
-                    <RegisterPage onLoginSuccess={(u) => setUser(u)} />
-                  )
-                }
-              />
+              <div className="relative z-10 w-72 max-w-[85vw] h-full shadow-2xl">
+                <Sidebar
+                  user={user}
+                  onLogout={handleLogout}
+                  onOpenDigitalId={() => {
+                    setMobileDrawerOpen(false);
+                    setProfileModalStudentId(user.id);
+                  }}
+                  onCloseMobileDrawer={() => setMobileDrawerOpen(false)}
+                />
+              </div>
+            </div>
+          )}
 
-              {/* Authenticated Application Routes (Fresh key on user switch) */}
-              <Route
-                path="/dashboard"
-                element={
-                  user ? (
-                    user.role === "FACULTY" ? (
-                      <Navigate to="/faculty" replace />
-                    ) : (
-                      <DashboardPage key={user.id} user={user} />
-                    )
-                  ) : (
-                    <Navigate to="/login" replace />
-                  )
-                }
-              />
-              <Route
-                path="/faculty"
-                element={
-                  user ? (
-                    user.role === "FACULTY" || user.role === "ADMIN" ? (
-                      <FacultyDashboardPage key={user.id} user={user} />
-                    ) : (
-                      <Navigate to="/dashboard" replace />
-                    )
-                  ) : (
-                    <Navigate to="/login" replace />
-                  )
-                }
-              />
-              <Route
-                path="/results"
-                element={
-                  user ? (
-                    <StudentResultsPage key={user.id} user={user} />
-                  ) : (
-                    <Navigate to="/login" replace />
-                  )
-                }
-              />
-              <Route
-                path="/tickets"
-                element={user ? <TicketsPage key={user.id} user={user} /> : <Navigate to="/login" replace />}
-              />
-              <Route
-                path="/tickets/new"
-                element={user ? <NewTicketPage key={user.id} user={user} /> : <Navigate to="/login" replace />}
-              />
-              <Route
-                path="/tickets/:id"
-                element={user ? <TicketDetailPage key={user.id} user={user} /> : <Navigate to="/login" replace />}
-              />
-              <Route
-                path="/gatepass"
-                element={user ? <GatePassPage key={user.id} user={user} /> : <Navigate to="/login" replace />}
-              />
-              <Route
-                path="/gate-log"
-                element={
-                  user ? (
-                    user.role !== "STUDENT" ? (
-                      <GateLogPage key={user.id} user={user} />
-                    ) : (
-                      <Navigate to="/dashboard" replace />
-                    )
-                  ) : (
-                    <Navigate to="/login" replace />
-                  )
-                }
-              />
-              <Route
-                path="/notices"
-                element={user ? <NoticesPage key={user.id} user={user} /> : <Navigate to="/login" replace />}
-              />
-              <Route
-                path="/notices/:id"
-                element={user ? <NoticeDetailPage key={user.id} user={user} /> : <Navigate to="/login" replace />}
-              />
-              <Route
-                path="/academics"
-                element={user ? <TimetableAttendancePage key={user.id} user={user} /> : <Navigate to="/login" replace />}
-              />
-              <Route
-                path="/mess"
-                element={user ? <MessPage key={user.id} user={user} /> : <Navigate to="/login" replace />}
-              />
-              <Route
-                path="/clubs"
-                element={user ? <ClubsPage key={user.id} user={user} /> : <Navigate to="/login" replace />}
-              />
-              <Route
-                path="/transport"
-                element={user ? <TransportPage key={user.id} user={user} /> : <Navigate to="/login" replace />}
-              />
-              <Route
-                path="/parcels"
-                element={user ? <ParcelsPage key={user.id} user={user} /> : <Navigate to="/login" replace />}
-              />
-              <Route
-                path="/help"
-                element={user ? <CampusHelpPage key={user.id} user={user} /> : <Navigate to="/login" replace />}
-              />
-              <Route
-                path="/documents"
-                element={user ? <DocumentRequestsPage key={user.id} user={user} /> : <Navigate to="/login" replace />}
-              />
-              <Route
-                path="/fees"
-                element={user ? <FeeStatusPage key={user.id} user={user} /> : <Navigate to="/login" replace />}
-              />
-              <Route
-                path="/faq"
-                element={user ? <FaqAssistantPage key={user.id} user={user} /> : <Navigate to="/login" replace />}
-              />
-              <Route
-                path="/console"
-                element={user ? <CommandConsolePage key={user.id} user={user} /> : <Navigate to="/login" replace />}
-              />
-              <Route
-                path="/admin"
-                element={
-                  user ? (
-                    isWardenOrAdmin ? (
-                      <AdminDashboardPage key={user.id} user={user} />
-                    ) : (
-                      <Navigate to="/dashboard" replace />
-                    )
-                  ) : (
-                    <Navigate to="/login" replace />
-                  )
-                }
-              />
-              <Route
-                path="/import"
-                element={
-                  user ? (
-                    user.role === "ADMIN" ? (
-                      <DataImportPage key={user.id} user={user} />
-                    ) : (
-                      <Navigate to="/dashboard" replace />
-                    )
-                  ) : (
-                    <Navigate to="/login" replace />
-                  )
-                }
-              />
+          {/* Right Main Shell */}
+          <div className="flex-1 flex flex-col min-w-0 min-h-screen">
+            <Topbar
+              user={user}
+              onToggleMobileDrawer={() => setMobileDrawerOpen((prev) => !prev)}
+              onOpenDigitalId={() => setProfileModalStudentId(user.id)}
+            />
 
-              {/* Public Policies & Guides */}
-              <Route path="/privacy" element={<PrivacyPage />} />
-              <Route path="/terms" element={<TermsPage />} />
-              <Route path="/adoption" element={<AdoptionPage />} />
+            <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8 page-fade-in">
+              {appRoutes}
+            </main>
 
-              {/* 404 Fallback */}
-              <Route path="*" element={<NotFoundPage />} />
-            </Routes>
-          </main>
+            <Footer />
+          </div>
 
-          <Footer />
+          {/* Global Student Digital Dossier Modal */}
+          {profileModalStudentId && (
+            <StudentProfileModal
+              studentId={profileModalStudentId}
+              onClose={() => setProfileModalStudentId(null)}
+              currentUserRole={user?.role}
+            />
+          )}
         </div>
+      ) : (
+        <div className="min-h-screen flex flex-col bg-[var(--bg-main)] text-[var(--text-primary)] selection:bg-[#FF6D1F]/30 selection:text-[var(--text-primary)]">
+          <OfflineBanner />
+          <Navbar user={null} onLogout={handleLogout} />
 
-        {/* Global Student Digital Dossier Modal */}
-        {profileModalStudentId && (
-          <StudentProfileModal
-            studentId={profileModalStudentId}
-            onClose={() => setProfileModalStudentId(null)}
-            currentUserRole={user?.role}
-          />
-        )}
-      </div>
+          <div className="flex-1 flex flex-col">
+            <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8 page-fade-in">
+              {appRoutes}
+            </main>
+
+            <Footer />
+          </div>
+        </div>
+      )}
     </BrowserRouter>
   );
 };

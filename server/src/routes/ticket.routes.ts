@@ -178,7 +178,9 @@ ticketRouter.get("/", requireAuth, async (req: Request, res: Response): Promise<
       whereClause.category = category;
     }
 
-    if (hostelBlock && hostelBlock !== "ALL") {
+    if (req.user!.role === "WARDEN" && req.user!.hostelBlock) {
+      whereClause.hostelBlock = req.user!.hostelBlock;
+    } else if (hostelBlock && hostelBlock !== "ALL") {
       whereClause.hostelBlock = hostelBlock;
     }
 
@@ -235,6 +237,20 @@ ticketRouter.get("/", requireAuth, async (req: Request, res: Response): Promise<
   } catch (err: any) {
     console.error("Failed to list tickets:", err);
     res.status(500).json({ error: "Failed to load tickets." });
+  }
+});
+
+// Get active operations staff for ticket assignment dropdown (Staff, Warden, Admin)
+ticketRouter.get("/meta/staff", requireAuth, requireRoles(["STAFF", "WARDEN", "ADMIN"]), async (_req: Request, res: Response): Promise<void> => {
+  try {
+    const staff = await prisma.user.findMany({
+      where: { role: "STAFF", isActive: true },
+      select: { id: true, fullName: true, department: true, role: true },
+      orderBy: { fullName: "asc" }
+    });
+    res.json({ staff });
+  } catch (err: any) {
+    res.status(500).json({ error: "Failed to load staff list." });
   }
 });
 

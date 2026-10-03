@@ -650,3 +650,29 @@ transportRouter.get("/", requireAuth, async (req: Request, res: Response): Promi
     res.status(500).json({ error: "Failed to fetch routes." });
   }
 });
+
+// =========================================================================
+// 7. GET /parking ENDPOINT
+// =========================================================================
+transportRouter.get("/parking", requireAuth, async (_req: Request, res: Response): Promise<void> => {
+  try {
+    const zones = await prisma.parkingZone.findMany({
+      orderBy: { name: "asc" }
+    });
+
+    const parsedZones = zones.map((z) => {
+      const freeSlots = Math.max(0, z.totalSlots - z.occupiedSlots);
+      const occupancyRate = z.totalSlots > 0 ? (z.occupiedSlots / z.totalSlots) * 100 : 0;
+      return {
+        ...z,
+        freeSlots,
+        occupancyRate: Math.round(occupancyRate)
+      };
+    });
+
+    res.json({ parkingLots: parsedZones, parkingZones: parsedZones });
+  } catch (err: any) {
+    console.error("Failed to fetch transport parking zones:", err);
+    res.status(500).json({ error: "Failed to fetch parking zones." });
+  }
+});

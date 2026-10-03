@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { Utensils, Edit3, CheckCircle2, BarChart3, X, Save, AlertCircle, Star, Sparkles } from "lucide-react";
+import { Utensils, Edit3, CheckCircle2, X, Star } from "lucide-react";
 import { apiRequest, UserProfile } from "../api/client.js";
 
 interface MessMenuItem {
@@ -148,24 +148,17 @@ export const MessPage: React.FC<{ user: UserProfile | null }> = ({ user }) => {
     setFeedbackSuccess(null);
 
     try {
-      await apiRequest(
-        "/api/mess/feedback",
-        {
-          method: "POST",
-          body: JSON.stringify({
-            hostelBlock,
-            mealType: feedbackMeal,
-            rating: feedbackRating,
-            comments: feedbackComments || undefined
-          })
-        },
-        {
-          label: `Mess Rating: ${feedbackMeal}`,
-          data: { hostelBlock, mealType: feedbackMeal, rating: feedbackRating }
-        }
-      );
+      await apiRequest("/api/mess/feedback", {
+        method: "POST",
+        body: JSON.stringify({
+          hostelBlock,
+          mealType: feedbackMeal,
+          rating: feedbackRating,
+          comments: feedbackComments || undefined
+        })
+      });
 
-      setFeedbackSuccess("Your meal feedback and rating have been recorded.");
+      setFeedbackSuccess("Your meal rating and feedback has been recorded.");
       setFeedbackComments("");
       if (isStaffOrManagement) fetchData();
     } catch (err: any) {
@@ -177,58 +170,121 @@ export const MessPage: React.FC<{ user: UserProfile | null }> = ({ user }) => {
 
   const dayNames = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
   const currentDayNum = new Date().getDay();
+  const todayItem = menu.find((m) => m.dayOfWeek === currentDayNum) || menu[0];
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-8 pb-16 font-mono">
       {/* Top Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 glass-panel p-6 rounded-3xl border border-[rgba(77,42,0,0.1)] shadow-glass">
+      <section className="border-b border-[var(--border-subtle)] pb-6 flex flex-col md:flex-row md:items-end md:justify-between gap-4">
         <div>
-          <div className="flex items-center space-x-2 text-[#CC6F00] text-[11px] font-bold uppercase mb-1">
-            <Utensils className="w-3.5 h-3.5" />
-            <span>Hostel Dining & Catering</span>
-          </div>
-          <h1 className="text-2xl font-bold text-[#4D2A00]">Hostel Mess Menu & Ratings</h1>
-          <p className="text-xs text-[#4D2A00]/70 mt-1">
-            4-meal daily menu schedules, dietary inspection records, and student meal ratings
+          <span className="editorial-eyebrow text-[#FF6D1F] block mb-2">
+            01 // CATERING & NUTRITION
+          </span>
+          <h1 className="editorial-title text-xl sm:text-2xl text-[var(--text-primary)]">
+            CAMPUS DINING DISPATCH
+          </h1>
+          <p className="text-xs text-[var(--text-secondary)] mt-1">
+            4-meal daily menu schedules, dietary inspection records, and student meal ratings.
           </p>
         </div>
 
         {/* Hostel Block Switcher */}
-        <div className="flex items-center space-x-2">
-          <span className="text-xs font-semibold text-[#4D2A00]/80">Select Block:</span>
+        <div className="flex items-center space-x-2 text-xs">
+          <span className="text-[var(--text-secondary)]">HOSTEL:</span>
           <select
             value={hostelBlock}
             onChange={(e) => setHostelBlock(e.target.value)}
-            className="px-3.5 py-2 bg-white/60 border border-[rgba(77,42,0,0.12)] rounded-xl text-[#4D2A00] text-xs focus:outline-none focus:border-[#CC6F00]"
+            className="px-3 py-1.5 bg-[var(--bg-input)] border border-[var(--border-subtle)] text-[var(--text-primary)] text-xs rounded-lg focus:border-[#FF6D1F] outline-none"
           >
             <option value="Hostel-A">Hostel-A (Boys Senior)</option>
             <option value="Hostel-B">Hostel-B (Boys Junior)</option>
             <option value="Hostel-C">Hostel-C (Girls Campus)</option>
+            <option value="Hostel-D">Hostel-D (PG & Research)</option>
+            <option value="Hostel-E">Hostel-E (International)</option>
           </select>
         </div>
-      </div>
+      </section>
 
       {editSuccess && (
-        <div className="p-4 bg-emerald-500/20 text-emerald-950 border border-emerald-500/30 rounded-2xl text-xs font-medium flex items-center space-x-2">
-          <CheckCircle2 className="w-4 h-4 text-emerald-700 shrink-0" />
+        <div className="p-3 rounded-lg bg-emerald-950/40 border border-emerald-500/40 text-emerald-300 text-xs flex items-center space-x-2">
+          <CheckCircle2 className="w-4 h-4 text-emerald-400" />
           <span>{editSuccess}</span>
         </div>
       )}
 
+      {/* Section 25: EDITORIAL RESTAURANT MENU (TODAY'S SPECIAL DISPATCH) */}
+      <section className="campus-block p-6 sm:p-8 space-y-6">
+        <div className="flex items-center justify-between border-b border-[var(--border-subtle)] pb-4">
+          <div>
+            <span className="editorial-eyebrow text-[#FF6D1F] block mb-1">
+              TODAY'S CURATED MENU // {dayNames[currentDayNum].toUpperCase()}
+            </span>
+            <h2 className="editorial-title text-2xl text-[var(--text-primary)]">
+              DAILY DINING ROSTER
+            </h2>
+          </div>
+          <span className="text-xs font-mono px-2.5 py-1 rounded bg-[var(--bg-elevated)] text-[var(--text-secondary)] border border-[var(--border-subtle)]">
+            DINING HALL A
+          </span>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+          <div className="p-4 rounded-lg bg-[var(--bg-elevated)] border border-[var(--border-subtle)] space-y-2">
+            <div className="flex items-center justify-between text-xs">
+              <span className="font-bold text-[#FF6D1F]">BREAKFAST</span>
+              <span className="text-[10px] text-[var(--text-muted)]">07:30 – 09:30</span>
+            </div>
+            <p className="text-xs font-sans text-[var(--text-primary)] leading-relaxed">
+              {todayItem?.breakfast || "Poha · Boiled Egg / Banana · Special Chai"}
+            </p>
+          </div>
+
+          <div className="p-4 rounded-lg bg-[var(--bg-elevated)] border border-[var(--border-subtle)] space-y-2">
+            <div className="flex items-center justify-between text-xs">
+              <span className="font-bold text-[#FF6D1F]">LUNCH</span>
+              <span className="text-[10px] text-[var(--text-muted)]">12:30 – 14:30</span>
+            </div>
+            <p className="text-xs font-sans text-[var(--text-primary)] leading-relaxed">
+              {todayItem?.lunch || "Steamed Rice · Dal Tadka · Shahi Paneer · Kachumber"}
+            </p>
+          </div>
+
+          <div className="p-4 rounded-lg bg-[var(--bg-elevated)] border border-[var(--border-subtle)] space-y-2">
+            <div className="flex items-center justify-between text-xs">
+              <span className="font-bold text-[#FF6D1F]">SNACKS</span>
+              <span className="text-[10px] text-[var(--text-muted)]">17:00 – 18:00</span>
+            </div>
+            <p className="text-xs font-sans text-[var(--text-primary)] leading-relaxed">
+              {todayItem?.snacks || "Adrak Chai · Masala Cookies / Samosa"}
+            </p>
+          </div>
+
+          <div className="p-4 rounded-lg bg-[var(--bg-elevated)] border border-[var(--border-subtle)] space-y-2">
+            <div className="flex items-center justify-between text-xs">
+              <span className="font-bold text-[#FF6D1F]">DINNER</span>
+              <span className="text-[10px] text-[var(--text-muted)]">20:00 – 22:00</span>
+            </div>
+            <p className="text-xs font-sans text-[var(--text-primary)] leading-relaxed">
+              {todayItem?.dinner || "Phulka Roti · Seasonal Mixed Sabzi · Dal Fry · Kheer"}
+            </p>
+          </div>
+        </div>
+      </section>
+
       {/* 7-Day Menu Schedule Grid */}
-      <div className="space-y-4">
-        <div className="flex items-center justify-between">
-          <h2 className="text-xs font-bold uppercase tracking-wider text-[#CC6F00]">
-            Weekly 4-Meal Menu ({hostelBlock})
-          </h2>
+      <section className="space-y-4">
+        <div className="flex items-center justify-between pb-2 border-b border-[var(--border-subtle)]">
+          <span className="editorial-eyebrow text-[#FF6D1F]">
+            WEEKLY 4-MEAL SCHEDULE // {hostelBlock.toUpperCase()}
+          </span>
           {isAdminOrWarden && (
-            <span className="text-xs text-[#4D2A00]/60">Click edit icon to modify recipes</span>
+            <span className="text-[11px] text-[var(--text-muted)]">Select edit icon to modify daily recipes</span>
           )}
         </div>
 
         {loading ? (
-          <div className="p-14 text-center text-xs text-[#4D2A00]/60 glass-panel rounded-3xl border border-[rgba(77,42,0,0.1)]">
-            Loading mess menu schedule...
+          <div className="py-12 text-center text-xs text-[var(--text-muted)]">
+            Synchronizing weekly catering schedule...
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
@@ -239,18 +295,18 @@ export const MessPage: React.FC<{ user: UserProfile | null }> = ({ user }) => {
               return (
                 <div
                   key={dayNum}
-                  className={`p-5 rounded-3xl border transition-all ${
+                  className={`p-5 rounded-lg border transition-colors ${
                     isToday
-                      ? "bg-[#FDB773]/30 border-[#CC6F00]/50 shadow-glass"
-                      : "glass-card border-[rgba(77,42,0,0.08)]"
+                      ? "bg-[var(--bg-hover)] border-[#FF6D1F]/50 shadow-md"
+                      : "bg-[var(--bg-elevated)] border-[var(--border-subtle)]"
                   } flex flex-col justify-between space-y-4`}
                 >
                   <div>
-                    <div className="flex items-center justify-between pb-2 border-b border-[rgba(77,42,0,0.08)]">
+                    <div className="flex items-center justify-between pb-2 border-b border-[var(--border-subtle)]">
                       <div className="flex items-center space-x-2">
-                        <span className="font-bold text-sm text-[#4D2A00]">{dayNames[dayNum]}</span>
+                        <span className="font-bold text-xs text-[var(--text-primary)]">{dayNames[dayNum]}</span>
                         {isToday && (
-                          <span className="px-2 py-0.5 text-[9px] font-bold bg-[#FDB773] text-[#4D2A00] border border-[#CC6F00]/30 rounded-md">
+                          <span className="px-1.5 py-0.5 text-[9px] font-bold bg-[#FF6D1F] text-[#141414] rounded">
                             TODAY
                           </span>
                         )}
@@ -258,7 +314,7 @@ export const MessPage: React.FC<{ user: UserProfile | null }> = ({ user }) => {
                       {isAdminOrWarden && (
                         <button
                           onClick={() => handleOpenEditForDay(dayNum)}
-                          className="p-1.5 rounded-lg text-[#4D2A00]/60 hover:text-[#CC6F00] hover:bg-white/60 transition-colors"
+                          className="p-1 rounded text-[var(--text-muted)] hover:text-[#FF6D1F] transition-colors"
                           title="Edit Menu"
                         >
                           <Edit3 className="w-3.5 h-3.5" />
@@ -268,38 +324,38 @@ export const MessPage: React.FC<{ user: UserProfile | null }> = ({ user }) => {
 
                     <div className="space-y-2.5 pt-3 text-xs">
                       <div>
-                        <span className="text-[10px] text-[#CC6F00] uppercase font-bold block">
-                          Breakfast (07:30 - 09:30)
+                        <span className="text-[10px] text-[#FF6D1F] uppercase font-bold block">
+                          Breakfast
                         </span>
-                        <p className="text-[#4D2A00] mt-0.5 leading-snug">
-                          {dayItem?.breakfast || "Standard Continental / Indian Breakfast"}
+                        <p className="text-[var(--text-primary)] font-sans text-xs mt-0.5 leading-snug">
+                          {dayItem?.breakfast || "Poha · Banana · Tea"}
                         </p>
                       </div>
 
                       <div>
-                        <span className="text-[10px] text-[#CC6F00] uppercase font-bold block">
-                          Lunch (12:30 - 14:30)
+                        <span className="text-[10px] text-[#FF6D1F] uppercase font-bold block">
+                          Lunch
                         </span>
-                        <p className="text-[#4D2A00] mt-0.5 leading-snug">
-                          {dayItem?.lunch || "Full Meal Rice, Dal, Veg & Curd"}
+                        <p className="text-[var(--text-primary)] font-sans text-xs mt-0.5 leading-snug">
+                          {dayItem?.lunch || "Rice · Dal · Veg · Curd"}
                         </p>
                       </div>
 
                       <div>
-                        <span className="text-[10px] text-[#CC6F00] uppercase font-bold block">
-                          Snacks (17:00 - 18:00)
+                        <span className="text-[10px] text-[#FF6D1F] uppercase font-bold block">
+                          Snacks
                         </span>
-                        <p className="text-[#4D2A00] mt-0.5 leading-snug">
-                          {dayItem?.snacks || "Tea / Coffee with Evening Snack"}
+                        <p className="text-[var(--text-primary)] font-sans text-xs mt-0.5 leading-snug">
+                          {dayItem?.snacks || "Tea / Coffee with Biscuits"}
                         </p>
                       </div>
 
                       <div>
-                        <span className="text-[10px] text-[#CC6F00] uppercase font-bold block">
-                          Dinner (20:00 - 22:00)
+                        <span className="text-[10px] text-[#FF6D1F] uppercase font-bold block">
+                          Dinner
                         </span>
-                        <p className="text-[#4D2A00] mt-0.5 leading-snug">
-                          {dayItem?.dinner || "Roti, Sabzi, Rice & Sweet/Dessert"}
+                        <p className="text-[var(--text-primary)] font-sans text-xs mt-0.5 leading-snug">
+                          {dayItem?.dinner || "Roti · Mixed Veg · Dal Fry"}
                         </p>
                       </div>
                     </div>
@@ -309,35 +365,38 @@ export const MessPage: React.FC<{ user: UserProfile | null }> = ({ user }) => {
             })}
           </div>
         )}
-      </div>
+      </section>
 
       {/* Student Meal Feedback & Rating Box */}
       {user?.role === "STUDENT" && (
-        <div className="glass-panel rounded-3xl p-6 sm:p-8 space-y-4 max-w-2xl border border-[rgba(77,42,0,0.1)] shadow-glass">
+        <section className="campus-block p-6 sm:p-8 space-y-4 max-w-xl">
           <div>
-            <h2 className="text-xs font-bold uppercase tracking-wider text-[#CC6F00]">
-              Today&apos;s Meal Rating & Feedback
+            <span className="editorial-eyebrow text-[#FF6D1F] block mb-1">
+              STUDENT TELEMETRY
+            </span>
+            <h2 className="editorial-title text-xl text-[var(--text-primary)]">
+              TODAY'S MEAL RATING & FEEDBACK
             </h2>
-            <p className="text-xs text-[#4D2A00]/70 mt-0.5">
-              Your feedback is aggregated and directly reviewed by hostel wardens and catering contractors.
+            <p className="text-xs text-[var(--text-secondary)] mt-0.5">
+              Aggregated and reviewed directly by Hostel Warden and Catering Committee.
             </p>
           </div>
 
           {feedbackSuccess && (
-            <div className="p-4 bg-emerald-500/20 border border-emerald-500/30 rounded-2xl text-xs text-emerald-950 font-medium flex items-center space-x-2">
-              <CheckCircle2 className="w-4 h-4 text-emerald-700 shrink-0" />
+            <div className="p-3 rounded-lg bg-emerald-950/40 border border-emerald-500/40 text-emerald-300 text-xs flex items-center space-x-2">
+              <CheckCircle2 className="w-4 h-4 text-emerald-400" />
               <span>{feedbackSuccess}</span>
             </div>
           )}
 
           <form onSubmit={handleFeedbackSubmit} className="space-y-4 text-xs">
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div>
-                <label className="block font-semibold text-[#4D2A00] mb-1">Meal Period *</label>
+              <div className="space-y-1">
+                <label className="block text-[10px] uppercase text-[var(--text-secondary)]">Meal Period *</label>
                 <select
                   value={feedbackMeal}
                   onChange={(e) => setFeedbackMeal(e.target.value)}
-                  className="w-full px-3.5 py-2.5 bg-white/60 border border-[rgba(77,42,0,0.12)] rounded-xl text-[#4D2A00] focus:outline-none focus:border-[#CC6F00]"
+                  className="w-full px-3 py-2 bg-[var(--bg-input)] border border-[var(--border-subtle)] rounded-lg text-[var(--text-primary)] focus:border-[#FF6D1F] outline-none"
                 >
                   <option value="BREAKFAST">Breakfast</option>
                   <option value="LUNCH">Lunch</option>
@@ -346,176 +405,157 @@ export const MessPage: React.FC<{ user: UserProfile | null }> = ({ user }) => {
                 </select>
               </div>
 
-              <div>
-                <label className="block font-semibold text-[#4D2A00] mb-1">Star Rating (1 - 5) *</label>
-                <div className="flex items-center space-x-2 pt-1.5">
+              <div className="space-y-1">
+                <label className="block text-[10px] uppercase text-[var(--text-secondary)]">Star Rating *</label>
+                <div className="flex items-center space-x-2 pt-1">
                   {[1, 2, 3, 4, 5].map((star) => (
                     <button
                       key={star}
                       type="button"
                       onClick={() => setFeedbackRating(star)}
-                      className="p-1 text-[#CC6F00] hover:scale-125 transition-transform"
+                      className="p-0.5 text-[#FF6D1F] hover:scale-110 transition-transform"
                     >
                       <Star
-                        className={`w-6 h-6 ${
-                          star <= feedbackRating ? "fill-[#CC6F00] text-[#CC6F00]" : "text-[#4D2A00]/30"
+                        className={`w-5 h-5 ${
+                          star <= feedbackRating ? "fill-[#FF6D1F] text-[#FF6D1F]" : "text-[var(--text-muted)]/30"
                         }`}
                       />
                     </button>
                   ))}
-                  <span className="font-mono text-[#CC6F00] font-bold ml-2 text-sm">{feedbackRating}/5</span>
+                  <span className="font-bold text-[#FF6D1F] ml-2 text-xs">{feedbackRating}/5</span>
                 </div>
               </div>
             </div>
 
-            <div>
-              <label className="block font-semibold text-[#4D2A00] mb-1">Optional Comments / Taste Feedback</label>
+            <div className="space-y-1">
+              <label className="block text-[10px] uppercase text-[var(--text-secondary)]">Taste & Hygiene Remarks</label>
               <input
                 type="text"
                 value={feedbackComments}
                 onChange={(e) => setFeedbackComments(e.target.value)}
-                placeholder="Mention taste, hygiene, food temperature, or portion quality..."
-                className="w-full px-3.5 py-2.5 bg-white/60 border border-[rgba(77,42,0,0.12)] rounded-xl text-[#4D2A00] placeholder-[#4D2A00]/40 focus:outline-none focus:border-[#CC6F00]"
+                placeholder="Comment on temperature, portion, or salt levels..."
+                className="w-full px-3 py-2 bg-[var(--bg-input)] border border-[var(--border-subtle)] rounded-lg text-[var(--text-primary)] placeholder:text-[var(--text-muted)] focus:border-[#FF6D1F] outline-none"
               />
             </div>
 
             <button
               type="submit"
               disabled={feedbackSubmitting}
-              className="btn-primary px-6 py-2.5 text-xs font-bold disabled:opacity-50 shadow-sm"
+              className="btn-primary px-5 py-2.5 text-xs font-bold disabled:opacity-50"
             >
-              {feedbackSubmitting ? "Submitting..." : "Submit Meal Rating"}
+              {feedbackSubmitting ? "RECORDING..." : "SUBMIT MEAL RATING"}
             </button>
           </form>
-        </div>
+        </section>
       )}
 
       {/* Admin / Warden Feedback Analytics */}
       {isStaffOrManagement && summary && (
-        <div className="glass-panel rounded-3xl p-6 sm:p-8 space-y-6 border border-[rgba(77,42,0,0.1)] shadow-glass">
+        <section className="campus-block p-6 sm:p-8 space-y-6">
           <div>
-            <h2 className="text-xs font-bold uppercase tracking-wider text-[#CC6F00]">
-              Catering Satisfaction Telemetry ({hostelBlock})
+            <span className="editorial-eyebrow text-[#FF6D1F] block mb-1">
+              HOSTEL TELEMETRY
+            </span>
+            <h2 className="editorial-title text-xl text-[var(--text-primary)]">
+              CATERING SATISFACTION TELEMETRY ({hostelBlock})
             </h2>
-            <p className="text-xs text-[#4D2A00]/70 mt-0.5">
+            <p className="text-xs text-[var(--text-secondary)] mt-0.5">
               Total responses recorded: {summary.totalResponses}
             </p>
           </div>
 
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
             {summary.summary.map((s) => (
-              <div key={s.mealType} className="p-4 bg-white/50 border border-[rgba(77,42,0,0.08)] rounded-2xl text-center">
-                <span className="text-[10px] font-mono uppercase text-[#4D2A00]/60 block">{s.mealType}</span>
-                <span className="text-2xl font-extrabold text-[#CC6F00] font-mono block mt-1">
+              <div key={s.mealType} className="p-4 bg-[var(--bg-elevated)] border border-[var(--border-subtle)] rounded-lg text-center">
+                <span className="text-[10px] uppercase text-[var(--text-muted)] block">{s.mealType}</span>
+                <span className="text-2xl font-black text-[#FF6D1F] block mt-1">
                   ★ {s.averageRating.toFixed(1)}
                 </span>
-                <span className="text-[10px] text-[#4D2A00]/70 block mt-0.5">{s.responseCount} reviews</span>
+                <span className="text-[10px] text-[var(--text-secondary)] block mt-0.5">{s.responseCount} reviews</span>
               </div>
             ))}
           </div>
-
-          {summary.recentFeedbacks && summary.recentFeedbacks.length > 0 && (
-            <div className="space-y-2 pt-2 border-t border-[rgba(77,42,0,0.08)]">
-              <h3 className="text-xs font-semibold text-[#4D2A00]">Recent Student Feedback Comments</h3>
-              <div className="space-y-2">
-                {summary.recentFeedbacks.map((fb) => (
-                  <div key={fb.id} className="p-3 bg-white/50 rounded-2xl border border-[rgba(77,42,0,0.08)] text-xs flex items-start justify-between gap-3">
-                    <div className="space-y-0.5">
-                      <div className="flex items-center space-x-2">
-                        <span className="font-bold text-[#4D2A00]">{fb.student.fullName}</span>
-                        <span className="text-[10px] font-mono font-bold text-[#CC6F00]">★ {fb.rating}/5 ({fb.mealType})</span>
-                      </div>
-                      <p className="text-[#4D2A00]/80">{fb.comments || "No written remarks."}</p>
-                    </div>
-                    <span className="text-[10px] font-mono text-[#4D2A00]/60 shrink-0">
-                      {new Date(fb.createdAt).toLocaleDateString()}
-                    </span>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
-        </div>
+        </section>
       )}
 
       {/* Edit Menu Modal */}
       {isAdminOrWarden && isEditingMenu && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-md p-4 animate-fadeIn">
-          <div className="glass-modal max-w-lg w-full p-6 space-y-4 text-xs rounded-3xl border border-[rgba(77,42,0,0.15)] shadow-glass">
-            <div className="flex items-center justify-between border-b border-[rgba(77,42,0,0.1)] pb-3">
-              <h3 className="text-base font-bold text-[#4D2A00]">
-                Edit {dayNames[editDayOfWeek]} Menu — {hostelBlock}
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-md p-4 animate-fadeIn">
+          <div className="campus-block max-w-lg w-full p-6 space-y-4 text-xs font-mono border border-[var(--border-subtle)] shadow-2xl">
+            <div className="flex items-center justify-between border-b border-[var(--border-subtle)] pb-3">
+              <h3 className="text-xs font-bold text-[var(--text-primary)] uppercase">
+                EDIT {dayNames[editDayOfWeek].toUpperCase()} MENU — {hostelBlock}
               </h3>
-              <button onClick={() => setIsEditingMenu(false)} className="text-[#4D2A00]/60 hover:text-[#4D2A00]">
+              <button onClick={() => setIsEditingMenu(false)} className="text-[var(--text-muted)] hover:text-[var(--text-primary)]">
                 <X className="w-5 h-5" />
               </button>
             </div>
 
             {editError && (
-              <div className="p-3 bg-rose-500/20 border border-rose-500/30 rounded-xl text-rose-900 font-medium">
+              <div className="p-3 bg-rose-950/40 border border-rose-500/40 text-rose-300 rounded-lg">
                 {editError}
               </div>
             )}
 
             <form onSubmit={handleSaveMenu} className="space-y-3.5">
-              <div>
-                <label className="block font-semibold text-[#4D2A00] mb-1">Breakfast Menu</label>
+              <div className="space-y-1">
+                <label className="block uppercase text-[10px] text-[var(--text-secondary)]">Breakfast Menu</label>
                 <input
                   type="text"
                   required
                   value={editBreakfast}
                   onChange={(e) => setEditBreakfast(e.target.value)}
-                  className="w-full px-3.5 py-2 bg-white/60 border border-[rgba(77,42,0,0.12)] rounded-xl text-[#4D2A00] focus:outline-none focus:border-[#CC6F00]"
+                  className="w-full px-3 py-2 bg-[var(--bg-input)] border border-[var(--border-subtle)] rounded-lg text-[var(--text-primary)] placeholder:text-[var(--text-muted)] focus:border-[#FF6D1F] outline-none"
                 />
               </div>
 
-              <div>
-                <label className="block font-semibold text-[#4D2A00] mb-1">Lunch Menu</label>
+              <div className="space-y-1">
+                <label className="block uppercase text-[10px] text-[var(--text-secondary)]">Lunch Menu</label>
                 <input
                   type="text"
                   required
                   value={editLunch}
                   onChange={(e) => setEditLunch(e.target.value)}
-                  className="w-full px-3.5 py-2 bg-white/60 border border-[rgba(77,42,0,0.12)] rounded-xl text-[#4D2A00] focus:outline-none focus:border-[#CC6F00]"
+                  className="w-full px-3 py-2 bg-[var(--bg-input)] border border-[var(--border-subtle)] rounded-lg text-[var(--text-primary)] placeholder:text-[var(--text-muted)] focus:border-[#FF6D1F] outline-none"
                 />
               </div>
 
-              <div>
-                <label className="block font-semibold text-[#4D2A00] mb-1">Evening Snacks</label>
+              <div className="space-y-1">
+                <label className="block uppercase text-[10px] text-[var(--text-secondary)]">Evening Snacks</label>
                 <input
                   type="text"
                   required
                   value={editSnacks}
                   onChange={(e) => setEditSnacks(e.target.value)}
-                  className="w-full px-3.5 py-2 bg-white/60 border border-[rgba(77,42,0,0.12)] rounded-xl text-[#4D2A00] focus:outline-none focus:border-[#CC6F00]"
+                  className="w-full px-3 py-2 bg-[var(--bg-input)] border border-[var(--border-subtle)] rounded-lg text-[var(--text-primary)] placeholder:text-[var(--text-muted)] focus:border-[#FF6D1F] outline-none"
                 />
               </div>
 
-              <div>
-                <label className="block font-semibold text-[#4D2A00] mb-1">Dinner Menu</label>
+              <div className="space-y-1">
+                <label className="block uppercase text-[10px] text-[var(--text-secondary)]">Dinner Menu</label>
                 <input
                   type="text"
                   required
                   value={editDinner}
                   onChange={(e) => setEditDinner(e.target.value)}
-                  className="w-full px-3.5 py-2 bg-white/60 border border-[rgba(77,42,0,0.12)] rounded-xl text-[#4D2A00] focus:outline-none focus:border-[#CC6F00]"
+                  className="w-full px-3 py-2 bg-[var(--bg-input)] border border-[var(--border-subtle)] rounded-lg text-[var(--text-primary)] placeholder:text-[var(--text-muted)] focus:border-[#FF6D1F] outline-none"
                 />
               </div>
 
-              <div className="flex items-center justify-end space-x-2.5 pt-3 border-t border-[rgba(77,42,0,0.1)]">
+              <div className="flex items-center justify-end space-x-2 pt-3 border-t border-[var(--border-subtle)]">
                 <button
                   type="button"
                   onClick={() => setIsEditingMenu(false)}
-                  className="btn-secondary px-4 py-2"
+                  className="btn-secondary px-4 py-2 text-xs"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
                   disabled={editSubmitting}
-                  className="btn-primary px-6 py-2 text-xs font-bold disabled:opacity-50 shadow-sm"
+                  className="btn-primary px-5 py-2 text-xs font-bold"
                 >
-                  {editSubmitting ? "Saving..." : "Save Menu Changes"}
+                  {editSubmitting ? "SAVING..." : "SAVE MENU"}
                 </button>
               </div>
             </form>

@@ -90,42 +90,43 @@ export const NewTicketPage: React.FC<{ user: UserProfile | null }> = ({ user }) 
   };
 
   return (
-    <div className="max-w-2xl mx-auto space-y-6">
+    <div className="max-w-2xl mx-auto space-y-6 pb-16">
       <div className="flex items-center space-x-3">
         <button
           onClick={() => navigate("/tickets")}
-          className="p-2.5 glass-panel rounded-xl text-[#4D2A00]/70 hover:text-[#4D2A00] border border-[rgba(77,42,0,0.1)] transition-colors"
+          className="p-2 bg-[var(--bg-elevated)] rounded-xl text-[var(--text-secondary)] hover:text-[var(--text-primary)] border border-[var(--border-subtle)] transition-colors"
           aria-label="Back to tickets list"
         >
           <ArrowLeft className="w-4 h-4" />
         </button>
         <div>
-          <h1 className="text-2xl font-bold text-[#4D2A00]">
+          <span className="editorial-eyebrow">07 // LOG DEFECT</span>
+          <h1 className="editorial-title text-xl sm:text-2xl font-bold text-[var(--text-primary)] mt-0.5">
             {t("tickets.newTicket", "Report Maintenance Complaint")}
           </h1>
-          <p className="text-xs text-[#4D2A00]/70 mt-0.5">
-            Submit hostel repair requests with automatic department dispatch
+          <p className="text-xs text-[var(--text-secondary)]">
+            Submit hostel repair requests with automated triage & SLA timer dispatch.
           </p>
         </div>
       </div>
 
       {resultMessage && (
-        <div className="p-4 bg-emerald-500/20 border border-emerald-500/30 rounded-2xl text-xs text-emerald-950 font-medium flex items-center space-x-2">
-          <CheckCircle2 className="w-4 h-4 shrink-0 text-emerald-700" />
+        <div className="p-3.5 bg-emerald-500/15 border border-emerald-500/30 rounded-xl text-xs text-emerald-400 font-mono flex items-center space-x-2">
+          <CheckCircle2 className="w-4 h-4 shrink-0 text-emerald-400" />
           <span>{resultMessage}</span>
         </div>
       )}
 
       {error && (
-        <div className="p-4 bg-rose-500/20 border border-rose-500/30 rounded-2xl text-xs text-rose-900 font-medium flex items-center space-x-2">
-          <AlertCircle className="w-4 h-4 shrink-0 text-rose-600" />
+        <div className="p-3.5 bg-rose-500/15 border border-rose-500/30 rounded-xl text-xs text-rose-400 font-mono flex items-center space-x-2">
+          <AlertCircle className="w-4 h-4 shrink-0 text-rose-400" />
           <span>{error}</span>
         </div>
       )}
 
-      <form onSubmit={handleSubmit} className="glass-panel rounded-3xl p-6 sm:p-8 space-y-5 border border-[rgba(77,42,0,0.1)] shadow-glass">
+      <form onSubmit={handleSubmit} className="campus-panel rounded-2xl p-6 sm:p-8 space-y-4 border border-[var(--border-subtle)]">
         <div>
-          <label className="block text-xs font-semibold text-[#4D2A00] mb-1.5">
+          <label className="block text-[10px] font-mono uppercase text-[var(--text-secondary)] mb-1">
             Complaint Summary / Title *
           </label>
           <input
@@ -134,18 +135,18 @@ export const NewTicketPage: React.FC<{ user: UserProfile | null }> = ({ user }) 
             value={formData.title}
             onChange={(e) => setFormData({ ...formData, title: e.target.value })}
             placeholder="e.g. Bathroom tap leaking heavily in 2nd floor washroom"
-            className="w-full px-3.5 py-2.5 bg-white/60 border border-[rgba(77,42,0,0.12)] rounded-xl text-[#4D2A00] text-xs placeholder-[#4D2A00]/40 focus:outline-none focus:border-[#CC6F00]"
+            className="w-full px-3.5 py-2.5 bg-[var(--bg-input)] border border-[var(--border-subtle)] rounded-xl text-[var(--text-primary)] text-xs placeholder:text-[var(--text-muted)] focus:outline-none focus:border-[#FF6D1F]"
           />
         </div>
 
         <div>
-          <div className="flex items-center justify-between mb-1.5">
-            <label className="block text-xs font-semibold text-[#4D2A00]">
+          <div className="flex items-center justify-between mb-1">
+            <label className="block text-[10px] font-mono uppercase text-[var(--text-secondary)]">
               Detailed Description *
             </label>
-            <span className="text-[10px] text-[#CC6F00] flex items-center space-x-1 font-semibold">
+            <span className="text-[10px] text-[#FF6D1F] flex items-center space-x-1 font-mono">
               <Sparkles className="w-3 h-3" />
-              <span>Auto-categorizes with NLP</span>
+              <span>Auto-triage with NLP</span>
             </span>
           </div>
           <textarea
@@ -153,20 +154,20 @@ export const NewTicketPage: React.FC<{ user: UserProfile | null }> = ({ user }) 
             rows={4}
             value={formData.description}
             onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-            placeholder="Describe the issue, exact defect location, and when it started..."
-            className="w-full px-3.5 py-2.5 bg-white/60 border border-[rgba(77,42,0,0.12)] rounded-xl text-[#4D2A00] text-xs placeholder-[#4D2A00]/40 focus:outline-none focus:border-[#CC6F00] resize-none"
+            placeholder="Describe the defect, exact location, and when it started..."
+            className="w-full px-3.5 py-2.5 bg-[var(--bg-input)] border border-[var(--border-subtle)] rounded-xl text-[var(--text-primary)] text-xs placeholder:text-[var(--text-muted)] focus:outline-none focus:border-[#FF6D1F] resize-none"
           />
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
           <div>
-            <label className="block text-xs font-semibold text-[#4D2A00] mb-1.5">
+            <label className="block text-[10px] font-mono uppercase text-[var(--text-secondary)] mb-1">
               Hostel Block *
             </label>
             <select
               value={formData.hostelBlock}
               onChange={(e) => setFormData({ ...formData, hostelBlock: e.target.value })}
-              className="w-full px-3.5 py-2.5 bg-white/60 border border-[rgba(77,42,0,0.12)] rounded-xl text-[#4D2A00] text-xs focus:outline-none focus:border-[#CC6F00]"
+              className="w-full px-3.5 py-2.5 bg-[var(--bg-input)] border border-[var(--border-subtle)] rounded-xl text-[var(--text-primary)] text-xs focus:outline-none focus:border-[#FF6D1F] font-mono"
             >
               <option value="Hostel-A">Hostel-A (Boys Senior)</option>
               <option value="Hostel-B">Hostel-B (Boys Junior)</option>
@@ -177,7 +178,7 @@ export const NewTicketPage: React.FC<{ user: UserProfile | null }> = ({ user }) 
           </div>
 
           <div>
-            <label className="block text-xs font-semibold text-[#4D2A00] mb-1.5">
+            <label className="block text-[10px] font-mono uppercase text-[var(--text-secondary)] mb-1">
               Room / Location Identifier *
             </label>
             <input
@@ -186,22 +187,22 @@ export const NewTicketPage: React.FC<{ user: UserProfile | null }> = ({ user }) 
               value={formData.roomNumber}
               onChange={(e) => setFormData({ ...formData, roomNumber: e.target.value })}
               placeholder="e.g. Rm 204 or 2nd Floor Corridor"
-              className="w-full px-3.5 py-2.5 bg-white/60 border border-[rgba(77,42,0,0.12)] rounded-xl text-[#4D2A00] text-xs placeholder-[#4D2A00]/40 focus:outline-none focus:border-[#CC6F00]"
+              className="w-full px-3.5 py-2.5 bg-[var(--bg-input)] border border-[var(--border-subtle)] rounded-xl text-[var(--text-primary)] text-xs placeholder:text-[var(--text-muted)] focus:outline-none focus:border-[#FF6D1F]"
             />
           </div>
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
           <div>
-            <label className="block text-xs font-semibold text-[#4D2A00] mb-1.5">
+            <label className="block text-[10px] font-mono uppercase text-[var(--text-secondary)] mb-1">
               Manual Category Override (Optional)
             </label>
             <select
               value={formData.category}
               onChange={(e) => setFormData({ ...formData, category: e.target.value })}
-              className="w-full px-3.5 py-2.5 bg-white/60 border border-[rgba(77,42,0,0.12)] rounded-xl text-[#4D2A00] text-xs focus:outline-none focus:border-[#CC6F00]"
+              className="w-full px-3.5 py-2.5 bg-[var(--bg-input)] border border-[var(--border-subtle)] rounded-xl text-[var(--text-primary)] text-xs focus:outline-none focus:border-[#FF6D1F] font-mono"
             >
-              <option value="">Auto-Detect via ML Classifier</option>
+              <option value="">Auto-Detect via Classifier</option>
               <option value="PLUMBING">Plumbing</option>
               <option value="ELECTRICAL">Electrical</option>
               <option value="CARPENTRY">Carpentry</option>
@@ -214,66 +215,60 @@ export const NewTicketPage: React.FC<{ user: UserProfile | null }> = ({ user }) 
           </div>
 
           <div>
-            <label className="block text-xs font-semibold text-[#4D2A00] mb-1.5">
+            <label className="block text-[10px] font-mono uppercase text-[var(--text-secondary)] mb-1">
               Reported Urgency
             </label>
             <select
               value={formData.priority}
               onChange={(e) => setFormData({ ...formData, priority: e.target.value })}
-              className="w-full px-3.5 py-2.5 bg-white/60 border border-[rgba(77,42,0,0.12)] rounded-xl text-[#4D2A00] text-xs focus:outline-none focus:border-[#CC6F00]"
+              className="w-full px-3.5 py-2.5 bg-[var(--bg-input)] border border-[var(--border-subtle)] rounded-xl text-[var(--text-primary)] text-xs focus:outline-none focus:border-[#FF6D1F] font-mono"
             >
-              <option value="LOW">Low (Routine Check)</option>
-              <option value="MEDIUM">Medium (Standard 24h SLA)</option>
-              <option value="HIGH">High (Urgent Attention)</option>
+              <option value="LOW">LOW (Cosmetic / 48h SLA)</option>
+              <option value="MEDIUM">MEDIUM (Standard Queue / 24h SLA)</option>
+              <option value="HIGH">HIGH (Urgent / 12h SLA)</option>
+              <option value="CRITICAL">CRITICAL (Immediate Risk / 4h SLA)</option>
             </select>
           </div>
         </div>
 
-        {/* Photo Attachment */}
+        {/* Photo Evidence */}
         <div>
-          <label className="block text-xs font-semibold text-[#4D2A00] mb-1.5">
-            Attach Photo Evidence (Optional)
+          <label className="block text-[10px] font-mono uppercase text-[var(--text-secondary)] mb-1">
+            Photo Evidence (Optional)
           </label>
-          <div className="border border-dashed border-[#CC6F00]/30 hover:border-[#CC6F00] rounded-2xl p-4 text-center bg-white/40 transition-colors cursor-pointer relative">
-            <input
-              type="file"
-              accept="image/*"
-              onChange={handlePhotoChange}
-              className="absolute inset-0 opacity-0 cursor-pointer w-full h-full"
-            />
-            {photoPreview ? (
-              <div className="space-y-2">
-                <img
-                  src={photoPreview}
-                  alt="Preview"
-                  className="max-h-44 mx-auto rounded-xl object-contain border border-[rgba(77,42,0,0.1)]"
-                />
-                <p className="text-[11px] text-[#CC6F00] font-bold">Click to replace photo</p>
-              </div>
-            ) : (
-              <div className="py-3 flex flex-col items-center justify-center space-y-1.5 text-xs text-[#4D2A00]/70">
-                <Upload className="w-5 h-5 text-[#CC6F00]" />
-                <span className="text-[#4D2A00] font-semibold">Drop an image here or browse</span>
-                <span className="text-[10px] text-[#4D2A00]/50">Max 5MB compressed directly</span>
+          <div className="flex items-center space-x-3">
+            <label className="cursor-pointer px-4 py-2 bg-[var(--bg-input)] border border-[var(--border-subtle)] rounded-xl text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:border-[#FF6D1F] flex items-center space-x-2 text-xs transition-colors font-mono">
+              <Upload className="w-3.5 h-3.5 text-[#FF6D1F]" />
+              <span>{photoFile ? photoFile.name : "Choose Image File"}</span>
+              <input
+                type="file"
+                accept="image/*"
+                onChange={handlePhotoChange}
+                className="hidden"
+              />
+            </label>
+            {photoPreview && (
+              <div className="w-10 h-10 rounded-lg overflow-hidden border border-[var(--border-subtle)] shrink-0">
+                <img src={photoPreview} alt="Preview" className="w-full h-full object-cover" />
               </div>
             )}
           </div>
         </div>
 
-        <div className="flex items-center justify-end space-x-3 pt-4 border-t border-[rgba(77,42,0,0.1)]">
+        <div className="flex items-center justify-end space-x-2 pt-3 border-t border-[var(--border-subtle)]">
           <button
             type="button"
             onClick={() => navigate("/tickets")}
-            className="btn-secondary px-4 py-2.5 text-xs font-semibold"
+            className="btn-secondary px-4 py-2 text-xs rounded-xl"
           >
             Cancel
           </button>
           <button
             type="submit"
             disabled={loading}
-            className="btn-primary px-6 py-2.5 text-xs font-bold disabled:opacity-50 flex items-center space-x-1.5 shadow-sm"
+            className="btn-primary px-6 py-2 text-xs font-bold rounded-xl disabled:opacity-50"
           >
-            <span>{loading ? "Submitting..." : "Submit Complaint"}</span>
+            {loading ? "Registering Defect..." : "Submit Complaint"}
           </button>
         </div>
       </form>

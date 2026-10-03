@@ -3,18 +3,16 @@ import {
   CalendarDays,
   Clock,
   CheckCircle2,
-  AlertCircle,
   Users,
   BookOpen,
   MapPin,
   GraduationCap,
   Save,
   Send,
-  UserCheck,
-  ChevronRight,
   RefreshCw,
   X,
-  FileSpreadsheet,
+  ChevronRight,
+  Layers,
   Award
 } from "lucide-react";
 import { apiRequest, UserProfile } from "../api/client.js";
@@ -24,7 +22,7 @@ interface FacultyDashboardPageProps {
 }
 
 export const FacultyDashboardPage: React.FC<FacultyDashboardPageProps> = ({ user }) => {
-  const [activeTab, setActiveTab] = useState<"today" | "timetable" | "subjects" | "marks">("today");
+  const [activeTab, setActiveTab] = useState<"today" | "timetable" | "assignments" | "marks">("today");
   const [loading, setLoading] = useState<boolean>(true);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
 
@@ -95,15 +93,18 @@ export const FacultyDashboardPage: React.FC<FacultyDashboardPageProps> = ({ user
         section: cls.section
       });
 
-      const res = await apiRequest<{ students: any[] }>(`/api/academic/attendance/class-students?${query.toString()}`);
+      const res = await apiRequest<{ students: any[]; session?: any }>(`/api/academic/attendance/class-students?${query.toString()}`);
       setClassStudents(res.students || []);
 
-      // Default all students to PRESENT
+      // If student has savedStatus from database, use it! Otherwise default to PRESENT
       const initial: Record<string, "PRESENT" | "ABSENT" | "LATE"> = {};
       (res.students || []).forEach((s) => {
-        initial[s.id] = "PRESENT";
+        initial[s.id] = s.savedStatus || "PRESENT";
       });
       setAttendanceRecords(initial);
+      if (res.session?.topic) {
+        setAttendanceTopic(res.session.topic);
+      }
     } catch (err: any) {
       showToast(err.message || "Failed to load class roster.");
     } finally {
@@ -204,18 +205,11 @@ export const FacultyDashboardPage: React.FC<FacultyDashboardPageProps> = ({ user
     );
   };
 
-  // Save or Publish Marks
+  // Save Marks Batch
   const handleSaveMarks = async (status: "DRAFT" | "PUBLISHED") => {
-    if (!selectedAssignment || marksRoster.length === 0) return;
-
-    if (status === "PUBLISHED") {
-      const confirmed = window.confirm(
-        "Are you sure you want to PUBLISH these marks? Published results are immediately visible to students and calculate their semester SGPA."
-      );
-      if (!confirmed) return;
-    }
-
+    if (!selectedAssignment) return;
     setSavingMarks(true);
+
     try {
       const payload = {
         subjectId: selectedAssignment.subjectId,
@@ -255,511 +249,457 @@ export const FacultyDashboardPage: React.FC<FacultyDashboardPageProps> = ({ user
   const dayNames = ["", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
   const pendingCount = todayClasses.filter((c) => !c.isAttendanceMarked).length;
 
+  // Distinct branches taught
+  const distinctBranches = Array.from(new Set(assignments.map((a) => `${a.course} ${a.branch}`)));
+
   return (
-    <div className="space-y-6 animate-fadeIn">
+    <div className="space-y-8 pb-16 animate-fadeIn">
       {/* Toast Notification */}
       {toastMessage && (
-        <div className="fixed bottom-6 right-6 z-50 bg-[#4D2A00] text-[#FFF6ED] px-4 py-3 rounded-2xl shadow-xl flex items-center space-x-2 text-xs font-semibold animate-slideUp">
-          <CheckCircle2 className="w-4 h-4 text-[#FDB773]" />
+        <div className="fixed bottom-6 right-6 z-50 bg-[var(--bg-elevated)] text-[var(--text-primary)] border border-[#FF6D1F]/50 px-4 py-3 rounded-lg shadow-2xl flex items-center space-x-2 text-xs font-mono">
+          <CheckCircle2 className="w-4 h-4 text-[#FF6D1F]" />
           <span>{toastMessage}</span>
         </div>
       )}
 
-      {/* Faculty Profile Banner */}
-      <div className="glass-panel p-6 rounded-3xl border border-[rgba(77,42,0,0.1)] flex flex-col md:flex-row md:items-center justify-between gap-4 shadow-glass">
-        <div className="flex items-center space-x-4">
-          <div className="w-14 h-14 rounded-2xl bg-[#CC6F00] text-white flex items-center justify-center font-bold text-xl shadow-md">
-            {user?.fullName?.charAt(0) || "F"}
-          </div>
-          <div>
-            <div className="flex items-center space-x-2">
-              <h1 className="text-xl font-extrabold text-[#4D2A00]">{user?.fullName}</h1>
-              <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-[#CC6F00]/15 text-[#CC6F00] border border-[#CC6F00]/30 uppercase">
-                Faculty Member
-              </span>
-            </div>
-            <p className="text-xs text-[#4D2A00]/70 mt-0.5">
-              {user?.department} • Employee ID: <span className="font-mono font-semibold">{user?.employeeId || "FAC-EMP"}</span>
-            </p>
-            <p className="text-[11px] text-[#4D2A00]/50 font-mono mt-0.5">{user?.email}</p>
-          </div>
-        </div>
-
-        <div className="flex items-center space-x-3">
-          <button
-            onClick={fetchFacultyData}
-            disabled={loading}
-            className="btn-secondary px-4 py-2.5 text-xs flex items-center space-x-2"
-          >
-            <RefreshCw className={`w-3.5 h-3.5 ${loading ? "animate-spin" : ""}`} />
-            <span>Refresh Portal</span>
-          </button>
-        </div>
-      </div>
-
-      {/* Quick Summary Metric Cards */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-        <div className="glass-card p-4 rounded-3xl border border-[rgba(77,42,0,0.1)] space-y-1">
-          <span className="text-[10px] font-mono text-[#4D2A00]/60 uppercase block">Today&apos;s Lectures</span>
-          <p className="text-2xl font-black text-[#4D2A00]">{todayClasses.length}</p>
-          <span className="text-[10px] text-[#4D2A00]/70">Scheduled today</span>
-        </div>
-
-        <div className="glass-card p-4 rounded-3xl border border-[rgba(77,42,0,0.1)] space-y-1">
-          <span className="text-[10px] font-mono text-[#4D2A00]/60 uppercase block">Pending Attendance</span>
-          <p className={`text-2xl font-black ${pendingCount > 0 ? "text-amber-600" : "text-emerald-700"}`}>
-            {pendingCount}
+      {/* Header Banner */}
+      <section className="border-b border-[var(--border-subtle)] pb-6 flex flex-col md:flex-row md:items-end md:justify-between gap-4">
+        <div>
+          <span className="editorial-eyebrow text-[#FF6D1F] block mb-2">
+            01 // ACADEMIC INSTRUCTION
+          </span>
+          <h1 className="editorial-title text-xl sm:text-2xl text-[var(--text-primary)]">
+            FACULTY COMMAND PORTAL
+          </h1>
+          <p className="text-xs font-mono text-[var(--text-secondary)] mt-2">
+            {user?.fullName} · {user?.department || "Computer Applications"} · EMP ID: {user?.employeeId || "FAC-CSE01"}
           </p>
-          <span className="text-[10px] text-[#4D2A00]/70">Requires marking</span>
         </div>
 
-        <div className="glass-card p-4 rounded-3xl border border-[rgba(77,42,0,0.1)] space-y-1">
-          <span className="text-[10px] font-mono text-[#4D2A00]/60 uppercase block">Assigned Classes</span>
-          <p className="text-2xl font-black text-[#4D2A00]">{assignments.length}</p>
-          <span className="text-[10px] text-[#4D2A00]/70">Subjects & sections</span>
+        <button
+          onClick={fetchFacultyData}
+          disabled={loading}
+          className="btn-secondary px-4 py-2 text-xs font-mono flex items-center space-x-2 shrink-0"
+        >
+          <RefreshCw className={`w-3.5 h-3.5 ${loading ? "animate-spin" : ""}`} />
+          <span>REFRESH PORTAL</span>
+        </button>
+      </section>
+
+      {/* Numerical Metrics Bar (Horizontal Data Strip) */}
+      <section className="grid grid-cols-2 lg:grid-cols-4 gap-4 p-5 rounded-2xl bg-[var(--bg-secondary)] border border-[var(--border-subtle)]">
+        <div className="space-y-1">
+          <span className="text-[10px] font-mono uppercase tracking-widest text-[var(--text-muted)]">
+            Today's Lectures
+          </span>
+          <div className="text-3xl font-mono font-black text-[var(--text-primary)]">
+            {todayClasses.length}
+          </div>
+          <span className="text-[11px] font-mono text-[var(--text-secondary)]">
+            Scheduled slots today
+          </span>
         </div>
 
-        <div className="glass-card p-4 rounded-3xl border border-[rgba(77,42,0,0.1)] space-y-1">
-          <span className="text-[10px] font-mono text-[#4D2A00]/60 uppercase block">Weekly Lectures</span>
-          <p className="text-2xl font-black text-[#4D2A00]">{fullTimetable.length}</p>
-          <span className="text-[10px] text-[#4D2A00]/70">Total weekly slots</span>
+        <div className="space-y-1">
+          <span className="text-[10px] font-mono uppercase tracking-widest text-[var(--text-muted)]">
+            Attendance Status
+          </span>
+          <div className={`text-3xl font-mono font-black ${pendingCount > 0 ? "text-[#FF6D1F]" : "text-emerald-400"}`}>
+            {pendingCount > 0 ? `${pendingCount} PENDING` : "ALL MARKED"}
+          </div>
+          <span className="text-[11px] font-mono text-[var(--text-secondary)]">
+            {pendingCount > 0 ? "Action required" : "Session synchronized"}
+          </span>
         </div>
-      </div>
 
-      {/* Tabs Bar */}
-      <div className="flex border-b border-[rgba(77,42,0,0.1)] gap-2 overflow-x-auto pb-1 text-xs">
+        <div className="space-y-1">
+          <span className="text-[10px] font-mono uppercase tracking-widest text-[var(--text-muted)]">
+            Multi-Branch Teaching
+          </span>
+          <div className="text-3xl font-mono font-black text-[var(--text-primary)]">
+            {distinctBranches.length} PROGRAMS
+          </div>
+          <span className="text-[11px] font-mono text-[var(--text-secondary)] truncate block" title={distinctBranches.join(", ")}>
+            {distinctBranches.join(" · ") || "MCA, B.Tech, BCA"}
+          </span>
+        </div>
+
+        <div className="space-y-1">
+          <span className="text-[10px] font-mono uppercase tracking-widest text-[var(--text-muted)]">
+            Weekly Schedule
+          </span>
+          <div className="text-3xl font-mono font-black text-[var(--text-primary)]">
+            {fullTimetable.length} SESSIONS
+          </div>
+          <span className="text-[11px] font-mono text-[var(--text-secondary)]">
+            Across campus semesters
+          </span>
+        </div>
+      </section>
+
+      {/* Section 21: MY TEACHING ASSIGNMENTS (Multi-Branch Program Bands) */}
+      <section className="campus-block p-6">
+        <div className="flex items-center justify-between mb-4 pb-3 border-b border-[var(--border-subtle)]">
+          <div>
+            <span className="editorial-eyebrow text-[#FF6D1F]">
+              02 // CROSS-DISCIPLINARY ROSTER
+            </span>
+            <h2 className="editorial-title text-xl text-[var(--text-primary)] mt-0.5">
+              MY TEACHING ASSIGNMENTS
+            </h2>
+          </div>
+          <span className="text-[11px] font-mono text-[var(--text-muted)]">
+            Rosters strictly segregated by program
+          </span>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          {assignments.map((a, i) => (
+            <div
+              key={a.id || i}
+              className="p-4 rounded-xl bg-[var(--bg-elevated)] border border-[var(--border-subtle)] space-y-2 hover:border-[#FF6D1F]/40 transition-colors"
+            >
+              <div className="flex items-center justify-between">
+                <span className="text-xs font-mono font-bold text-[#FF6D1F]">
+                  {a.course} // {a.branch}
+                </span>
+                <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-[var(--bg-surface)] text-[var(--text-secondary)] border border-[var(--border-subtle)]">
+                  SEC {a.section}
+                </span>
+              </div>
+              <h3 className="text-sm font-bold text-[var(--text-primary)]">
+                {a.subject?.name || a.subjectName || "Assigned Course"}
+              </h3>
+              <div className="text-xs font-mono text-[var(--text-muted)] flex items-center justify-between pt-1 border-t border-[var(--border-subtle)]">
+                <span>Year {a.year} · Sem {a.semester}</span>
+                <span>Code: {a.subject?.code || a.subjectCode || "CS-401"}</span>
+              </div>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      {/* Tabs Navigation Rail */}
+      <div className="flex border-b border-[var(--border-subtle)] gap-4 overflow-x-auto pb-1 text-xs font-mono">
         <button
           onClick={() => setActiveTab("today")}
-          className={`py-2 px-4 rounded-xl font-bold flex items-center space-x-2 transition-all whitespace-nowrap ${
+          className={`pb-3 font-bold transition-all relative ${
             activeTab === "today"
-              ? "bg-[#CC6F00] text-white shadow-sm"
-              : "bg-white/40 text-[#4D2A00]/70 hover:bg-white/70 hover:text-[#4D2A00]"
+              ? "text-[var(--text-primary)] border-b-2 border-[#FF6D1F]"
+              : "text-[var(--text-muted)] hover:text-[var(--text-primary)]"
           }`}
         >
-          <Clock className="w-3.5 h-3.5" />
-          <span>Today&apos;s Lectures & Attendance ({todayClasses.length})</span>
+          01 TODAY'S LECTURES & ATTENDANCE ({todayClasses.length})
         </button>
 
         <button
           onClick={() => setActiveTab("timetable")}
-          className={`py-2 px-4 rounded-xl font-bold flex items-center space-x-2 transition-all whitespace-nowrap ${
+          className={`pb-3 font-bold transition-all relative ${
             activeTab === "timetable"
-              ? "bg-[#CC6F00] text-white shadow-sm"
-              : "bg-white/40 text-[#4D2A00]/70 hover:bg-white/70 hover:text-[#4D2A00]"
+              ? "text-[var(--text-primary)] border-b-2 border-[#FF6D1F]"
+              : "text-[var(--text-muted)] hover:text-[var(--text-primary)]"
           }`}
         >
-          <CalendarDays className="w-3.5 h-3.5" />
-          <span>Weekly Timetable ({fullTimetable.length})</span>
-        </button>
-
-        <button
-          onClick={() => setActiveTab("subjects")}
-          className={`py-2 px-4 rounded-xl font-bold flex items-center space-x-2 transition-all whitespace-nowrap ${
-            activeTab === "subjects"
-              ? "bg-[#CC6F00] text-white shadow-sm"
-              : "bg-white/40 text-[#4D2A00]/70 hover:bg-white/70 hover:text-[#4D2A00]"
-          }`}
-        >
-          <BookOpen className="w-3.5 h-3.5" />
-          <span>Assigned Subjects ({assignments.length})</span>
+          02 WEEKLY TIMETABLE ({fullTimetable.length})
         </button>
 
         <button
           onClick={() => setActiveTab("marks")}
-          className={`py-2 px-4 rounded-xl font-bold flex items-center space-x-2 transition-all whitespace-nowrap ${
+          className={`pb-3 font-bold transition-all relative ${
             activeTab === "marks"
-              ? "bg-[#CC6F00] text-white shadow-sm"
-              : "bg-white/40 text-[#4D2A00]/70 hover:bg-white/70 hover:text-[#4D2A00]"
+              ? "text-[var(--text-primary)] border-b-2 border-[#FF6D1F]"
+              : "text-[var(--text-muted)] hover:text-[var(--text-primary)]"
           }`}
         >
-          <Award className="w-3.5 h-3.5" />
-          <span>Enter / Publish Marks</span>
+          03 SEMESTER MARKS & GRADING
         </button>
       </div>
 
-      {/* TAB 1: TODAY'S CLASSES */}
+      {/* TAB 1: TODAY'S LECTURES & ATTENDANCE */}
       {activeTab === "today" && (
-        <div className="space-y-4">
-          <div className="flex items-center justify-between">
-            <h2 className="text-sm font-bold text-[#4D2A00] flex items-center space-x-2">
-              <Clock className="w-4 h-4 text-[#CC6F00]" />
-              <span>Today&apos;s Class Schedule & Attendance Actions</span>
-            </h2>
-            <span className="text-xs text-[#4D2A00]/60">
+        <section className="campus-block p-6">
+          <div className="flex items-center justify-between mb-4">
+            <span className="editorial-eyebrow text-[var(--text-muted)]">
+              LECTURES SCHEDULED FOR TODAY
+            </span>
+            <span className="text-xs font-mono text-[var(--text-muted)]">
               {new Date().toLocaleDateString(undefined, { weekday: "long", month: "short", day: "numeric" })}
             </span>
           </div>
 
           {todayClasses.length === 0 ? (
-            <div className="glass-panel p-8 text-center rounded-3xl border border-[rgba(77,42,0,0.1)] text-[#4D2A00]/70 text-xs">
-              <p className="font-semibold text-sm text-[#4D2A00]">No lectures scheduled for you today.</p>
-              <p className="mt-1">Check your weekly timetable tab for your upcoming days.</p>
+            <div className="py-12 text-center text-xs font-mono text-[var(--text-muted)]">
+              No lectures scheduled for your faculty profile today.
             </div>
           ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="divide-y divide-[var(--border-subtle)]">
               {todayClasses.map((cls) => (
                 <div
                   key={cls.id}
-                  className="glass-card p-5 rounded-3xl border border-[rgba(77,42,0,0.1)] flex flex-col justify-between space-y-4 hover:border-[#CC6F00]/40 transition-all shadow-glass"
+                  className="py-4 flex flex-col md:flex-row md:items-center justify-between gap-4 group"
                 >
-                  <div className="space-y-2">
-                    <div className="flex items-center justify-between">
-                      <span className="px-2.5 py-1 rounded-full text-xs font-mono font-bold bg-[#CC6F00]/10 text-[#CC6F00] border border-[#CC6F00]/20">
-                        {cls.startTime} – {cls.endTime}
+                  <div className="flex items-center space-x-4">
+                    <div className="w-20 font-mono text-left shrink-0">
+                      <span className="text-sm font-bold text-[var(--text-primary)] block">
+                        {cls.startTime}
                       </span>
-                      {cls.isAttendanceMarked ? (
-                        <span className="flex items-center space-x-1 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-emerald-500/10 text-emerald-800 border border-emerald-500/30">
-                          <CheckCircle2 className="w-3 h-3 text-emerald-600" />
-                          <span>Attendance Marked</span>
-                        </span>
-                      ) : (
-                        <span className="flex items-center space-x-1 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-amber-500/15 text-amber-900 border border-amber-500/30">
-                          <AlertCircle className="w-3 h-3 text-amber-700" />
-                          <span>Pending Attendance</span>
-                        </span>
-                      )}
+                      <span className="text-[10px] text-[var(--text-muted)] block">
+                        {cls.endTime}
+                      </span>
                     </div>
 
-                    <div>
-                      <h3 className="text-base font-bold text-[#4D2A00]">{cls.subjectName}</h3>
-                      <p className="text-xs text-[#CC6F00] font-mono font-bold mt-0.5">{cls.subjectCode}</p>
-                    </div>
-
-                    <div className="flex flex-wrap items-center gap-y-1 gap-x-3 text-xs text-[#4D2A00]/80">
-                      <div className="flex items-center space-x-1">
-                        <GraduationCap className="w-3.5 h-3.5 text-[#CC6F00]" />
-                        <span>{cls.course} • {cls.branch}</span>
+                    <div className="border-l border-[var(--border-subtle)] pl-4">
+                      <div className="flex items-center space-x-2">
+                        <span className="text-xs font-mono font-bold text-[#FF6D1F]">
+                          {cls.course} {cls.branch}
+                        </span>
+                        <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-[var(--bg-surface)] text-[var(--text-primary)] border border-[var(--border-subtle)]">
+                          Sem {cls.semester} · Sec {cls.section}
+                        </span>
                       </div>
-                      <div>•</div>
-                      <div>Sem {cls.semester} • <strong>Section {cls.section}</strong></div>
-                      <div>•</div>
-                      <div className="flex items-center space-x-1">
-                        <MapPin className="w-3.5 h-3.5 text-[#CC6F00]" />
-                        <span className="font-mono font-semibold">{cls.room}</span>
-                      </div>
+                      <h4 className="text-sm font-bold text-[var(--text-primary)] mt-0.5">
+                        {cls.subject?.name || cls.subjectName}
+                      </h4>
+                      <p className="text-xs font-mono text-[var(--text-secondary)] mt-0.5">
+                        Room {cls.roomNumber || cls.room || "Lab 2"} · Code: {cls.subject?.code || cls.subjectCode}
+                      </p>
                     </div>
                   </div>
 
-                  <div className="pt-3 border-t border-[rgba(77,42,0,0.08)] flex items-center justify-between">
-                    <span className="text-[11px] text-[#4D2A00]/60">
-                      {cls.isAttendanceMarked ? "Re-take or update session" : "Ready for attendance roll call"}
-                    </span>
-                    <button
-                      onClick={() => handleOpenAttendance(cls)}
-                      className={`px-4 py-2 rounded-xl text-xs font-bold transition-all shadow-sm ${
-                        cls.isAttendanceMarked
-                          ? "btn-secondary text-[11px]"
-                          : "btn-primary"
-                      }`}
-                    >
-                      {cls.isAttendanceMarked ? "Update Attendance" : "Mark Attendance"}
-                    </button>
+                  <div className="flex items-center space-x-3 shrink-0">
+                    {cls.isAttendanceMarked ? (
+                      <span className="px-3 py-1.5 rounded-xl text-xs font-mono font-bold bg-emerald-500/15 text-emerald-300 border border-emerald-500/30 flex items-center space-x-1.5">
+                        <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" />
+                        <span>ATTENDANCE RECORDED</span>
+                      </span>
+                    ) : (
+                      <button
+                        onClick={() => handleOpenAttendance(cls)}
+                        className="btn-primary px-4 py-2 rounded-xl text-xs font-mono font-bold flex items-center space-x-1.5 shadow-sm"
+                      >
+                        <Users className="w-3.5 h-3.5" />
+                        <span>RECORD ATTENDANCE</span>
+                      </button>
+                    )}
                   </div>
                 </div>
               ))}
             </div>
           )}
-        </div>
+        </section>
       )}
 
-      {/* TAB 2: WEEKLY TIMETABLE */}
+      {/* TAB 2: FULL TIMETABLE */}
       {activeTab === "timetable" && (
-        <div className="glass-card rounded-3xl p-5 border border-[rgba(77,42,0,0.1)] space-y-4">
-          <div className="flex items-center justify-between">
-            <h2 className="text-sm font-bold text-[#4D2A00]">
-              Personal Weekly Timetable ({fullTimetable.length} Slots)
-            </h2>
-            <span className="text-xs text-[#4D2A00]/60">Filtered strictly to your assigned classes</span>
-          </div>
-
+        <section className="campus-block p-6">
           <div className="overflow-x-auto">
-            <table className="w-full text-left text-xs border-collapse">
-              <thead>
-                <tr className="border-b border-[rgba(77,42,0,0.1)] text-[#4D2A00]/60 font-mono text-[11px] uppercase">
-                  <th className="py-3 px-3">Day</th>
-                  <th className="py-3 px-3">Time</th>
-                  <th className="py-3 px-3">Subject</th>
-                  <th className="py-3 px-3">Class / Section</th>
-                  <th className="py-3 px-3">Room / Lab</th>
+            <table className="w-full text-left text-xs font-mono">
+              <thead className="border-b border-[var(--border-subtle)] text-[var(--text-muted)]">
+                <tr>
+                  <th className="py-2.5 px-3">DAY</th>
+                  <th className="py-2.5 px-3">TIME</th>
+                  <th className="py-2.5 px-3">PROGRAM</th>
+                  <th className="py-2.5 px-3">SUBJECT</th>
+                  <th className="py-2.5 px-3">LOCATION</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-[rgba(77,42,0,0.06)] text-[#4D2A00]">
-                {fullTimetable.map((item) => (
-                  <tr key={item.id} className="hover:bg-white/40 transition-colors">
-                    <td className="py-3.5 px-3 font-bold text-[#4D2A00]">
-                      {dayNames[item.dayOfWeek] || `Day ${item.dayOfWeek}`}
+              <tbody className="divide-y divide-[var(--border-subtle)] text-[var(--text-primary)]">
+                {fullTimetable.map((slot) => (
+                  <tr key={slot.id} className="hover:bg-[var(--bg-hover)] transition-colors">
+                    <td className="py-3 px-3 font-bold text-[#FF6D1F]">
+                      {dayNames[slot.dayOfWeek] || "Day"}
                     </td>
-                    <td className="py-3.5 px-3 font-mono text-[#CC6F00] font-semibold">
-                      {item.startTime} – {item.endTime}
+                    <td className="py-3 px-3">
+                      {slot.startTime} – {slot.endTime}
                     </td>
-                    <td className="py-3.5 px-3">
-                      <div className="font-bold text-[#4D2A00]">{item.subjectName}</div>
-                      <div className="text-[11px] text-[#4D2A00]/60 font-mono">{item.subjectCode}</div>
+                    <td className="py-3 px-3">
+                      {slot.course} {slot.branch} · Sem {slot.semester} (Sec {slot.section})
                     </td>
-                    <td className="py-3.5 px-3">
-                      <div>{item.course} • {item.branch}</div>
-                      <div className="text-[11px] text-[#4D2A00]/60">Year {item.year} • Sem {item.semester} • Section {item.section}</div>
+                    <td className="py-3 px-3 font-semibold">
+                      {slot.subject?.name || slot.subjectName}
                     </td>
-                    <td className="py-3.5 px-3">
-                      <span className="px-2.5 py-0.5 rounded-lg bg-stone-100 border border-stone-200 font-mono font-bold text-[#4D2A00]">
-                        {item.room}
-                      </span>
+                    <td className="py-3 px-3 text-[var(--text-secondary)]">
+                      Room {slot.roomNumber || slot.room || "Academic Block"}
                     </td>
                   </tr>
                 ))}
               </tbody>
             </table>
           </div>
-        </div>
+        </section>
       )}
 
-      {/* TAB 3: ASSIGNED SUBJECTS */}
-      {activeTab === "subjects" && (
-        <div className="glass-card rounded-3xl p-5 border border-[rgba(77,42,0,0.1)] space-y-4">
-          <div className="flex items-center justify-between">
-            <h2 className="text-sm font-bold text-[#4D2A00]">
-              Authorized Course & Subject Assignments ({assignments.length})
-            </h2>
-            <span className="text-xs text-[#4D2A00]/60">Assigned by Central Academic Administration</span>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {assignments.map((asg) => (
-              <div
-                key={asg.id}
-                className="p-5 rounded-2xl bg-white/60 border border-[rgba(77,42,0,0.1)] space-y-3 shadow-sm hover:border-[#CC6F00]/40 transition-all"
-              >
-                <div className="flex items-center justify-between">
-                  <span className="font-mono text-xs font-bold text-[#CC6F00]">{asg.subject?.code}</span>
-                  <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-[#FDB773]/20 border border-[#CC6F00]/20">
-                    {asg.subject?.type || "THEORY"}
-                  </span>
-                </div>
-
-                <div>
-                  <h3 className="text-sm font-bold text-[#4D2A00]">{asg.subject?.name}</h3>
-                  <p className="text-xs text-[#4D2A00]/70 mt-1">
-                    {asg.course} • {asg.branch}
-                  </p>
-                </div>
-
-                <div className="pt-2 border-t border-[rgba(77,42,0,0.06)] flex items-center justify-between text-xs text-[#4D2A00]/80">
-                  <span>Semester {asg.semester} • <strong>Section {asg.section}</strong></span>
-                  <span className="font-mono font-bold">{asg.subject?.credits || 3} Credits</span>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
-
-      {/* TAB 4: MARKS & RESULTS ENTRY */}
+      {/* TAB 3: SEMESTER MARKS & GRADING */}
       {activeTab === "marks" && (
-        <div className="glass-card rounded-3xl p-5 border border-[rgba(77,42,0,0.1)] space-y-5">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-[rgba(77,42,0,0.1)] pb-4">
+        <section className="campus-block p-6 space-y-6">
+          {/* Class Selector */}
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-[var(--border-subtle)]">
             <div>
-              <h2 className="text-sm font-bold text-[#4D2A00] flex items-center space-x-2">
-                <FileSpreadsheet className="w-4 h-4 text-[#CC6F00]" />
-                <span>Internal & Semester Marks Evaluation</span>
-              </h2>
-              <p className="text-xs text-[#4D2A00]/70 mt-0.5">
-                Enter midterm, internal, assignment and practical marks. Save as Draft or Publish to students.
-              </p>
+              <span className="text-[10px] font-mono uppercase text-[var(--text-muted)] block">
+                Select Teaching Assignment:
+              </span>
+              <div className="flex gap-2 flex-wrap mt-2">
+                {assignments.map((a) => (
+                  <button
+                    key={a.id}
+                    onClick={() => setSelectedAssignment(a)}
+                    className={`px-3 py-1.5 rounded-lg text-xs font-mono transition-colors border ${
+                      selectedAssignment?.id === a.id
+                        ? "bg-[#FF6D1F] text-[#141414] font-bold border-[#FF6D1F]"
+                        : "bg-[var(--bg-elevated)] text-[var(--text-secondary)] border-[var(--border-subtle)] hover:bg-[var(--bg-hover)] hover:text-[var(--text-primary)]"
+                    }`}
+                  >
+                    {a.course} {a.branch} (Sec {a.section}) · {a.subject?.code || a.subjectCode}
+                  </button>
+                ))}
+              </div>
             </div>
 
-            {/* Select Subject Dropdown */}
-            <div className="flex items-center space-x-2">
-              <label className="text-xs text-[#4D2A00]/70 font-semibold whitespace-nowrap">Class:</label>
-              <select
-                value={selectedAssignment?.id || ""}
-                onChange={(e) => {
-                  const asg = assignments.find((a) => a.id === e.target.value);
-                  setSelectedAssignment(asg);
-                }}
-                className="px-3 py-2 bg-white/70 border border-[rgba(77,42,0,0.12)] rounded-xl text-xs text-[#4D2A00] font-semibold focus:outline-none focus:border-[#CC6F00]"
-              >
-                {assignments.map((a) => (
-                  <option key={a.id} value={a.id}>
-                    {a.subject?.code} - Section {a.section} (Sem {a.semester})
-                  </option>
-                ))}
-              </select>
-            </div>
+            {selectedAssignment && (
+              <div className="flex items-center space-x-2 shrink-0">
+                <button
+                  onClick={() => handleSaveMarks("DRAFT")}
+                  disabled={savingMarks}
+                  className="btn-secondary px-3.5 py-2 text-xs font-mono font-bold flex items-center space-x-1.5"
+                >
+                  <Save className="w-3.5 h-3.5" />
+                  <span>SAVE DRAFT</span>
+                </button>
+                <button
+                  onClick={() => handleSaveMarks("PUBLISHED")}
+                  disabled={savingMarks}
+                  className="btn-primary px-4 py-2 text-xs font-mono font-bold flex items-center space-x-1.5"
+                >
+                  <Send className="w-3.5 h-3.5" />
+                  <span>PUBLISH RESULTS</span>
+                </button>
+              </div>
+            )}
           </div>
 
+          {/* Marks Table */}
           {marksLoading ? (
-            <div className="py-12 text-center text-xs text-[#4D2A00]/60">
-              <RefreshCw className="w-5 h-5 animate-spin mx-auto mb-2 text-[#CC6F00]" />
-              <span>Loading class student roster and assessment records...</span>
-            </div>
-          ) : marksRoster.length === 0 ? (
-            <div className="py-8 text-center text-xs text-[#4D2A00]/60">
-              No students enrolled in this course, branch, and section yet.
+            <div className="py-12 text-center text-xs font-mono text-[var(--text-muted)]">
+              Loading student roster & gradebook...
             </div>
           ) : (
-            <div className="space-y-4">
-              <div className="overflow-x-auto">
-                <table className="w-full text-left text-xs border-collapse">
-                  <thead>
-                    <tr className="border-b border-[rgba(77,42,0,0.1)] text-[#4D2A00]/60 font-mono text-[11px] uppercase">
-                      <th className="py-2.5 px-3">Roll No</th>
-                      <th className="py-2.5 px-3">Student Name</th>
-                      <th className="py-2.5 px-2">Internal (30)</th>
-                      <th className="py-2.5 px-2">Assignment (20)</th>
-                      <th className="py-2.5 px-2">Practical (30)</th>
-                      <th className="py-2.5 px-2">End Sem (100)</th>
-                      <th className="py-2.5 px-2 font-bold">Total</th>
-                      <th className="py-2.5 px-2 font-bold">Grade</th>
-                      <th className="py-2.5 px-3">Status</th>
+            <div className="overflow-x-auto">
+              <table className="w-full text-left text-xs font-mono">
+                <thead className="border-b border-[var(--border-subtle)] text-[var(--text-muted)] uppercase tracking-wider text-[11px]">
+                  <tr>
+                    <th className="py-2.5 px-3">STUDENT</th>
+                    <th className="py-2.5 px-3">ROLL NO</th>
+                    <th className="py-2.5 px-2">INTERNAL (30)</th>
+                    <th className="py-2.5 px-2">ASSIGN (10)</th>
+                    <th className="py-2.5 px-2">LAB (30)</th>
+                    <th className="py-2.5 px-2">END SEM (100)</th>
+                    <th className="py-2.5 px-2">TOTAL</th>
+                    <th className="py-2.5 px-2">GRADE</th>
+                    <th className="py-2.5 px-3">STATUS</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-[var(--border-subtle)] text-[var(--text-primary)]">
+                  {marksRoster.map((row) => (
+                    <tr key={row.studentId} className="hover:bg-[var(--bg-hover)] transition-colors">
+                      <td className="py-2.5 px-3 font-bold text-[var(--text-primary)]">
+                        {row.fullName || row.studentName || "Student"}
+                      </td>
+                      <td className="py-2.5 px-3 text-[var(--text-secondary)] font-mono">{row.rollNumber}</td>
+                      <td className="py-2.5 px-2">
+                        <input
+                          type="number"
+                          value={row.internalMarks ?? ""}
+                          onChange={(e) => handleMarkChange(row.studentId, "internalMarks", e.target.value)}
+                          className="w-16 px-2 py-1 bg-[var(--bg-input)] border border-[var(--border-subtle)] rounded text-center text-[var(--text-primary)] font-mono outline-none focus:border-[#FF6D1F]"
+                        />
+                      </td>
+                      <td className="py-2.5 px-2">
+                        <input
+                          type="number"
+                          value={row.assignmentMarks ?? ""}
+                          onChange={(e) => handleMarkChange(row.studentId, "assignmentMarks", e.target.value)}
+                          className="w-16 px-2 py-1 bg-[var(--bg-input)] border border-[var(--border-subtle)] rounded text-center text-[var(--text-primary)] font-mono outline-none focus:border-[#FF6D1F]"
+                        />
+                      </td>
+                      <td className="py-2.5 px-2">
+                        <input
+                          type="number"
+                          value={row.practicalMarks ?? ""}
+                          onChange={(e) => handleMarkChange(row.studentId, "practicalMarks", e.target.value)}
+                          className="w-16 px-2 py-1 bg-[var(--bg-input)] border border-[var(--border-subtle)] rounded text-center text-[var(--text-primary)] font-mono outline-none focus:border-[#FF6D1F]"
+                        />
+                      </td>
+                      <td className="py-2.5 px-2">
+                        <input
+                          type="number"
+                          value={row.endSemMarks ?? ""}
+                          onChange={(e) => handleMarkChange(row.studentId, "endSemMarks", e.target.value)}
+                          className="w-16 px-2 py-1 bg-[var(--bg-input)] border border-[var(--border-subtle)] rounded text-center text-[var(--text-primary)] font-mono outline-none focus:border-[#FF6D1F]"
+                        />
+                      </td>
+                      <td className="py-2.5 px-2 font-bold font-mono text-[#FF6D1F]">
+                        {row.totalMarks ?? "—"}
+                      </td>
+                      <td className="py-2.5 px-2 font-bold font-mono">
+                        {row.grade || "—"}
+                      </td>
+                      <td className="py-2.5 px-3">
+                        <span className={`px-2 py-0.5 rounded text-[10px] font-mono font-bold ${
+                          row.status === "PUBLISHED"
+                            ? "bg-emerald-500/15 text-emerald-300 border border-emerald-500/30"
+                            : "bg-[var(--bg-elevated)] text-[var(--text-muted)] border border-[var(--border-subtle)]"
+                        }`}>
+                          {row.status || "DRAFT"}
+                        </span>
+                      </td>
                     </tr>
-                  </thead>
-                  <tbody className="divide-y divide-[rgba(77,42,0,0.06)] text-[#4D2A00]">
-                    {marksRoster.map((row) => (
-                      <tr key={row.studentId} className="hover:bg-white/40 transition-colors">
-                        <td className="py-3 px-3 font-mono font-bold text-[#CC6F00]">{row.rollNumber || "—"}</td>
-                        <td className="py-3 px-3 font-bold text-[#4D2A00]">{row.fullName}</td>
-
-                        <td className="py-3 px-2">
-                          <input
-                            type="number"
-                            min={0}
-                            max={30}
-                            value={row.internalMarks ?? ""}
-                            onChange={(e) => handleMarkChange(row.studentId, "internalMarks", e.target.value)}
-                            placeholder="-"
-                            className="w-16 px-2 py-1 bg-white/80 border border-[rgba(77,42,0,0.12)] rounded-lg text-center font-mono font-semibold"
-                          />
-                        </td>
-
-                        <td className="py-3 px-2">
-                          <input
-                            type="number"
-                            min={0}
-                            max={20}
-                            value={row.assignmentMarks ?? ""}
-                            onChange={(e) => handleMarkChange(row.studentId, "assignmentMarks", e.target.value)}
-                            placeholder="-"
-                            className="w-16 px-2 py-1 bg-white/80 border border-[rgba(77,42,0,0.12)] rounded-lg text-center font-mono font-semibold"
-                          />
-                        </td>
-
-                        <td className="py-3 px-2">
-                          <input
-                            type="number"
-                            min={0}
-                            max={30}
-                            value={row.practicalMarks ?? ""}
-                            onChange={(e) => handleMarkChange(row.studentId, "practicalMarks", e.target.value)}
-                            placeholder="-"
-                            className="w-16 px-2 py-1 bg-white/80 border border-[rgba(77,42,0,0.12)] rounded-lg text-center font-mono font-semibold"
-                          />
-                        </td>
-
-                        <td className="py-3 px-2">
-                          <input
-                            type="number"
-                            min={0}
-                            max={100}
-                            value={row.endSemMarks ?? ""}
-                            onChange={(e) => handleMarkChange(row.studentId, "endSemMarks", e.target.value)}
-                            placeholder="-"
-                            className="w-16 px-2 py-1 bg-white/80 border border-[rgba(77,42,0,0.12)] rounded-lg text-center font-mono font-semibold"
-                          />
-                        </td>
-
-                        <td className="py-3 px-2 font-mono font-bold text-[#4D2A00]">
-                          {row.totalMarks ?? "—"}
-                        </td>
-
-                        <td className="py-3 px-2">
-                          <span className="px-2 py-0.5 rounded-md font-mono font-bold text-[11px] bg-[#CC6F00]/10 text-[#CC6F00] border border-[#CC6F00]/20">
-                            {row.grade || "—"}
-                          </span>
-                        </td>
-
-                        <td className="py-3 px-3">
-                          <span
-                            className={`px-2 py-0.5 rounded-full text-[10px] font-bold border ${
-                              row.status === "PUBLISHED"
-                                ? "bg-emerald-500/10 text-emerald-800 border-emerald-500/30"
-                                : "bg-stone-500/10 text-stone-600 border-stone-300"
-                            }`}
-                          >
-                            {row.status || "DRAFT"}
-                          </span>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-
-              {/* Action Buttons */}
-              <div className="flex flex-col sm:flex-row items-center justify-between gap-3 pt-3 border-t border-[rgba(77,42,0,0.1)]">
-                <span className="text-xs text-[#4D2A00]/70">
-                  Total Students: <strong>{marksRoster.length}</strong>
-                </span>
-
-                <div className="flex items-center space-x-2.5">
-                  <button
-                    onClick={() => handleSaveMarks("DRAFT")}
-                    disabled={savingMarks}
-                    className="btn-secondary px-4 py-2 text-xs font-bold flex items-center space-x-1.5"
-                  >
-                    <Save className="w-4 h-4" />
-                    <span>Save Draft</span>
-                  </button>
-
-                  <button
-                    onClick={() => handleSaveMarks("PUBLISHED")}
-                    disabled={savingMarks}
-                    className="btn-primary px-5 py-2 text-xs font-bold flex items-center space-x-1.5 shadow-sm"
-                  >
-                    <Send className="w-4 h-4" />
-                    <span>Publish Results to Students</span>
-                  </button>
-                </div>
-              </div>
+                  ))}
+                </tbody>
+              </table>
             </div>
           )}
-        </div>
+        </section>
       )}
 
-      {/* MODAL: MARK ATTENDANCE */}
+      {/* FAST ATTENDANCE ROSTER MODAL */}
       {markingClass && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-md p-4 animate-fadeIn">
-          <div className="glass-modal max-w-2xl w-full p-6 space-y-4 rounded-3xl border border-[rgba(77,42,0,0.15)] shadow-glass max-h-[90vh] flex flex-col">
-            <div className="flex items-center justify-between border-b border-[rgba(77,42,0,0.1)] pb-3">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-md p-4 animate-fadeIn">
+          <div className="campus-panel max-w-2xl w-full p-6 space-y-4 border border-[var(--border-medium)] shadow-2xl max-h-[90vh] flex flex-col font-mono text-xs">
+            <div className="flex items-center justify-between border-b border-[var(--border-subtle)] pb-3">
               <div>
-                <h3 className="text-base font-bold text-[#4D2A00]">
-                  Mark Attendance • {markingClass.subjectName}
+                <h3 className="text-sm font-bold text-[var(--text-primary)] uppercase">
+                  RECORD ATTENDANCE · {markingClass.subject?.name || markingClass.subjectName}
                 </h3>
-                <p className="text-xs text-[#4D2A00]/70">
-                  {markingClass.course} {markingClass.branch} • Sem {markingClass.semester} • Section {markingClass.section} • Room {markingClass.room}
+                <p className="text-[11px] text-[var(--text-secondary)] mt-0.5">
+                  {markingClass.course} {markingClass.branch} · Sem {markingClass.semester} · Sec {markingClass.section} · Room {markingClass.roomNumber || markingClass.room || "Lab"}
                 </p>
               </div>
-              <button onClick={() => setMarkingClass(null)} className="text-[#4D2A00]/60 hover:text-[#4D2A00]">
+              <button onClick={() => setMarkingClass(null)} className="text-[var(--text-muted)] hover:text-[var(--text-primary)]">
                 <X className="w-5 h-5" />
               </button>
             </div>
 
-            <div className="space-y-3 flex-1 overflow-y-auto pr-1">
+            <div className="flex-1 overflow-y-auto pr-1 space-y-3">
+              {/* Optional Lesson Topic */}
               <div>
-                <label className="block text-xs font-semibold text-[#4D2A00] mb-1">Lesson Topic (Optional)</label>
+                <label className="block text-[10px] text-[var(--text-muted)] uppercase mb-1">
+                  Lesson Topic / Chapter Covered
+                </label>
                 <input
                   type="text"
-                  placeholder="e.g. Relational Calculus & Query Optimization"
+                  placeholder="e.g. Relational Calculus & Indexing Operations"
                   value={attendanceTopic}
                   onChange={(e) => setAttendanceTopic(e.target.value)}
-                  className="w-full px-3 py-2 bg-white/70 border border-[rgba(77,42,0,0.12)] rounded-xl text-xs text-[#4D2A00] focus:outline-none focus:border-[#CC6F00]"
+                  className="w-full px-3 py-2 rounded-xl bg-[var(--bg-input)] border border-[var(--border-subtle)] text-[var(--text-primary)] focus:border-[#FF6D1F] outline-none"
                 />
               </div>
 
-              <div className="flex items-center justify-between pt-1">
-                <span className="text-xs font-bold text-[#4D2A00]">
-                  Students Enrolled ({classStudents.length})
+              {/* Roster Controls */}
+              <div className="flex items-center justify-between pt-2">
+                <span className="font-bold text-[var(--text-primary)]">
+                  ENROLLED STUDENTS ({classStudents.length})
                 </span>
-                <div className="space-x-1.5">
+                <div className="space-x-2">
                   <button
                     type="button"
                     onClick={() => {
@@ -767,9 +707,9 @@ export const FacultyDashboardPage: React.FC<FacultyDashboardPageProps> = ({ user
                       classStudents.forEach((s) => { allPres[s.id] = "PRESENT"; });
                       setAttendanceRecords(allPres);
                     }}
-                    className="px-2.5 py-1 text-[11px] font-bold rounded-lg bg-emerald-500/10 text-emerald-800 border border-emerald-500/30 hover:bg-emerald-500/20"
+                    className="px-2.5 py-1 rounded-lg bg-emerald-500/15 text-emerald-300 border border-emerald-500/30 hover:bg-emerald-500/25"
                   >
-                    All Present
+                    ALL PRESENT
                   </button>
                   <button
                     type="button"
@@ -778,101 +718,91 @@ export const FacultyDashboardPage: React.FC<FacultyDashboardPageProps> = ({ user
                       classStudents.forEach((s) => { allAbs[s.id] = "ABSENT"; });
                       setAttendanceRecords(allAbs);
                     }}
-                    className="px-2.5 py-1 text-[11px] font-bold rounded-lg bg-rose-500/10 text-rose-800 border border-rose-500/30 hover:bg-rose-500/20"
+                    className="px-2.5 py-1 rounded-lg bg-rose-500/15 text-rose-300 border border-rose-500/30 hover:bg-rose-500/25"
                   >
-                    All Absent
+                    ALL ABSENT
                   </button>
                 </div>
               </div>
 
-              {markingLoading ? (
-                <div className="py-8 text-center text-xs text-[#4D2A00]/60">
-                  <RefreshCw className="w-5 h-5 animate-spin mx-auto mb-2 text-[#CC6F00]" />
-                  Loading students roster...
-                </div>
-              ) : classStudents.length === 0 ? (
-                <div className="py-6 text-center text-xs text-[#4D2A00]/60">
-                  No students found in this section ({markingClass.section}).
-                </div>
-              ) : (
-                <div className="space-y-2">
-                  {classStudents.map((student) => {
-                    const currentStatus = attendanceRecords[student.id] || "PRESENT";
-                    return (
-                      <div
-                        key={student.id}
-                        className="p-3 bg-white/60 border border-[rgba(77,42,0,0.1)] rounded-2xl flex items-center justify-between text-xs"
-                      >
-                        <div>
-                          <div className="font-bold text-[#4D2A00]">{student.fullName}</div>
-                          <div className="text-[11px] text-[#4D2A00]/60 font-mono">{student.rollNumber || student.email}</div>
-                        </div>
-
-                        {/* Status Toggle Buttons */}
-                        <div className="flex items-center space-x-1.5">
-                          <button
-                            type="button"
-                            onClick={() => setAttendanceRecords((prev) => ({ ...prev, [student.id]: "PRESENT" }))}
-                            className={`px-3 py-1 rounded-xl text-[11px] font-bold border transition-all ${
-                              currentStatus === "PRESENT"
-                                ? "bg-emerald-600 text-white border-emerald-600 shadow-sm"
-                                : "bg-white/80 text-emerald-800 border-emerald-300 hover:bg-emerald-50"
-                            }`}
-                          >
-                            P
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => setAttendanceRecords((prev) => ({ ...prev, [student.id]: "LATE" }))}
-                            className={`px-3 py-1 rounded-xl text-[11px] font-bold border transition-all ${
-                              currentStatus === "LATE"
-                                ? "bg-amber-600 text-white border-amber-600 shadow-sm"
-                                : "bg-white/80 text-amber-800 border-amber-300 hover:bg-amber-50"
-                            }`}
-                          >
-                            L
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => setAttendanceRecords((prev) => ({ ...prev, [student.id]: "ABSENT" }))}
-                            className={`px-3 py-1 rounded-xl text-[11px] font-bold border transition-all ${
-                              currentStatus === "ABSENT"
-                                ? "bg-rose-600 text-white border-rose-600 shadow-sm"
-                                : "bg-white/80 text-rose-800 border-rose-300 hover:bg-rose-50"
-                            }`}
-                          >
-                            A
-                          </button>
-                        </div>
+              {/* Table Roster */}
+              <div className="divide-y divide-[var(--border-subtle)] border border-[var(--border-subtle)] rounded-xl bg-[var(--bg-input)] overflow-hidden">
+                {classStudents.map((student) => {
+                  const currentStatus = attendanceRecords[student.id] || "PRESENT";
+                  return (
+                    <div
+                      key={student.id}
+                      className="p-3 flex items-center justify-between hover:bg-[var(--bg-hover)] transition-colors"
+                    >
+                      <div>
+                        <span className="font-bold text-[var(--text-primary)] block">{student.fullName}</span>
+                        <span className="text-[10px] text-[var(--text-muted)]">{student.rollNumber || student.email}</span>
                       </div>
-                    );
-                  })}
-                </div>
-              )}
+
+                      <div className="flex items-center space-x-1.5">
+                        <button
+                          type="button"
+                          onClick={() => setAttendanceRecords((prev) => ({ ...prev, [student.id]: "PRESENT" }))}
+                          className={`w-8 h-7 rounded text-xs font-bold transition-colors ${
+                            currentStatus === "PRESENT"
+                              ? "bg-emerald-500 text-[#141414]"
+                              : "bg-[var(--bg-elevated)] text-emerald-400 border border-[var(--border-subtle)] hover:bg-[var(--bg-hover)]"
+                          }`}
+                        >
+                          P
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setAttendanceRecords((prev) => ({ ...prev, [student.id]: "LATE" }))}
+                          className={`w-8 h-7 rounded text-xs font-bold transition-colors ${
+                            currentStatus === "LATE"
+                              ? "bg-amber-500 text-[#141414]"
+                              : "bg-[var(--bg-elevated)] text-amber-400 border border-[var(--border-subtle)] hover:bg-[var(--bg-hover)]"
+                          }`}
+                        >
+                          L
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setAttendanceRecords((prev) => ({ ...prev, [student.id]: "ABSENT" }))}
+                          className={`w-8 h-7 rounded text-xs font-bold transition-colors ${
+                            currentStatus === "ABSENT"
+                              ? "bg-rose-500 text-white"
+                              : "bg-[var(--bg-elevated)] text-rose-400 border border-[var(--border-subtle)] hover:bg-[var(--bg-hover)]"
+                          }`}
+                        >
+                          A
+                        </button>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
             </div>
 
-            <div className="pt-3 border-t border-[rgba(77,42,0,0.1)] flex items-center justify-between">
-              <span className="text-xs text-[#4D2A00]/70">
-                Present: {Object.values(attendanceRecords).filter((s) => s === "PRESENT").length} •
-                Late: {Object.values(attendanceRecords).filter((s) => s === "LATE").length} •
-                Absent: {Object.values(attendanceRecords).filter((s) => s === "ABSENT").length}
+            {/* Modal Footer */}
+            <div className="pt-3 border-t border-[var(--border-subtle)] flex items-center justify-between">
+              <span className="text-[11px] text-[var(--text-secondary)]">
+                P: {Object.values(attendanceRecords).filter((s) => s === "PRESENT").length} ·
+                L: {Object.values(attendanceRecords).filter((s) => s === "LATE").length} ·
+                A: {Object.values(attendanceRecords).filter((s) => s === "ABSENT").length}
               </span>
 
               <div className="flex items-center space-x-2">
                 <button
                   type="button"
                   onClick={() => setMarkingClass(null)}
-                  className="btn-secondary px-4 py-2 text-xs"
+                  className="btn-secondary px-3.5 py-2 text-xs"
                 >
-                  Cancel
+                  CANCEL
                 </button>
                 <button
                   type="button"
                   onClick={handleSubmitAttendance}
                   disabled={markingLoading || classStudents.length === 0}
-                  className="btn-primary px-6 py-2 text-xs font-bold shadow-sm"
+                  className="btn-primary px-5 py-2 text-xs font-bold"
                 >
-                  Submit Attendance
+                  SUBMIT ATTENDANCE
                 </button>
               </div>
             </div>

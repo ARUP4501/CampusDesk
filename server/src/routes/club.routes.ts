@@ -192,8 +192,8 @@ clubRouter.post("/:id/join", requireAuth, async (req: Request, res: Response): P
   }
 });
 
-// 4. Leave a Club (Student)
-clubRouter.delete("/:id/leave", requireAuth, async (req: Request, res: Response): Promise<void> => {
+// 4. Leave a Club (Student) - Supports both DELETE and POST
+const handleLeaveClub = async (req: Request, res: Response): Promise<void> => {
   try {
     const { id } = req.params;
     await prisma.clubMember.deleteMany({
@@ -206,7 +206,9 @@ clubRouter.delete("/:id/leave", requireAuth, async (req: Request, res: Response)
   } catch (err: any) {
     res.status(500).json({ error: "Failed to leave club." });
   }
-});
+};
+clubRouter.delete("/:id/leave", requireAuth, handleLeaveClub);
+clubRouter.post("/:id/leave", requireAuth, handleLeaveClub);
 
 // 5. Register for a Club Event (Student)
 clubRouter.post("/events/:eventId/register", requireAuth, async (req: Request, res: Response): Promise<void> => {
@@ -254,6 +256,22 @@ clubRouter.post("/events/:eventId/register", requireAuth, async (req: Request, r
       return;
     }
     res.status(500).json({ error: "Failed to register for event." });
+  }
+});
+
+// 5b. Cancel Registration for a Club Event (Student)
+clubRouter.delete("/events/:eventId/register", requireAuth, async (req: Request, res: Response): Promise<void> => {
+  try {
+    const { eventId } = req.params;
+    await prisma.clubEventRegistration.deleteMany({
+      where: {
+        eventId,
+        studentId: req.user!.id
+      }
+    });
+    res.json({ message: "Event registration cancelled successfully." });
+  } catch (err: any) {
+    res.status(500).json({ error: "Failed to cancel event registration." });
   }
 });
 

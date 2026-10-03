@@ -5,12 +5,12 @@ import { ArrowLeft, FileQuestion } from "lucide-react";
 export const NotFoundPage: React.FC = () => {
   return (
     <div className="max-w-md mx-auto my-20 text-center px-4">
-      <div className="glass-card rounded-3xl p-8 shadow-glass border border-[rgba(77,42,0,0.1)] space-y-4">
-        <div className="w-14 h-14 rounded-2xl bg-[#FDB773]/40 border border-[#CC6F00]/25 flex items-center justify-center mx-auto text-[#4D2A00] shadow-sm">
-          <FileQuestion className="w-7 h-7 text-[#4D2A00]" />
+      <div className="glass-card rounded-3xl p-8 shadow-glass border border-[var(--border-subtle)] space-y-4">
+        <div className="w-14 h-14 rounded-2xl bg-[#FF6D1F]/40 border border-[#FF6D1F]/25 flex items-center justify-center mx-auto text-[var(--text-primary)] shadow-sm">
+          <FileQuestion className="w-7 h-7 text-[var(--text-primary)]" />
         </div>
-        <h1 className="text-xl font-bold text-[#4D2A00]">404 — Page Not Found</h1>
-        <p className="text-xs text-[#4D2A00]/70 leading-relaxed">
+        <h1 className="text-xl font-bold text-[var(--text-primary)]">404 — Page Not Found</h1>
+        <p className="text-xs text-[var(--text-secondary)] leading-relaxed">
           The requested system route or operational resource does not exist in the CampusDesk service layer.
         </p>
         <div className="pt-3">

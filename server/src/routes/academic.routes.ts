@@ -727,20 +727,59 @@ academicRouter.get(
   requireRoles(["ADMIN", "FACULTY"]),
   async (req: Request, res: Response): Promise<void> => {
     try {
-      const subjectId = req.query.subjectId as string;
+      let subjectId = req.query.subjectId as string | undefined;
+      const subjectCode = req.query.subjectCode as string | undefined;
+      const timetableEntryId = req.query.timetableEntryId as string | undefined;
       const course = req.query.course as string;
       const branch = req.query.branch as string;
       const year = req.query.year ? parseInt(req.query.year as string, 10) : undefined;
       const semester = req.query.semester ? parseInt(req.query.semester as string, 10) : undefined;
       const section = ((req.query.section as string) || "A").trim().toUpperCase();
+      const dateStr = (req.query.date as string) || new Date().toISOString().slice(0, 10);
 
-      if (!subjectId || !course || !branch || !semester) {
-        res.status(400).json({ error: "subjectId, course, branch, and semester are required." });
+      if (!course || !branch || !semester) {
+        res.status(400).json({ error: "course, branch, and semester are required." });
+        return;
+      }
+
+      // If subjectId is missing, resolve it from subjectCode or timetableEntryId
+      if (!subjectId && subjectCode) {
+        const sub = await prisma.subject.findFirst({
+          where: { code: subjectCode, course, branch, semester }
+        });
+        if (sub) subjectId = sub.id;
+      }
+      if (!subjectId && timetableEntryId) {
+        const entry = await prisma.courseSchedule.findUnique({
+          where: { id: timetableEntryId }
+        });
+        if (entry?.subjectId) {
+          subjectId = entry.subjectId;
+        } else if (entry?.subjectCode) {
+          const sub = await prisma.subject.findFirst({
+            where: { code: entry.subjectCode, course, branch, semester }
+          });
+          if (sub) subjectId = sub.id;
+        }
+      }
+
+      if (!subjectId) {
+        // Fallback: search any subject with matching course, branch, semester
+        const anySub = await prisma.subject.findFirst({
+          where: { course, branch, semester }
+        });
+        if (anySub) subjectId = anySub.id;
+      }
+
+      if (!subjectId) {
+        res.status(400).json({ error: "subjectId could not be resolved for this class." });
         return;
       }
 
       // Strict backend check: Faculty must be assigned to this subject + section + semester
       if (req.user!.role === "FACULTY") {
+        let isAuthorized = false;
+
         const assignment = await prisma.facultyAssignment.findFirst({
           where: {
             facultyId: req.user!.id,
@@ -750,8 +789,26 @@ academicRouter.get(
             isActive: true
           }
         });
+        if (assignment) isAuthorized = true;
 
-        if (!assignment) {
+        if (!isAuthorized) {
+          const schedule = await prisma.courseSchedule.findFirst({
+            where: {
+              OR: [
+                { facultyId: req.user!.id },
+                { facultyName: req.user!.fullName }
+              ],
+              course,
+              branch,
+              semester,
+              section,
+              isActive: true
+            }
+          });
+          if (schedule) isAuthorized = true;
+        }
+
+        if (!isAuthorized) {
           res.status(403).json({
             error: "Forbidden. You are not authorized to access or mark attendance for this class/section."
           });
@@ -779,7 +836,67 @@ academicRouter.get(
         orderBy: { rollNumber: "asc" }
       });
 
-      res.json({ students });
+      // Check if an attendance session already exists for this class and date
+      const queryDate = new Date(dateStr);
+      const startOfDay = new Date(queryDate);
+      startOfDay.setHours(0, 0, 0, 0);
+      const endOfDay = new Date(startOfDay);
+      endOfDay.setDate(endOfDay.getDate() + 1);
+
+      let existingSession = null;
+      if (timetableEntryId) {
+        existingSession = await prisma.attendanceSession.findFirst({
+          where: {
+            timetableEntryId,
+            date: { gte: startOfDay, lt: endOfDay }
+          },
+          include: { records: true }
+        });
+      }
+      if (!existingSession) {
+        existingSession = await prisma.attendanceSession.findFirst({
+          where: {
+            subjectId,
+            course: course.trim(),
+            branch: branch.trim(),
+            section,
+            semester,
+            date: { gte: startOfDay, lt: endOfDay }
+          },
+          include: { records: true }
+        });
+      }
+
+      const recordMap = new Map<string, { status: string; remarks: string | null }>();
+      if (existingSession) {
+        for (const r of existingSession.records) {
+          recordMap.set(r.studentId, { status: r.status, remarks: r.remarks });
+        }
+      }
+
+      const studentsWithStatus = students.map((s) => ({
+        ...s,
+        savedStatus: recordMap.get(s.id)?.status || null,
+        savedRemarks: recordMap.get(s.id)?.remarks || null
+      }));
+
+      res.json({
+        students: studentsWithStatus,
+        subjectId,
+        session: existingSession
+          ? {
+              id: existingSession.id,
+              date: existingSession.date,
+              topic: existingSession.topic,
+              startTime: existingSession.startTime,
+              endTime: existingSession.endTime,
+              isAttendanceMarked: true,
+              totalMarked: existingSession.records.length,
+              presentCount: existingSession.records.filter((r) => r.status === "PRESENT").length,
+              absentCount: existingSession.records.filter((r) => r.status === "ABSENT").length
+            }
+          : null
+      });
     } catch (err: any) {
       console.error("Failed to fetch class students:", err);
       res.status(500).json({ error: "Failed to fetch class students." });
@@ -804,6 +921,7 @@ academicRouter.post(
         semester,
         section,
         date,
+        topic,
         startTime,
         endTime,
         records
@@ -813,6 +931,8 @@ academicRouter.post(
 
       // Strict authorization check for Faculty
       if (req.user!.role === "FACULTY") {
+        let isAuthorized = false;
+
         const assignment = await prisma.facultyAssignment.findFirst({
           where: {
             facultyId: req.user!.id,
@@ -822,8 +942,26 @@ academicRouter.post(
             isActive: true
           }
         });
+        if (assignment) isAuthorized = true;
 
-        if (!assignment) {
+        if (!isAuthorized) {
+          const schedule = await prisma.courseSchedule.findFirst({
+            where: {
+              OR: [
+                { facultyId: req.user!.id },
+                { facultyName: req.user!.fullName }
+              ],
+              course: course.trim(),
+              branch: branch.trim(),
+              semester: Number(semester),
+              section: normSection,
+              isActive: true
+            }
+          });
+          if (schedule) isAuthorized = true;
+        }
+
+        if (!isAuthorized) {
           res.status(403).json({
             error: "Forbidden. You are not authorized to mark attendance for this class."
           });
@@ -834,35 +972,99 @@ academicRouter.post(
       const facultyId = req.user!.role === "FACULTY" ? req.user!.id : (req.body.facultyId || req.user!.id);
       const subject = await prisma.subject.findUnique({ where: { id: subjectId } });
 
-      // Create attendance session with record items
       const sessionDate = new Date(date);
-      const session = await prisma.attendanceSession.create({
-        data: {
-          date: sessionDate,
-          timetableEntryId: timetableEntryId || null,
-          facultyId,
-          subjectId,
-          course: course.trim(),
-          branch: branch.trim(),
-          year: Number(year),
-          semester: Number(semester),
-          section: normSection,
-          startTime,
-          endTime,
-          records: {
-            create: records.map((r: any) => ({
+      const startOfDay = new Date(sessionDate);
+      startOfDay.setHours(0, 0, 0, 0);
+      const endOfDay = new Date(startOfDay);
+      endOfDay.setDate(endOfDay.getDate() + 1);
+
+      // Check if session already exists for this date and class
+      let session = await prisma.attendanceSession.findFirst({
+        where: {
+          OR: [
+            ...(timetableEntryId ? [{ timetableEntryId, date: { gte: startOfDay, lt: endOfDay } }] : []),
+            {
+              facultyId,
+              subjectId,
+              course: course.trim(),
+              branch: branch.trim(),
+              semester: Number(semester),
+              section: normSection,
+              date: { gte: startOfDay, lt: endOfDay }
+            }
+          ]
+        },
+        include: { records: true }
+      });
+
+      if (session) {
+        // Update existing session
+        session = await prisma.attendanceSession.update({
+          where: { id: session.id },
+          data: {
+            topic: topic !== undefined ? topic : session.topic,
+            startTime: startTime || session.startTime,
+            endTime: endTime || session.endTime
+          },
+          include: {
+            records: true,
+            subject: true,
+            faculty: { select: { fullName: true } }
+          }
+        });
+
+        // Upsert each record item
+        for (const r of records) {
+          await prisma.attendanceRecordItem.upsert({
+            where: {
+              sessionId_studentId: {
+                sessionId: session.id,
+                studentId: r.studentId
+              }
+            },
+            update: {
+              status: r.status,
+              remarks: r.remarks || null
+            },
+            create: {
+              sessionId: session.id,
               studentId: r.studentId,
               status: r.status,
               remarks: r.remarks || null
-            }))
-          }
-        },
-        include: {
-          records: true,
-          subject: true,
-          faculty: { select: { fullName: true } }
+            }
+          });
         }
-      });
+      } else {
+        // Create new session
+        session = await prisma.attendanceSession.create({
+          data: {
+            date: sessionDate,
+            timetableEntryId: timetableEntryId || null,
+            facultyId,
+            subjectId,
+            course: course.trim(),
+            branch: branch.trim(),
+            year: Number(year),
+            semester: Number(semester),
+            section: normSection,
+            topic: topic || null,
+            startTime,
+            endTime,
+            records: {
+              create: records.map((r: any) => ({
+                studentId: r.studentId,
+                status: r.status,
+                remarks: r.remarks || null
+              }))
+            }
+          },
+          include: {
+            records: true,
+            subject: true,
+            faculty: { select: { fullName: true } }
+          }
+        });
+      }
 
       // Sync aggregate attendance records for each student
       if (subject) {
@@ -914,13 +1116,12 @@ academicRouter.post(
         }
       }
 
-      res.status(201).json({
+      res.status(200).json({
         message: "Attendance recorded successfully.",
         session
       });
     } catch (err: any) {
       console.error("Failed to submit attendance:", err);
-      res.status(500).json({ error: "Failed to submit attendance." });
     }
   }
 );
@@ -1127,6 +1328,7 @@ academicRouter.get(
         return {
           studentId: s.id,
           fullName: s.fullName,
+          studentName: s.fullName,
           rollNumber: s.rollNumber,
           internalMarks: resObj?.internalMarks ?? null,
           assignmentMarks: resObj?.assignmentMarks ?? null,

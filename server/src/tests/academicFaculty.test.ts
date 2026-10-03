@@ -251,6 +251,42 @@ describe("Academic Management Module - RBAC, Timetable, Attendance & Results", (
       expect(testSession.records.length).toBe(1);
       expect(testSession.records[0].status).toBe("PRESENT");
 
+      // Verify that re-querying the session returns the saved status for the student
+      const fetchedSession = await prisma.attendanceSession.findUnique({
+        where: { id: testSession.id },
+        include: { records: true }
+      });
+      expect(fetchedSession).not.toBeNull();
+      const studentRecord = fetchedSession!.records.find((r) => r.studentId === demoStudent.id);
+      expect(studentRecord).toBeDefined();
+      expect(studentRecord!.status).toBe("PRESENT");
+
+      // Update student status to ABSENT and verify persistence
+      await prisma.attendanceRecordItem.upsert({
+        where: {
+          sessionId_studentId: {
+            sessionId: testSession.id,
+            studentId: demoStudent.id
+          }
+        },
+        update: { status: "ABSENT" },
+        create: {
+          sessionId: testSession.id,
+          studentId: demoStudent.id,
+          status: "ABSENT"
+        }
+      });
+
+      const updatedRecord = await prisma.attendanceRecordItem.findUnique({
+        where: {
+          sessionId_studentId: {
+            sessionId: testSession.id,
+            studentId: demoStudent.id
+          }
+        }
+      });
+      expect(updatedRecord?.status).toBe("ABSENT");
+
       // Clean up test session
       await prisma.attendanceRecordItem.deleteMany({ where: { sessionId: testSession.id } });
       await prisma.attendanceSession.delete({ where: { id: testSession.id } });

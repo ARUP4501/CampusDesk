@@ -98,6 +98,8 @@ model User {
   studentAttendanceItems  AttendanceRecordItem[] @relation("StudentAttendanceItems")
   facultySubmittedResults StudentResult[]       @relation("FacultySubmittedResults")
   studentResults          StudentResult[]       @relation("StudentResults")
+  hostelEveningRecords    HostelEveningAttendance[] @relation("HostelEveningAttendanceStudent")
+  hostelEveningRecorded   HostelEveningAttendance[] @relation("HostelEveningAttendanceStaff")
 
   @@index([role, hostelBlock, verificationStatus, livingType])
 }
@@ -851,5 +853,27 @@ model StudentResult {
   @@unique([studentId, subjectId, semester])
   @@index([studentId, status])
   @@index([subjectId, section, semester])
+}
+
+// ----------------------------------------------------
+// EVENING HOSTEL RETURN & CURFEW ATTENDANCE
+// ----------------------------------------------------
+model HostelEveningAttendance {
+  id           String    @id @default(uuid())
+  date         DateTime  // Evening roll-call date (normalized to midnight UTC/local)
+  hostelBlock  String    // e.g. "Hostel-A", "Hostel-B", "Hostel-C", "Hostel-D", "Hostel-E"
+  studentId    String
+  student      User      @relation("HostelEveningAttendanceStudent", fields: [studentId], references: [id], onDelete: Cascade)
+  status       String    @default("RETURNED") // RETURNED, NOT_RETURNED, ON_LEAVE
+  returnTime   DateTime?
+  recordedById String?
+  recordedBy   User?     @relation("HostelEveningAttendanceStaff", fields: [recordedById], references: [id], onDelete: SetNull)
+  remarks      String?
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  @@unique([date, studentId])
+  @@index([hostelBlock, date, status])
+  @@index([studentId, date])
 }
 

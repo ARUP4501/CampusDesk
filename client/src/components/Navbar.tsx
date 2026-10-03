@@ -28,6 +28,7 @@ import {
 } from "lucide-react";
 import { UserProfile } from "../api/client.js";
 import { NotificationInbox } from "./NotificationInbox.js";
+import { ThemeSwitcher } from "./ThemeSwitcher.js";
 
 interface NavbarProps {
   user: UserProfile | null;
@@ -71,7 +72,7 @@ const ROLE_NAV_CONFIG: Record<string, RoleNavConfig> = {
       { to: "/parcels", label: "Courier Parcels", icon: Package },
       { to: "/documents", label: "Certificates & Letters", icon: Files },
       { to: "/fees", label: "Fee Statement", icon: IndianRupee },
-      { to: "/help", label: "Help & Directory", icon: LifeBuoy },
+      { to: "/help", label: "Emergency Directory", icon: LifeBuoy },
       { to: "/faq", label: "Campus FAQ", icon: CircleHelp },
       { to: "/console", label: "Offline Console", icon: Terminal }
     ]
@@ -92,14 +93,25 @@ const ROLE_NAV_CONFIG: Record<string, RoleNavConfig> = {
     main: [
       { to: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
       { to: "/tickets", label: "Complaints", icon: Wrench },
-      { to: "/academics", label: "Attendance", icon: CalendarDays },
-      { to: "/gate-log", label: "Gate Log", icon: BadgeCheck }
+      { to: "/gate-log", label: "Gate Log", icon: BadgeCheck },
+      { to: "/parcels", label: "Courier Parcels", icon: Package }
     ],
     more: [
       { to: "/notices", label: "Official Circulars", icon: Megaphone },
       { to: "/documents", label: "Document Approvals", icon: Files },
-      { to: "/parcels", label: "Courier Parcels", icon: Package },
       { to: "/transport", label: "Transport & Fleet", icon: Bus },
+      { to: "/help", label: "Emergency Directory", icon: LifeBuoy },
+      { to: "/faq", label: "Campus FAQ", icon: CircleHelp },
+      { to: "/console", label: "Offline Console", icon: Terminal }
+    ]
+  },
+  SECURITY: {
+    main: [
+      { to: "/gate-log", label: "Gate Log", icon: BadgeCheck },
+      { to: "/gatepass", label: "Gate Passes", icon: DoorOpen },
+      { to: "/notices", label: "Circulars", icon: Megaphone }
+    ],
+    more: [
       { to: "/help", label: "Emergency Directory", icon: LifeBuoy },
       { to: "/faq", label: "Campus FAQ", icon: CircleHelp },
       { to: "/console", label: "Offline Console", icon: Terminal }
@@ -124,14 +136,15 @@ const ROLE_NAV_CONFIG: Record<string, RoleNavConfig> = {
   ADMIN: {
     main: [
       { to: "/admin", label: "Governance", icon: LayoutDashboard },
+      { to: "/academics", label: "Attendance", icon: CalendarDays },
       { to: "/tickets", label: "Complaints", icon: Wrench },
-      { to: "/notices", label: "Notices", icon: Megaphone },
-      { to: "/import", label: "Data Ingestion", icon: Database }
+      { to: "/notices", label: "Notices", icon: Megaphone }
     ],
     more: [
       { to: "/gatepass", label: "Gate Passes", icon: DoorOpen },
       { to: "/gate-log", label: "Security Gate Log", icon: BadgeCheck },
       { to: "/mess", label: "Mess Dining", icon: Utensils },
+      { to: "/import", label: "Data Ingestion", icon: Database },
       { to: "/documents", label: "Document Issuance", icon: Files },
       { to: "/transport", label: "Fleet & Transport", icon: Bus },
       { to: "/parcels", label: "Courier Logistics", icon: Package },
@@ -193,11 +206,15 @@ export const Navbar: React.FC<NavbarProps> = ({ user, onLogout, onOpenDigitalId 
   }, [location.pathname]);
 
   const userRole = user?.role || "STUDENT";
+  const isSecurity =
+    userRole === "SECURITY" ||
+    (userRole === "STAFF" && Boolean(user?.department?.toLowerCase().includes("security")));
+  const effectiveRole = isSecurity ? "SECURITY" : userRole;
   const isDayScholar =
     userRole === "STUDENT" &&
     (user?.livingType === "DAY_SCHOLAR" || (user as any)?.studentType === "DAY_SCHOLAR");
 
-  const baseNavConfig = ROLE_NAV_CONFIG[userRole] || ROLE_NAV_CONFIG.STUDENT;
+  const baseNavConfig = ROLE_NAV_CONFIG[effectiveRole] || ROLE_NAV_CONFIG.STUDENT;
   const navConfig: RoleNavConfig = isDayScholar
     ? {
         main: [
@@ -212,7 +229,7 @@ export const Navbar: React.FC<NavbarProps> = ({ user, onLogout, onOpenDigitalId 
           { to: "/clubs", label: "Campus Clubs", icon: Sparkles },
           { to: "/documents", label: "Certificates & Letters", icon: Files },
           { to: "/fees", label: "Fee Statement", icon: IndianRupee },
-          { to: "/help", label: "Help & Directory", icon: LifeBuoy },
+          { to: "/help", label: "Emergency Directory", icon: LifeBuoy },
           { to: "/faq", label: "Campus FAQ", icon: CircleHelp },
           { to: "/console", label: "Offline Console", icon: Terminal }
         ]
@@ -398,6 +415,9 @@ export const Navbar: React.FC<NavbarProps> = ({ user, onLogout, onOpenDigitalId 
 
         {/* RIGHT: Notifications + Profile + Guaranteed Viewport Visible Logout */}
         <div className="flex items-center space-x-1.5 sm:space-x-2 shrink-0 ml-auto">
+          {/* Global Theme Mode Switcher */}
+          <ThemeSwitcher />
+
           {user ? (
             <>
               <NotificationInbox user={user} />

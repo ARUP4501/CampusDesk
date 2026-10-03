@@ -23,44 +23,54 @@ messRouter.get("/menu", requireAuth, async (req: Request, res: Response): Promis
 });
 
 // Update or create mess menu items for a day (Only ADMIN and WARDEN)
+const handleUpdateMessMenu = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const { hostelBlock, dayOfWeek, breakfast, lunch, snacks, dinner } = req.body;
+
+    const updated = await prisma.messMenu.upsert({
+      where: {
+        hostelBlock_dayOfWeek: {
+          hostelBlock,
+          dayOfWeek
+        }
+      },
+      update: {
+        breakfast,
+        lunch,
+        snacks,
+        dinner,
+        updatedAt: new Date()
+      },
+      create: {
+        hostelBlock,
+        dayOfWeek,
+        breakfast,
+        lunch,
+        snacks,
+        dinner
+      }
+    });
+
+    res.json({ message: "Mess menu updated successfully.", item: updated });
+  } catch (err: any) {
+    res.status(500).json({ error: "Failed to update mess menu: " + (err.message || "") });
+  }
+};
+
 messRouter.post(
   "/menu",
   requireAuth,
   requireRoles(["ADMIN", "WARDEN"]),
   validateBody(UpdateMessMenuSchema),
-  async (req: Request, res: Response): Promise<void> => {
-    try {
-      const { hostelBlock, dayOfWeek, breakfast, lunch, snacks, dinner } = req.body;
+  handleUpdateMessMenu
+);
 
-      const updated = await prisma.messMenu.upsert({
-        where: {
-          hostelBlock_dayOfWeek: {
-            hostelBlock,
-            dayOfWeek
-          }
-        },
-        update: {
-          breakfast,
-          lunch,
-          snacks,
-          dinner,
-          updatedAt: new Date()
-        },
-        create: {
-          hostelBlock,
-          dayOfWeek,
-          breakfast,
-          lunch,
-          snacks,
-          dinner
-        }
-      });
-
-      res.json({ message: "Mess menu updated successfully.", item: updated });
-    } catch (err: any) {
-      res.status(500).json({ error: "Failed to update mess menu: " + (err.message || "") });
-    }
-  }
+messRouter.put(
+  "/menu",
+  requireAuth,
+  requireRoles(["ADMIN", "WARDEN"]),
+  validateBody(UpdateMessMenuSchema),
+  handleUpdateMessMenu
 );
 
 // Reset or delete mess menu for a day (Only ADMIN and WARDEN)

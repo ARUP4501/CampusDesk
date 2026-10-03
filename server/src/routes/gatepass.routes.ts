@@ -71,6 +71,8 @@ gatePassRouter.get("/", requireAuth, async (req: Request, res: Response): Promis
     const whereClause: any = {};
     if (isStudent) {
       whereClause.studentId = req.user!.id;
+    } else if (req.user!.role === "WARDEN" && req.user!.hostelBlock) {
+      whereClause.student = { hostelBlock: req.user!.hostelBlock };
     }
 
     if (status && status !== "ALL") {
@@ -164,6 +166,11 @@ gatePassRouter.patch(
 
       if (!gatePass) {
         res.status(404).json({ error: "Gate pass not found." });
+        return;
+      }
+
+      if (req.user!.role === "WARDEN" && req.user!.hostelBlock && gatePass.student?.hostelBlock !== req.user!.hostelBlock) {
+        res.status(403).json({ error: `Forbidden: You are assigned to ${req.user!.hostelBlock} and cannot review gate passes for ${gatePass.student?.hostelBlock || "other hostels"}.` });
         return;
       }
 

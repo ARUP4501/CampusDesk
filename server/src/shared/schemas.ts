@@ -698,6 +698,7 @@ export const SubmitAttendanceSessionSchema = z.object({
   semester: z.coerce.number().int().min(1).max(12),
   section: z.string().min(1).max(10).default("A"),
   date: z.string().min(1, "Date is required"),
+  topic: z.string().max(200).optional().nullable(),
   startTime: z.string().min(1),
   endTime: z.string().min(1),
   records: z.array(AttendanceItemSchema).min(1, "At least one attendance record is required")

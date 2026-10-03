@@ -56,15 +56,15 @@ export const OfflineBanner: React.FC = () => {
       aria-live="polite"
       className={`px-4 py-2 border-b text-xs font-medium flex items-center justify-between transition-colors ${
         !isOnline
-          ? "bg-[#FDB773]/40 border-amber-600/30 text-[#4D2A00]"
-          : "bg-white/60 border-emerald-600/20 text-[#2E7D32]"
+          ? "bg-amber-500/15 border-amber-500/30 text-amber-300"
+          : "bg-emerald-500/15 border-emerald-500/30 text-emerald-400"
       }`}
     >
       <div className="flex items-center space-x-2.5">
         {!isOnline ? (
-          <WifiOff className="w-4 h-4 text-[#CC6F00] shrink-0" aria-hidden="true" />
+          <WifiOff className="w-4 h-4 text-amber-400 shrink-0" aria-hidden="true" />
         ) : (
-          <CheckCircle2 className="w-4 h-4 text-[#2E7D32] shrink-0" aria-hidden="true" />
+          <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" aria-hidden="true" />
         )}
         <span>
           {!isOnline

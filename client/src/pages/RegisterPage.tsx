@@ -98,63 +98,69 @@ export const RegisterPage: React.FC<RegisterPageProps> = ({ onLoginSuccess }) =>
     branch: "Computer Science & Engineering",
     year: 1,
     semester: 1,
+    section: "A",
     batch: "2024-2028",
-    permanentAddress: "",
-    currentAddress: "",
     fatherName: "",
     fatherPhone: "",
     motherName: "",
     motherPhone: "",
     guardianName: "",
-    guardianRelation: "Uncle",
+    guardianRelation: "Guardian",
     guardianPhone: "",
     guardianAddress: "",
+    permanentAddress: "",
     livingType: "HOSTELLER",
     requestedHostel: "Hostel-A",
     roomPreference: "Double Sharing",
+    currentAddress: "",
     busRoute: "Route 1",
-    pickupPoint: "Master Canteen",
+    pickupPoint: "",
     vehicleNumber: "",
     parkingZone: "Zone A (Two-Wheeler)",
     consentAgreed: false
   });
 
+  const [currentStep, setCurrentStep] = useState<number>(1);
+  const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
-  const [loading, setLoading] = useState<boolean>(false);
-  const [currentStep, setCurrentStep] = useState<number>(1);
 
-  // Load live active courses from database
   useEffect(() => {
-    apiRequest<{ courses: CourseOption[] }>("/api/academic/courses")
-      .then((res) => {
-        if (res?.courses && res.courses.length > 0) {
+    const fetchCoursesMetadata = async () => {
+      try {
+        const res = await apiRequest<{ courses: CourseOption[] }>("/api/academic/courses");
+        if (res && res.courses && res.courses.length > 0) {
           setCoursesList(res.courses);
         }
-      })
-      .catch(() => {
-        // Fallback to DEFAULT_COURSES on network issues
-      });
+      } catch (err) {
+        // Fallback to DEFAULT_COURSES
+      }
+    };
+    fetchCoursesMetadata();
   }, []);
 
   const handleCourseChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    const selectedCode = e.target.value;
-    const selectedCourseObj = coursesList.find((c) => c.code === selectedCode);
-    const defaultBranch = selectedCourseObj?.branches?.[0]?.name || "";
+    const selectedCourseCode = e.target.value;
+    const selectedCourseObj = coursesList.find((c) => c.code === selectedCourseCode) || coursesList[0];
+    const defaultBranchName = selectedCourseObj?.branches?.[0]?.name || "General";
+    const currentYear = new Date().getFullYear();
+    const endYear = currentYear + (selectedCourseObj?.durationYears || 4);
+
     setFormData((prev) => ({
       ...prev,
-      course: selectedCode,
-      branch: defaultBranch,
-      department: defaultBranch,
+      course: selectedCourseCode,
+      department: selectedCourseObj?.name || prev.department,
+      branch: defaultBranchName,
       year: 1,
-      semester: 1
+      semester: 1,
+      batch: `${currentYear}-${endYear}`
     }));
   };
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
     const { name, value, type } = e.target;
     if (type === "checkbox") {
-      const { checked } = e.target as HTMLInputElement;
+      const checked = (e.target as HTMLInputElement).checked;
       setFormData((prev) => ({ ...prev, [name]: checked }));
     } else {
       setFormData((prev) => ({ ...prev, [name]: value }));
@@ -162,24 +168,68 @@ export const RegisterPage: React.FC<RegisterPageProps> = ({ onLoginSuccess }) =>
   };
 
   const validateStep1 = () => {
-    if (!formData.fullName.trim() || !formData.email.trim() || !formData.phone.trim() || !formData.rollNumber.trim() || !formData.password) {
-      setError("Please fill in all required basic personal information.");
+    if (!formData.fullName.trim()) {
+      setError("Please enter your full legal name.");
       return false;
     }
-    if (formData.password.length < 8) {
-      setError("Password must have at least 8 characters.");
+    if (!formData.rollNumber.trim()) {
+      setError("Please enter your official student roll or registration number.");
+      return false;
+    }
+    if (!formData.email.trim() || !formData.email.includes("@")) {
+      setError("Please enter a valid official student email address.");
+      return false;
+    }
+    if (!formData.phone.trim() || formData.phone.length < 8) {
+      setError("Please enter a valid phone number.");
+      return false;
+    }
+    if (!formData.dob) {
+      setError("Please enter your date of birth.");
+      return false;
+    }
+    if (!formData.password || formData.password.length < 6) {
+      setError("Password must be at least 6 characters.");
       return false;
     }
     if (formData.password !== formData.confirmPassword) {
-      setError("Passwords do not match.");
+      setError("Passwords do not match. Please verify.");
       return false;
     }
     return true;
   };
 
   const validateStep2 = () => {
-    if (!formData.fatherName.trim() || !formData.fatherPhone.trim() || !formData.guardianName.trim() || !formData.guardianPhone.trim() || !formData.permanentAddress.trim()) {
-      setError("Please provide required Parent, Local Guardian, and Permanent Address details.");
+    if (!formData.fatherName.trim()) {
+      setError("Father's full name is required for verification.");
+      return false;
+    }
+    if (!formData.fatherPhone.trim() || formData.fatherPhone.length < 8) {
+      setError("Father's contact number is required.");
+      return false;
+    }
+    if (!formData.guardianName.trim()) {
+      setError("Local guardian name is required for student records.");
+      return false;
+    }
+    if (!formData.guardianPhone.trim() || formData.guardianPhone.length < 8) {
+      setError("Local guardian phone number is required.");
+      return false;
+    }
+    if (!formData.permanentAddress.trim()) {
+      setError("Permanent residential address is required.");
+      return false;
+    }
+    return true;
+  };
+
+  const validateStep3 = () => {
+    if (formData.livingType === "DAY_SCHOLAR" && !formData.currentAddress.trim()) {
+      setError("Local commuter / city residence address is required for Day Scholars.");
+      return false;
+    }
+    if (!formData.consentAgreed) {
+      setError("You must acknowledge the verification declaration to proceed.");
       return false;
     }
     return true;
@@ -189,71 +239,68 @@ export const RegisterPage: React.FC<RegisterPageProps> = ({ onLoginSuccess }) =>
     e.preventDefault();
     setError(null);
 
-    if (!formData.consentAgreed) {
-      setError("You must review and accept the official Campus Management terms and data consent agreement.");
+    if (!validateStep1() || !validateStep2() || !validateStep3()) {
       return;
     }
 
-    setLoading(true);
     try {
-      const data = await apiRequest<{ user: UserProfile; token?: string; message: string }>("/api/auth/register", {
+      setLoading(true);
+      const res = await apiRequest<{ token: string; user: UserProfile }>("/api/auth/register", {
         method: "POST",
-        body: JSON.stringify({
-          ...formData,
-          year: parseInt(String(formData.year), 10),
-          semester: parseInt(String(formData.semester), 10),
-          role: "STUDENT"
-        })
+        body: JSON.stringify(formData)
       });
 
-      if (data.token) {
-        setAuthToken(data.token);
+      if (res.token && res.user) {
+        setAuthToken(res.token);
+        broadcastAuthEvent("LOGIN");
+        setSuccessMessage("Registration submitted successfully! Verifying credentials...");
+        setTimeout(() => {
+          onLoginSuccess(res.user);
+          navigate("/dashboard");
+        }, 1200);
+      } else {
+        setSuccessMessage("Application submitted! Please await institutional verification.");
+        setTimeout(() => {
+          navigate("/login");
+        }, 1500);
       }
-      setSuccessMessage(data.message || "Registration submitted for verification!");
-      onLoginSuccess(data.user);
-      broadcastAuthEvent({ type: "LOGIN", user: data.user });
-      setTimeout(() => {
-        navigate("/dashboard", { replace: true });
-      }, 1500);
     } catch (err: any) {
-      setError(err.message || "Registration failed. Please check your information and try again.");
+      setError(err.message || "Registration failed. Please check your data and retry.");
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div className="max-w-2xl mx-auto my-8 px-4">
-      <div className="glass-panel rounded-3xl p-6 sm:p-8 relative overflow-hidden shadow-glass border border-[rgba(77,42,0,0.12)]">
-        {/* Subtle warm glow */}
-        <div className="absolute top-0 right-0 w-48 h-48 bg-[#FDB773]/20 rounded-full blur-2xl pointer-events-none" />
-
+    <div className="max-w-2xl mx-auto my-8 px-4 pb-16">
+      <div className="campus-panel rounded-2xl p-6 sm:p-8 relative overflow-hidden border border-[var(--border-subtle)] shadow-2xl">
         <div className="relative text-center mb-6">
-          <div className="w-12 h-12 bg-[#FDB773]/40 border border-[#CC6F00]/25 text-[#4D2A00] flex items-center justify-center font-bold text-sm rounded-2xl mx-auto mb-3 shadow-sm">
-            <UserCheck className="w-6 h-6 text-[#4D2A00]" />
+          <div className="w-12 h-12 bg-[var(--bg-input)] border border-[var(--border-subtle)] text-[#FF6D1F] flex items-center justify-center font-bold text-sm rounded-xl mx-auto mb-3 shadow-sm">
+            <UserCheck className="w-6 h-6" />
           </div>
-          <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-[#4D2A00]">Student Campus Enrollment</h1>
-          <p className="text-xs text-[#4D2A00]/70 mt-1 max-w-md mx-auto">
-            Complete your profile with academic, guardian and hostel preferences. Registration undergoes 2-step verification by your Warden and Administration.
+          <span className="editorial-eyebrow">ENROLLMENT PORTAL</span>
+          <h1 className="editorial-title text-xl sm:text-2xl font-bold text-[var(--text-primary)] mt-1">Student Campus Enrollment</h1>
+          <p className="text-xs text-[var(--text-secondary)] mt-1 max-w-md mx-auto">
+            Profile onboarding with academic branch, parent emergency contacts, and residential living preferences.
           </p>
         </div>
 
         {/* Multi-Step Indicator */}
-        <div className="relative flex items-center justify-center mb-6 border-b border-[rgba(77,42,0,0.1)] pb-4">
-          <div className="flex items-center space-x-2 sm:space-x-4 text-xs font-medium">
+        <div className="relative flex items-center justify-center mb-6 border-b border-[var(--border-subtle)] pb-4">
+          <div className="flex items-center space-x-2 sm:space-x-3 text-xs font-mono">
             <button
               type="button"
               onClick={() => setCurrentStep(1)}
-              className={`flex items-center space-x-1.5 px-3.5 py-1.5 rounded-xl transition-all ${
+              className={`flex items-center space-x-1.5 px-3 py-1.5 rounded-lg transition-all ${
                 currentStep === 1
-                  ? "bg-[#FDB773] text-[#4D2A00] font-bold shadow-sm"
-                  : "bg-white/50 text-[#4D2A00]/70 border border-[rgba(77,42,0,0.08)] hover:text-[#4D2A00]"
+                  ? "bg-[var(--bg-elevated)] text-[var(--text-primary)] border border-[var(--border-subtle)] font-bold"
+                  : "text-[var(--text-muted)] hover:text-[var(--text-primary)]"
               }`}
             >
-              <span>1.</span>
+              <span>01.</span>
               <span>Personal & Academic</span>
             </button>
-            <span className="text-[#4D2A00]/30">/</span>
+            <span className="text-[var(--text-muted)] opacity-40">/</span>
             <button
               type="button"
               onClick={() => {
@@ -262,16 +309,16 @@ export const RegisterPage: React.FC<RegisterPageProps> = ({ onLoginSuccess }) =>
                   setCurrentStep(2);
                 }
               }}
-              className={`flex items-center space-x-1.5 px-3.5 py-1.5 rounded-xl transition-all ${
+              className={`flex items-center space-x-1.5 px-3 py-1.5 rounded-lg transition-all ${
                 currentStep === 2
-                  ? "bg-[#FDB773] text-[#4D2A00] font-bold shadow-sm"
-                  : "bg-white/50 text-[#4D2A00]/70 border border-[rgba(77,42,0,0.08)] hover:text-[#4D2A00]"
+                  ? "bg-[var(--bg-elevated)] text-[var(--text-primary)] border border-[var(--border-subtle)] font-bold"
+                  : "text-[var(--text-muted)] hover:text-[var(--text-primary)]"
               }`}
             >
-              <span>2.</span>
-              <span>Parents & Guardian</span>
+              <span>02.</span>
+              <span>Guardians</span>
             </button>
-            <span className="text-[#4D2A00]/30">/</span>
+            <span className="text-[var(--text-muted)] opacity-40">/</span>
             <button
               type="button"
               onClick={() => {
@@ -280,40 +327,40 @@ export const RegisterPage: React.FC<RegisterPageProps> = ({ onLoginSuccess }) =>
                   setCurrentStep(3);
                 }
               }}
-              className={`flex items-center space-x-1.5 px-3.5 py-1.5 rounded-xl transition-all ${
+              className={`flex items-center space-x-1.5 px-3 py-1.5 rounded-lg transition-all ${
                 currentStep === 3
-                  ? "bg-[#FDB773] text-[#4D2A00] font-bold shadow-sm"
-                  : "bg-white/50 text-[#4D2A00]/70 border border-[rgba(77,42,0,0.08)] hover:text-[#4D2A00]"
+                  ? "bg-[var(--bg-elevated)] text-[var(--text-primary)] border border-[var(--border-subtle)] font-bold"
+                  : "text-[var(--text-muted)] hover:text-[var(--text-primary)]"
               }`}
             >
-              <span>3.</span>
-              <span>Hostel & Verification</span>
+              <span>03.</span>
+              <span>Living & Housing</span>
             </button>
           </div>
         </div>
 
         {error && (
-          <div role="alert" className="relative p-3.5 mb-4 text-xs font-medium text-rose-900 bg-rose-500/15 border border-rose-500/30 rounded-2xl">
+          <div role="alert" className="p-3 mb-4 text-xs font-mono font-medium text-rose-400 bg-rose-500/15 border border-rose-500/30 rounded-xl">
             {error}
           </div>
         )}
 
         {successMessage && (
-          <div role="status" className="relative p-3.5 mb-4 text-xs font-medium text-emerald-950 bg-emerald-500/20 border border-emerald-500/30 rounded-2xl">
-            {successMessage} Redirecting to your dashboard...
+          <div role="status" className="p-3 mb-4 text-xs font-mono font-medium text-emerald-400 bg-emerald-500/15 border border-emerald-500/30 rounded-xl">
+            {successMessage}
           </div>
         )}
 
-        <form onSubmit={handleSubmit} className="space-y-4 relative">
+        <form onSubmit={handleSubmit} className="space-y-4">
           {/* STEP 1: Personal & Academic Details */}
           {currentStep === 1 && (
             <div className="space-y-4">
-              <h2 className="text-xs font-bold text-[#CC6F00] uppercase tracking-wider border-b border-[rgba(77,42,0,0.1)] pb-1.5">
-                1. Personal Details
+              <h2 className="text-xs font-mono font-bold text-[#FF6D1F] uppercase tracking-wider border-b border-[var(--border-subtle)] pb-1.5">
+                01. Personal Identification
               </h2>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
                 <div>
-                  <label htmlFor="fullName" className="block text-xs font-semibold text-[#4D2A00] mb-1">
+                  <label htmlFor="fullName" className="block text-[10px] font-mono uppercase text-[var(--text-secondary)] mb-1">
                     Full Legal Name *
                   </label>
                   <input
@@ -324,13 +371,13 @@ export const RegisterPage: React.FC<RegisterPageProps> = ({ onLoginSuccess }) =>
                     value={formData.fullName}
                     onChange={handleChange}
                     placeholder="e.g. Aarav Sharma"
-                    className="w-full px-3.5 py-2.5 bg-white/60 border border-[rgba(77,42,0,0.12)] rounded-xl text-[#4D2A00] text-xs placeholder-[#4D2A00]/40 focus:outline-none focus:border-[#CC6F00]"
+                    className="w-full px-3 py-2 bg-[var(--bg-input)] border border-[var(--border-subtle)] rounded-xl text-[var(--text-primary)] text-xs placeholder:text-[var(--text-muted)] focus:outline-none focus:border-[#FF6D1F]"
                   />
                 </div>
 
                 <div>
-                  <label htmlFor="rollNumber" className="block text-xs font-semibold text-[#4D2A00] mb-1">
-                    Student Roll / Reg. Number *
+                  <label htmlFor="rollNumber" className="block text-[10px] font-mono uppercase text-[var(--text-secondary)] mb-1">
+                    Roll / Reg. Number *
                   </label>
                   <input
                     id="rollNumber"
@@ -340,12 +387,12 @@ export const RegisterPage: React.FC<RegisterPageProps> = ({ onLoginSuccess }) =>
                     value={formData.rollNumber}
                     onChange={handleChange}
                     placeholder="e.g. 2024CS101"
-                    className="w-full px-3.5 py-2.5 bg-white/60 border border-[rgba(77,42,0,0.12)] rounded-xl text-[#4D2A00] text-xs placeholder-[#4D2A00]/40 focus:outline-none focus:border-[#CC6F00] font-mono uppercase"
+                    className="w-full px-3 py-2 bg-[var(--bg-input)] border border-[var(--border-subtle)] rounded-xl text-[var(--text-primary)] text-xs placeholder:text-[var(--text-muted)] focus:outline-none focus:border-[#FF6D1F] font-mono uppercase"
                   />
                 </div>
 
                 <div>
-                  <label htmlFor="email" className="block text-xs font-semibold text-[#4D2A00] mb-1">
+                  <label htmlFor="email" className="block text-[10px] font-mono uppercase text-[var(--text-secondary)] mb-1">
                     Official Student Email *
                   </label>
                   <input
@@ -356,12 +403,12 @@ export const RegisterPage: React.FC<RegisterPageProps> = ({ onLoginSuccess }) =>
                     value={formData.email}
                     onChange={handleChange}
                     placeholder="aarav@campusdesk.edu"
-                    className="w-full px-3.5 py-2.5 bg-white/60 border border-[rgba(77,42,0,0.12)] rounded-xl text-[#4D2A00] text-xs placeholder-[#4D2A00]/40 focus:outline-none focus:border-[#CC6F00] font-mono"
+                    className="w-full px-3 py-2 bg-[var(--bg-input)] border border-[var(--border-subtle)] rounded-xl text-[var(--text-primary)] text-xs placeholder:text-[var(--text-muted)] focus:outline-none focus:border-[#FF6D1F] font-mono"
                   />
                 </div>
 
                 <div>
-                  <label htmlFor="phone" className="block text-xs font-semibold text-[#4D2A00] mb-1">
+                  <label htmlFor="phone" className="block text-[10px] font-mono uppercase text-[var(--text-secondary)] mb-1">
                     Student Phone Number *
                   </label>
                   <input
@@ -372,12 +419,12 @@ export const RegisterPage: React.FC<RegisterPageProps> = ({ onLoginSuccess }) =>
                     value={formData.phone}
                     onChange={handleChange}
                     placeholder="9876543210"
-                    className="w-full px-3.5 py-2.5 bg-white/60 border border-[rgba(77,42,0,0.12)] rounded-xl text-[#4D2A00] text-xs placeholder-[#4D2A00]/40 focus:outline-none focus:border-[#CC6F00] font-mono"
+                    className="w-full px-3 py-2 bg-[var(--bg-input)] border border-[var(--border-subtle)] rounded-xl text-[var(--text-primary)] text-xs placeholder:text-[var(--text-muted)] focus:outline-none focus:border-[#FF6D1F] font-mono"
                   />
                 </div>
 
                 <div>
-                  <label htmlFor="dob" className="block text-xs font-semibold text-[#4D2A00] mb-1">
+                  <label htmlFor="dob" className="block text-[10px] font-mono uppercase text-[var(--text-secondary)] mb-1">
                     Date of Birth *
                   </label>
                   <input
@@ -387,14 +434,14 @@ export const RegisterPage: React.FC<RegisterPageProps> = ({ onLoginSuccess }) =>
                     required
                     value={formData.dob}
                     onChange={handleChange}
-                    className="w-full px-3.5 py-2.5 bg-white/60 border border-[rgba(77,42,0,0.12)] rounded-xl text-[#4D2A00] text-xs focus:outline-none focus:border-[#CC6F00]"
+                    className="w-full px-3 py-2 bg-[var(--bg-input)] border border-[var(--border-subtle)] rounded-xl text-[var(--text-primary)] text-xs focus:outline-none focus:border-[#FF6D1F] font-mono text-[11px]"
                   />
                 </div>
 
                 <div>
                   <div className="grid grid-cols-2 gap-2">
                     <div>
-                      <label htmlFor="gender" className="block text-xs font-semibold text-[#4D2A00] mb-1">
+                      <label htmlFor="gender" className="block text-[10px] font-mono uppercase text-[var(--text-secondary)] mb-1">
                         Gender *
                       </label>
                       <select
@@ -402,7 +449,7 @@ export const RegisterPage: React.FC<RegisterPageProps> = ({ onLoginSuccess }) =>
                         name="gender"
                         value={formData.gender}
                         onChange={handleChange}
-                        className="w-full px-3.5 py-2.5 bg-white/60 border border-[rgba(77,42,0,0.12)] rounded-xl text-[#4D2A00] text-xs focus:outline-none focus:border-[#CC6F00]"
+                        className="w-full px-3 py-2 bg-[var(--bg-input)] border border-[var(--border-subtle)] rounded-xl text-[var(--text-primary)] text-xs focus:outline-none focus:border-[#FF6D1F] font-mono"
                       >
                         <option value="MALE">Male</option>
                         <option value="FEMALE">Female</option>
@@ -411,7 +458,7 @@ export const RegisterPage: React.FC<RegisterPageProps> = ({ onLoginSuccess }) =>
                     </div>
 
                     <div>
-                      <label htmlFor="bloodGroup" className="block text-xs font-semibold text-[#4D2A00] mb-1">
+                      <label htmlFor="bloodGroup" className="block text-[10px] font-mono uppercase text-[var(--text-secondary)] mb-1">
                         Blood Group
                       </label>
                       <select
@@ -419,7 +466,7 @@ export const RegisterPage: React.FC<RegisterPageProps> = ({ onLoginSuccess }) =>
                         name="bloodGroup"
                         value={formData.bloodGroup}
                         onChange={handleChange}
-                        className="w-full px-3.5 py-2.5 bg-white/60 border border-[rgba(77,42,0,0.12)] rounded-xl text-[#4D2A00] text-xs focus:outline-none focus:border-[#CC6F00]"
+                        className="w-full px-3 py-2 bg-[var(--bg-input)] border border-[var(--border-subtle)] rounded-xl text-[var(--text-primary)] text-xs focus:outline-none focus:border-[#FF6D1F] font-mono"
                       >
                         <option value="A+">A+</option>
                         <option value="B+">B+</option>
@@ -435,8 +482,8 @@ export const RegisterPage: React.FC<RegisterPageProps> = ({ onLoginSuccess }) =>
                 </div>
 
                 <div>
-                  <label htmlFor="password" className="block text-xs font-semibold text-[#4D2A00] mb-1">
-                    Create Password (min 8 chars) *
+                  <label htmlFor="password" className="block text-[10px] font-mono uppercase text-[var(--text-secondary)] mb-1">
+                    Password (min 6 chars) *
                   </label>
                   <div className="relative flex items-center">
                     <input
@@ -447,22 +494,21 @@ export const RegisterPage: React.FC<RegisterPageProps> = ({ onLoginSuccess }) =>
                       value={formData.password}
                       onChange={handleChange}
                       placeholder="••••••••"
-                      className="w-full pl-10 pr-10 py-2.5 bg-white/60 border border-[rgba(77,42,0,0.12)] rounded-xl text-[#4D2A00] text-xs placeholder-[#4D2A00]/40 focus:outline-none focus:border-[#CC6F00] transition-colors"
+                      className="w-full pl-9 pr-9 py-2 bg-[var(--bg-input)] border border-[var(--border-subtle)] rounded-xl text-[var(--text-primary)] text-xs placeholder:text-[var(--text-muted)] focus:outline-none focus:border-[#FF6D1F]"
                     />
-                    <KeyRound className="w-4 h-4 text-[#4D2A00]/40 absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+                    <KeyRound className="w-3.5 h-3.5 text-[var(--text-muted)] absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
                     <button
                       type="button"
                       onClick={() => setShowPassword(!showPassword)}
-                      className="absolute right-3 top-1/2 -translate-y-1/2 p-1 text-[#4D2A00]/50 hover:text-[#4D2A00] transition-colors rounded-lg focus:outline-none"
-                      aria-label={showPassword ? "Hide password" : "Show password"}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-[var(--text-muted)] hover:text-[var(--text-primary)]"
                     >
-                      {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                      {showPassword ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
                     </button>
                   </div>
                 </div>
 
                 <div>
-                  <label htmlFor="confirmPassword" className="block text-xs font-semibold text-[#4D2A00] mb-1">
+                  <label htmlFor="confirmPassword" className="block text-[10px] font-mono uppercase text-[var(--text-secondary)] mb-1">
                     Confirm Password *
                   </label>
                   <div className="relative flex items-center">
@@ -474,23 +520,22 @@ export const RegisterPage: React.FC<RegisterPageProps> = ({ onLoginSuccess }) =>
                       value={formData.confirmPassword}
                       onChange={handleChange}
                       placeholder="••••••••"
-                      className="w-full pl-10 pr-10 py-2.5 bg-white/60 border border-[rgba(77,42,0,0.12)] rounded-xl text-[#4D2A00] text-xs placeholder-[#4D2A00]/40 focus:outline-none focus:border-[#CC6F00] transition-colors"
+                      className="w-full pl-9 pr-9 py-2 bg-[var(--bg-input)] border border-[var(--border-subtle)] rounded-xl text-[var(--text-primary)] text-xs placeholder:text-[var(--text-muted)] focus:outline-none focus:border-[#FF6D1F]"
                     />
-                    <Lock className="w-4 h-4 text-[#4D2A00]/40 absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+                    <Lock className="w-3.5 h-3.5 text-[var(--text-muted)] absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
                     <button
                       type="button"
                       onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                      className="absolute right-3 top-1/2 -translate-y-1/2 p-1 text-[#4D2A00]/50 hover:text-[#4D2A00] transition-colors rounded-lg focus:outline-none"
-                      aria-label={showConfirmPassword ? "Hide password" : "Show password"}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-[var(--text-muted)] hover:text-[var(--text-primary)]"
                     >
-                      {showConfirmPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                      {showConfirmPassword ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
                     </button>
                   </div>
                 </div>
               </div>
 
-              <h2 className="text-xs font-bold text-[#CC6F00] uppercase tracking-wider border-b border-[rgba(77,42,0,0.1)] pb-1.5 pt-3">
-                2. Academic Details
+              <h2 className="text-xs font-mono font-bold text-[#FF6D1F] uppercase tracking-wider border-b border-[var(--border-subtle)] pb-1.5 pt-3">
+                02. Academic Program
               </h2>
               {(() => {
                 const selectedCourseObj = coursesList.find((c) => c.code === formData.course) || coursesList[0];
@@ -498,17 +543,17 @@ export const RegisterPage: React.FC<RegisterPageProps> = ({ onLoginSuccess }) =>
                 const maxYears = selectedCourseObj?.durationYears || 4;
 
                 return (
-                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-3.5">
                     <div>
-                      <label htmlFor="course" className="block text-xs font-semibold text-[#4D2A00] mb-1">
-                        Course / Degree *
+                      <label htmlFor="course" className="block text-[10px] font-mono uppercase text-[var(--text-secondary)] mb-1">
+                        Degree Program *
                       </label>
                       <select
                         id="course"
                         name="course"
                         value={formData.course}
                         onChange={handleCourseChange}
-                        className="w-full px-3.5 py-2.5 bg-white/60 border border-[rgba(77,42,0,0.12)] rounded-xl text-[#4D2A00] text-xs focus:outline-none focus:border-[#CC6F00] font-semibold"
+                        className="w-full px-3 py-2 bg-[var(--bg-input)] border border-[var(--border-subtle)] rounded-xl text-[var(--text-primary)] text-xs focus:outline-none focus:border-[#FF6D1F] font-mono font-semibold"
                       >
                         {coursesList.map((c) => (
                           <option key={c.code} value={c.code}>
@@ -519,7 +564,7 @@ export const RegisterPage: React.FC<RegisterPageProps> = ({ onLoginSuccess }) =>
                     </div>
 
                     <div>
-                      <label htmlFor="branch" className="block text-xs font-semibold text-[#4D2A00] mb-1">
+                      <label htmlFor="branch" className="block text-[10px] font-mono uppercase text-[var(--text-secondary)] mb-1">
                         Branch / Specialization *
                       </label>
                       <select
@@ -527,7 +572,7 @@ export const RegisterPage: React.FC<RegisterPageProps> = ({ onLoginSuccess }) =>
                         name="branch"
                         value={formData.branch}
                         onChange={handleChange}
-                        className="w-full px-3.5 py-2.5 bg-white/60 border border-[rgba(77,42,0,0.12)] rounded-xl text-[#4D2A00] text-xs focus:outline-none focus:border-[#CC6F00]"
+                        className="w-full px-3 py-2 bg-[var(--bg-input)] border border-[var(--border-subtle)] rounded-xl text-[var(--text-primary)] text-xs focus:outline-none focus:border-[#FF6D1F] font-mono"
                       >
                         {availableBranches.map((b) => (
                           <option key={b.code} value={b.name}>
@@ -540,7 +585,7 @@ export const RegisterPage: React.FC<RegisterPageProps> = ({ onLoginSuccess }) =>
                     <div>
                       <div className="grid grid-cols-2 gap-2">
                         <div>
-                          <label htmlFor="year" className="block text-xs font-semibold text-[#4D2A00] mb-1">
+                          <label htmlFor="year" className="block text-[10px] font-mono uppercase text-[var(--text-secondary)] mb-1">
                             Year *
                           </label>
                           <select
@@ -548,7 +593,7 @@ export const RegisterPage: React.FC<RegisterPageProps> = ({ onLoginSuccess }) =>
                             name="year"
                             value={formData.year}
                             onChange={handleChange}
-                            className="w-full px-3.5 py-2.5 bg-white/60 border border-[rgba(77,42,0,0.12)] rounded-xl text-[#4D2A00] text-xs focus:outline-none focus:border-[#CC6F00]"
+                            className="w-full px-3 py-2 bg-[var(--bg-input)] border border-[var(--border-subtle)] rounded-xl text-[var(--text-primary)] text-xs focus:outline-none focus:border-[#FF6D1F] font-mono"
                           >
                             {Array.from({ length: maxYears }, (_, i) => i + 1).map((yr) => (
                               <option key={yr} value={yr}>
@@ -559,7 +604,7 @@ export const RegisterPage: React.FC<RegisterPageProps> = ({ onLoginSuccess }) =>
                         </div>
 
                         <div>
-                          <label htmlFor="semester" className="block text-xs font-semibold text-[#4D2A00] mb-1">
+                          <label htmlFor="semester" className="block text-[10px] font-mono uppercase text-[var(--text-secondary)] mb-1">
                             Semester
                           </label>
                           <select
@@ -567,7 +612,7 @@ export const RegisterPage: React.FC<RegisterPageProps> = ({ onLoginSuccess }) =>
                             name="semester"
                             value={formData.semester}
                             onChange={handleChange}
-                            className="w-full px-3.5 py-2.5 bg-white/60 border border-[rgba(77,42,0,0.12)] rounded-xl text-[#4D2A00] text-xs focus:outline-none focus:border-[#CC6F00]"
+                            className="w-full px-3 py-2 bg-[var(--bg-input)] border border-[var(--border-subtle)] rounded-xl text-[var(--text-primary)] text-xs focus:outline-none focus:border-[#FF6D1F] font-mono"
                           >
                             {Array.from({ length: maxYears * 2 }, (_, i) => i + 1).map((s) => (
                               <option key={s} value={s}>
@@ -582,7 +627,7 @@ export const RegisterPage: React.FC<RegisterPageProps> = ({ onLoginSuccess }) =>
                 );
               })()}
 
-              <div className="flex justify-end pt-4">
+              <div className="flex justify-end pt-3">
                 <button
                   type="button"
                   onClick={() => {
@@ -591,7 +636,7 @@ export const RegisterPage: React.FC<RegisterPageProps> = ({ onLoginSuccess }) =>
                       setCurrentStep(2);
                     }
                   }}
-                  className="btn-primary px-6 py-2.5 text-xs font-bold shadow-sm"
+                  className="btn-primary px-5 py-2 text-xs font-bold font-mono rounded-xl"
                 >
                   Next: Parents & Guardian →
                 </button>
@@ -602,12 +647,12 @@ export const RegisterPage: React.FC<RegisterPageProps> = ({ onLoginSuccess }) =>
           {/* STEP 2: Parents & Local Guardian */}
           {currentStep === 2 && (
             <div className="space-y-4">
-              <h2 className="text-xs font-bold text-[#CC6F00] uppercase tracking-wider border-b border-[rgba(77,42,0,0.1)] pb-1.5">
-                3. Parent Contact Details
+              <h2 className="text-xs font-mono font-bold text-[#FF6D1F] uppercase tracking-wider border-b border-[var(--border-subtle)] pb-1.5">
+                03. Parent Verification Contacts
               </h2>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
                 <div>
-                  <label htmlFor="fatherName" className="block text-xs font-semibold text-[#4D2A00] mb-1">
+                  <label htmlFor="fatherName" className="block text-[10px] font-mono uppercase text-[var(--text-secondary)] mb-1">
                     Father's Full Name *
                   </label>
                   <input
@@ -618,12 +663,12 @@ export const RegisterPage: React.FC<RegisterPageProps> = ({ onLoginSuccess }) =>
                     value={formData.fatherName}
                     onChange={handleChange}
                     placeholder="e.g. Rajesh Sharma"
-                    className="w-full px-3.5 py-2.5 bg-white/60 border border-[rgba(77,42,0,0.12)] rounded-xl text-[#4D2A00] text-xs placeholder-[#4D2A00]/40 focus:outline-none focus:border-[#CC6F00]"
+                    className="w-full px-3 py-2 bg-[var(--bg-input)] border border-[var(--border-subtle)] rounded-xl text-[var(--text-primary)] text-xs placeholder:text-[var(--text-muted)] focus:outline-none focus:border-[#FF6D1F]"
                   />
                 </div>
 
                 <div>
-                  <label htmlFor="fatherPhone" className="block text-xs font-semibold text-[#4D2A00] mb-1">
+                  <label htmlFor="fatherPhone" className="block text-[10px] font-mono uppercase text-[var(--text-secondary)] mb-1">
                     Father's Phone Number *
                   </label>
                   <input
@@ -634,12 +679,12 @@ export const RegisterPage: React.FC<RegisterPageProps> = ({ onLoginSuccess }) =>
                     value={formData.fatherPhone}
                     onChange={handleChange}
                     placeholder="9876543288"
-                    className="w-full px-3.5 py-2.5 bg-white/60 border border-[rgba(77,42,0,0.12)] rounded-xl text-[#4D2A00] text-xs placeholder-[#4D2A00]/40 focus:outline-none focus:border-[#CC6F00] font-mono"
+                    className="w-full px-3 py-2 bg-[var(--bg-input)] border border-[var(--border-subtle)] rounded-xl text-[var(--text-primary)] text-xs placeholder:text-[var(--text-muted)] focus:outline-none focus:border-[#FF6D1F] font-mono"
                   />
                 </div>
 
                 <div>
-                  <label htmlFor="motherName" className="block text-xs font-semibold text-[#4D2A00] mb-1">
+                  <label htmlFor="motherName" className="block text-[10px] font-mono uppercase text-[var(--text-secondary)] mb-1">
                     Mother's Full Name
                   </label>
                   <input
@@ -649,12 +694,12 @@ export const RegisterPage: React.FC<RegisterPageProps> = ({ onLoginSuccess }) =>
                     value={formData.motherName}
                     onChange={handleChange}
                     placeholder="e.g. Sunita Sharma"
-                    className="w-full px-3.5 py-2.5 bg-white/60 border border-[rgba(77,42,0,0.12)] rounded-xl text-[#4D2A00] text-xs placeholder-[#4D2A00]/40 focus:outline-none focus:border-[#CC6F00]"
+                    className="w-full px-3 py-2 bg-[var(--bg-input)] border border-[var(--border-subtle)] rounded-xl text-[var(--text-primary)] text-xs placeholder:text-[var(--text-muted)] focus:outline-none focus:border-[#FF6D1F]"
                   />
                 </div>
 
                 <div>
-                  <label htmlFor="motherPhone" className="block text-xs font-semibold text-[#4D2A00] mb-1">
+                  <label htmlFor="motherPhone" className="block text-[10px] font-mono uppercase text-[var(--text-secondary)] mb-1">
                     Mother's Phone Number
                   </label>
                   <input
@@ -664,17 +709,17 @@ export const RegisterPage: React.FC<RegisterPageProps> = ({ onLoginSuccess }) =>
                     value={formData.motherPhone}
                     onChange={handleChange}
                     placeholder="9876543289"
-                    className="w-full px-3.5 py-2.5 bg-white/60 border border-[rgba(77,42,0,0.12)] rounded-xl text-[#4D2A00] text-xs placeholder-[#4D2A00]/40 focus:outline-none focus:border-[#CC6F00] font-mono"
+                    className="w-full px-3 py-2 bg-[var(--bg-input)] border border-[var(--border-subtle)] rounded-xl text-[var(--text-primary)] text-xs placeholder:text-[var(--text-muted)] focus:outline-none focus:border-[#FF6D1F] font-mono"
                   />
                 </div>
               </div>
 
-              <h2 className="text-xs font-bold text-[#CC6F00] uppercase tracking-wider border-b border-[rgba(77,42,0,0.1)] pb-1.5 pt-3">
-                4. Local Guardian Details
+              <h2 className="text-xs font-mono font-bold text-[#FF6D1F] uppercase tracking-wider border-b border-[var(--border-subtle)] pb-1.5 pt-3">
+                04. Local Guardian (Emergency Pass Verification)
               </h2>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
                 <div>
-                  <label htmlFor="guardianName" className="block text-xs font-semibold text-[#4D2A00] mb-1">
+                  <label htmlFor="guardianName" className="block text-[10px] font-mono uppercase text-[var(--text-secondary)] mb-1">
                     Local Guardian Name *
                   </label>
                   <input
@@ -685,13 +730,13 @@ export const RegisterPage: React.FC<RegisterPageProps> = ({ onLoginSuccess }) =>
                     value={formData.guardianName}
                     onChange={handleChange}
                     placeholder="e.g. Dr. Alok Mohanty"
-                    className="w-full px-3.5 py-2.5 bg-white/60 border border-[rgba(77,42,0,0.12)] rounded-xl text-[#4D2A00] text-xs placeholder-[#4D2A00]/40 focus:outline-none focus:border-[#CC6F00]"
+                    className="w-full px-3 py-2 bg-[var(--bg-input)] border border-[var(--border-subtle)] rounded-xl text-[var(--text-primary)] text-xs placeholder:text-[var(--text-muted)] focus:outline-none focus:border-[#FF6D1F]"
                   />
                 </div>
 
                 <div className="grid grid-cols-2 gap-2">
                   <div>
-                    <label htmlFor="guardianRelation" className="block text-xs font-semibold text-[#4D2A00] mb-1">
+                    <label htmlFor="guardianRelation" className="block text-[10px] font-mono uppercase text-[var(--text-secondary)] mb-1">
                       Relationship *
                     </label>
                     <input
@@ -701,13 +746,13 @@ export const RegisterPage: React.FC<RegisterPageProps> = ({ onLoginSuccess }) =>
                       required
                       value={formData.guardianRelation}
                       onChange={handleChange}
-                      placeholder="e.g. Uncle / Cousin"
-                      className="w-full px-3.5 py-2.5 bg-white/60 border border-[rgba(77,42,0,0.12)] rounded-xl text-[#4D2A00] text-xs placeholder-[#4D2A00]/40 focus:outline-none focus:border-[#CC6F00]"
+                      placeholder="e.g. Uncle"
+                      className="w-full px-3 py-2 bg-[var(--bg-input)] border border-[var(--border-subtle)] rounded-xl text-[var(--text-primary)] text-xs placeholder:text-[var(--text-muted)] focus:outline-none focus:border-[#FF6D1F]"
                     />
                   </div>
 
                   <div>
-                    <label htmlFor="guardianPhone" className="block text-xs font-semibold text-[#4D2A00] mb-1">
+                    <label htmlFor="guardianPhone" className="block text-[10px] font-mono uppercase text-[var(--text-secondary)] mb-1">
                       Guardian Phone *
                     </label>
                     <input
@@ -718,13 +763,13 @@ export const RegisterPage: React.FC<RegisterPageProps> = ({ onLoginSuccess }) =>
                       value={formData.guardianPhone}
                       onChange={handleChange}
                       placeholder="9876543290"
-                      className="w-full px-3.5 py-2.5 bg-white/60 border border-[rgba(77,42,0,0.12)] rounded-xl text-[#4D2A00] text-xs placeholder-[#4D2A00]/40 focus:outline-none focus:border-[#CC6F00] font-mono"
+                      className="w-full px-3 py-2 bg-[var(--bg-input)] border border-[var(--border-subtle)] rounded-xl text-[var(--text-primary)] text-xs placeholder:text-[var(--text-muted)] focus:outline-none focus:border-[#FF6D1F] font-mono"
                     />
                   </div>
                 </div>
 
                 <div className="sm:col-span-2">
-                  <label htmlFor="guardianAddress" className="block text-xs font-semibold text-[#4D2A00] mb-1">
+                  <label htmlFor="guardianAddress" className="block text-[10px] font-mono uppercase text-[var(--text-secondary)] mb-1">
                     Guardian Local Address
                   </label>
                   <input
@@ -734,16 +779,16 @@ export const RegisterPage: React.FC<RegisterPageProps> = ({ onLoginSuccess }) =>
                     value={formData.guardianAddress}
                     onChange={handleChange}
                     placeholder="Plot 12, Saheed Nagar, Bhubaneswar"
-                    className="w-full px-3.5 py-2.5 bg-white/60 border border-[rgba(77,42,0,0.12)] rounded-xl text-[#4D2A00] text-xs placeholder-[#4D2A00]/40 focus:outline-none focus:border-[#CC6F00]"
+                    className="w-full px-3 py-2 bg-[var(--bg-input)] border border-[var(--border-subtle)] rounded-xl text-[var(--text-primary)] text-xs placeholder:text-[var(--text-muted)] focus:outline-none focus:border-[#FF6D1F]"
                   />
                 </div>
               </div>
 
-              <h2 className="text-xs font-bold text-[#CC6F00] uppercase tracking-wider border-b border-[rgba(77,42,0,0.1)] pb-1.5 pt-3">
-                5. Permanent Residential Address
+              <h2 className="text-xs font-mono font-bold text-[#FF6D1F] uppercase tracking-wider border-b border-[var(--border-subtle)] pb-1.5 pt-3">
+                05. Permanent Residential Address
               </h2>
               <div>
-                <label htmlFor="permanentAddress" className="block text-xs font-semibold text-[#4D2A00] mb-1">
+                <label htmlFor="permanentAddress" className="block text-[10px] font-mono uppercase text-[var(--text-secondary)] mb-1">
                   Permanent Address *
                 </label>
                 <textarea
@@ -754,15 +799,15 @@ export const RegisterPage: React.FC<RegisterPageProps> = ({ onLoginSuccess }) =>
                   value={formData.permanentAddress}
                   onChange={handleChange}
                   placeholder="Full permanent postal address with PIN code"
-                  className="w-full px-3.5 py-2.5 bg-white/60 border border-[rgba(77,42,0,0.12)] rounded-xl text-[#4D2A00] text-xs placeholder-[#4D2A00]/40 focus:outline-none focus:border-[#CC6F00] resize-none"
+                  className="w-full px-3 py-2 bg-[var(--bg-input)] border border-[var(--border-subtle)] rounded-xl text-[var(--text-primary)] text-xs placeholder:text-[var(--text-muted)] focus:outline-none focus:border-[#FF6D1F] resize-none"
                 />
               </div>
 
-              <div className="flex justify-between pt-4">
+              <div className="flex justify-between pt-3">
                 <button
                   type="button"
                   onClick={() => setCurrentStep(1)}
-                  className="btn-secondary px-4 py-2 text-xs font-medium"
+                  className="btn-secondary px-4 py-2 text-xs font-mono rounded-xl"
                 >
                   ← Back
                 </button>
@@ -774,9 +819,9 @@ export const RegisterPage: React.FC<RegisterPageProps> = ({ onLoginSuccess }) =>
                       setCurrentStep(3);
                     }
                   }}
-                  className="btn-primary px-6 py-2.5 text-xs font-bold shadow-sm"
+                  className="btn-primary px-5 py-2 text-xs font-bold font-mono rounded-xl"
                 >
-                  Next: Hostel Preference →
+                  Next: Housing Preference →
                 </button>
               </div>
             </div>
@@ -785,47 +830,47 @@ export const RegisterPage: React.FC<RegisterPageProps> = ({ onLoginSuccess }) =>
           {/* STEP 3: Living Type & Preferences */}
           {currentStep === 3 && (
             <div className="space-y-4">
-              <h2 className="text-xs font-bold text-[#CC6F00] uppercase tracking-wider border-b border-[rgba(77,42,0,0.1)] pb-1.5">
-                6. Campus Living Status & Logistics
+              <h2 className="text-xs font-mono font-bold text-[#FF6D1F] uppercase tracking-wider border-b border-[var(--border-subtle)] pb-1.5">
+                06. Campus Living Status & Logistics
               </h2>
 
               <div>
-                <label className="block text-xs font-semibold text-[#4D2A00] mb-1.5">
-                  Are you a Hosteller or a Day Scholar? *
+                <label className="block text-[10px] font-mono uppercase text-[var(--text-secondary)] mb-1.5">
+                  Residency Status *
                 </label>
                 <div className="grid grid-cols-2 gap-3">
                   <button
                     type="button"
                     onClick={() => setFormData((prev) => ({ ...prev, livingType: "HOSTELLER" }))}
-                    className={`p-3 rounded-2xl border text-left transition-all ${
+                    className={`p-3 rounded-xl border text-left transition-all font-mono ${
                       formData.livingType === "HOSTELLER"
-                        ? "bg-[#FDB773] text-[#4D2A00] font-bold border-[#CC6F00] shadow-sm"
-                        : "bg-white/60 text-[#4D2A00]/70 border-[rgba(77,42,0,0.12)]"
+                        ? "bg-[var(--bg-elevated)] text-[var(--text-primary)] border-[#FF6D1F] shadow-sm"
+                        : "bg-[var(--bg-input)] text-[var(--text-muted)] border-[var(--border-subtle)]"
                     }`}
                   >
-                    <div className="text-xs font-bold">Hosteller</div>
-                    <div className="text-[10px] opacity-80 mt-0.5">Living in campus residence hostel</div>
+                    <div className="text-xs font-bold text-[var(--text-primary)]">HOSTELLER</div>
+                    <div className="text-[10px] text-[var(--text-muted)] mt-0.5">Living in campus residence hostel</div>
                   </button>
 
                   <button
                     type="button"
                     onClick={() => setFormData((prev) => ({ ...prev, livingType: "DAY_SCHOLAR" }))}
-                    className={`p-3 rounded-2xl border text-left transition-all ${
+                    className={`p-3 rounded-xl border text-left transition-all font-mono ${
                       formData.livingType === "DAY_SCHOLAR"
-                        ? "bg-[#FDB773] text-[#4D2A00] font-bold border-[#CC6F00] shadow-sm"
-                        : "bg-white/60 text-[#4D2A00]/70 border-[rgba(77,42,0,0.12)]"
+                        ? "bg-[var(--bg-elevated)] text-[var(--text-primary)] border-[#FF6D1F] shadow-sm"
+                        : "bg-[var(--bg-input)] text-[var(--text-muted)] border-[var(--border-subtle)]"
                     }`}
                   >
-                    <div className="text-xs font-bold">Day Scholar</div>
-                    <div className="text-[10px] opacity-80 mt-0.5">Daily commuting via bus / vehicle</div>
+                    <div className="text-xs font-bold text-[var(--text-primary)]">DAY SCHOLAR</div>
+                    <div className="text-[10px] text-[var(--text-muted)] mt-0.5">Daily commuter via transit / personal vehicle</div>
                   </button>
                 </div>
               </div>
 
               {formData.livingType === "HOSTELLER" ? (
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 animate-fadeIn">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5 animate-fadeIn">
                   <div>
-                    <label htmlFor="requestedHostel" className="block text-xs font-semibold text-[#4D2A00] mb-1">
+                    <label htmlFor="requestedHostel" className="block text-[10px] font-mono uppercase text-[var(--text-secondary)] mb-1">
                       Requested Hostel Block *
                     </label>
                     <select
@@ -833,7 +878,7 @@ export const RegisterPage: React.FC<RegisterPageProps> = ({ onLoginSuccess }) =>
                       name="requestedHostel"
                       value={formData.requestedHostel}
                       onChange={handleChange}
-                      className="w-full px-3.5 py-2.5 bg-white/60 border border-[rgba(77,42,0,0.12)] rounded-xl text-[#4D2A00] text-xs focus:outline-none focus:border-[#CC6F00]"
+                      className="w-full px-3 py-2 bg-[var(--bg-input)] border border-[var(--border-subtle)] rounded-xl text-[var(--text-primary)] text-xs focus:outline-none focus:border-[#FF6D1F] font-mono"
                     >
                       <option value="Hostel-A">Hostel-A (Boys Senior Block)</option>
                       <option value="Hostel-B">Hostel-B (Boys Junior Block)</option>
@@ -842,15 +887,15 @@ export const RegisterPage: React.FC<RegisterPageProps> = ({ onLoginSuccess }) =>
                   </div>
 
                   <div>
-                    <label htmlFor="roomPreference" className="block text-xs font-semibold text-[#4D2A00] mb-1">
-                      Room Preference
+                    <label htmlFor="roomPreference" className="block text-[10px] font-mono uppercase text-[var(--text-secondary)] mb-1">
+                      Room Configuration
                     </label>
                     <select
                       id="roomPreference"
                       name="roomPreference"
                       value={formData.roomPreference}
                       onChange={handleChange}
-                      className="w-full px-3.5 py-2.5 bg-white/60 border border-[rgba(77,42,0,0.12)] rounded-xl text-[#4D2A00] text-xs focus:outline-none focus:border-[#CC6F00]"
+                      className="w-full px-3 py-2 bg-[var(--bg-input)] border border-[var(--border-subtle)] rounded-xl text-[var(--text-primary)] text-xs focus:outline-none focus:border-[#FF6D1F] font-mono"
                     >
                       <option value="Double Sharing">Double Sharing (2 Beds)</option>
                       <option value="Single Room">Single Room (Subject to Availability)</option>
@@ -859,10 +904,10 @@ export const RegisterPage: React.FC<RegisterPageProps> = ({ onLoginSuccess }) =>
                   </div>
                 </div>
               ) : (
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 animate-fadeIn">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5 animate-fadeIn">
                   <div className="sm:col-span-2">
-                    <label htmlFor="currentAddress" className="block text-xs font-semibold text-[#4D2A00] mb-1">
-                      City Residence / Local Commuter Address *
+                    <label htmlFor="currentAddress" className="block text-[10px] font-mono uppercase text-[var(--text-secondary)] mb-1">
+                      City Residence / Local Address *
                     </label>
                     <input
                       id="currentAddress"
@@ -872,20 +917,20 @@ export const RegisterPage: React.FC<RegisterPageProps> = ({ onLoginSuccess }) =>
                       value={formData.currentAddress}
                       onChange={handleChange}
                       placeholder="e.g. Plot 45, Forest Park, Bhubaneswar, Odisha"
-                      className="w-full px-3.5 py-2.5 bg-white/60 border border-[rgba(77,42,0,0.12)] rounded-xl text-[#4D2A00] text-xs placeholder-[#4D2A00]/40 focus:outline-none focus:border-[#CC6F00]"
+                      className="w-full px-3 py-2 bg-[var(--bg-input)] border border-[var(--border-subtle)] rounded-xl text-[var(--text-primary)] text-xs placeholder:text-[var(--text-muted)] focus:outline-none focus:border-[#FF6D1F]"
                     />
                   </div>
 
                   <div>
-                    <label htmlFor="busRoute" className="block text-xs font-semibold text-[#4D2A00] mb-1">
-                      Preferred University Bus Route
+                    <label htmlFor="busRoute" className="block text-[10px] font-mono uppercase text-[var(--text-secondary)] mb-1">
+                      Transit Route Preference
                     </label>
                     <select
                       id="busRoute"
                       name="busRoute"
                       value={formData.busRoute}
                       onChange={handleChange}
-                      className="w-full px-3.5 py-2.5 bg-white/60 border border-[rgba(77,42,0,0.12)] rounded-xl text-[#4D2A00] text-xs focus:outline-none focus:border-[#CC6F00]"
+                      className="w-full px-3 py-2 bg-[var(--bg-input)] border border-[var(--border-subtle)] rounded-xl text-[var(--text-primary)] text-xs focus:outline-none focus:border-[#FF6D1F] font-mono"
                     >
                       <option value="Route 1">Route 1 (Master Canteen / Vani Vihar)</option>
                       <option value="Route 2">Route 2 (Khandagiri / Baramunda)</option>
@@ -896,7 +941,7 @@ export const RegisterPage: React.FC<RegisterPageProps> = ({ onLoginSuccess }) =>
                   </div>
 
                   <div>
-                    <label htmlFor="pickupPoint" className="block text-xs font-semibold text-[#4D2A00] mb-1">
+                    <label htmlFor="pickupPoint" className="block text-[10px] font-mono uppercase text-[var(--text-secondary)] mb-1">
                       Pickup / Boarding Stop
                     </label>
                     <input
@@ -906,13 +951,13 @@ export const RegisterPage: React.FC<RegisterPageProps> = ({ onLoginSuccess }) =>
                       value={formData.pickupPoint}
                       onChange={handleChange}
                       placeholder="e.g. Master Canteen Square"
-                      className="w-full px-3.5 py-2.5 bg-white/60 border border-[rgba(77,42,0,0.12)] rounded-xl text-[#4D2A00] text-xs placeholder-[#4D2A00]/40 focus:outline-none focus:border-[#CC6F00]"
+                      className="w-full px-3 py-2 bg-[var(--bg-input)] border border-[var(--border-subtle)] rounded-xl text-[var(--text-primary)] text-xs placeholder:text-[var(--text-muted)] focus:outline-none focus:border-[#FF6D1F]"
                     />
                   </div>
 
                   <div>
-                    <label htmlFor="vehicleNumber" className="block text-xs font-semibold text-[#4D2A00] mb-1">
-                      Vehicle Reg. Number (If Self-Driving)
+                    <label htmlFor="vehicleNumber" className="block text-[10px] font-mono uppercase text-[var(--text-secondary)] mb-1">
+                      Vehicle Plate Number
                     </label>
                     <input
                       id="vehicleNumber"
@@ -921,12 +966,12 @@ export const RegisterPage: React.FC<RegisterPageProps> = ({ onLoginSuccess }) =>
                       value={formData.vehicleNumber}
                       onChange={handleChange}
                       placeholder="e.g. OD-02-AB-1234"
-                      className="w-full px-3.5 py-2.5 bg-white/60 border border-[rgba(77,42,0,0.12)] rounded-xl text-[#4D2A00] text-xs placeholder-[#4D2A00]/40 focus:outline-none focus:border-[#CC6F00] font-mono uppercase"
+                      className="w-full px-3 py-2 bg-[var(--bg-input)] border border-[var(--border-subtle)] rounded-xl text-[var(--text-primary)] text-xs placeholder:text-[var(--text-muted)] focus:outline-none focus:border-[#FF6D1F] font-mono uppercase"
                     />
                   </div>
 
                   <div>
-                    <label htmlFor="parkingZone" className="block text-xs font-semibold text-[#4D2A00] mb-1">
+                    <label htmlFor="parkingZone" className="block text-[10px] font-mono uppercase text-[var(--text-secondary)] mb-1">
                       Requested Parking Zone
                     </label>
                     <select
@@ -934,7 +979,7 @@ export const RegisterPage: React.FC<RegisterPageProps> = ({ onLoginSuccess }) =>
                       name="parkingZone"
                       value={formData.parkingZone}
                       onChange={handleChange}
-                      className="w-full px-3.5 py-2.5 bg-white/60 border border-[rgba(77,42,0,0.12)] rounded-xl text-[#4D2A00] text-xs focus:outline-none focus:border-[#CC6F00]"
+                      className="w-full px-3 py-2 bg-[var(--bg-input)] border border-[var(--border-subtle)] rounded-xl text-[var(--text-primary)] text-xs focus:outline-none focus:border-[#FF6D1F] font-mono"
                     >
                       <option value="Zone A (Two-Wheeler)">Zone A (Two-Wheeler Main Lot)</option>
                       <option value="Zone B (Four-Wheeler)">Zone B (Four-Wheeler North Lot)</option>
@@ -944,16 +989,9 @@ export const RegisterPage: React.FC<RegisterPageProps> = ({ onLoginSuccess }) =>
                 </div>
               )}
 
-              <div className="p-4 bg-[#FDB773]/20 border border-[#CC6F00]/20 rounded-2xl text-xs text-[#4D2A00]/80 space-y-1">
-                <span className="font-bold text-[#CC6F00] block text-[11px] uppercase tracking-wider">Campus Enrollment Notice:</span>
-                <p className="leading-relaxed">
-                  Student applications undergo verification by designated campus officers. Your account will start in <strong className="text-[#4D2A00]">Pending Verification</strong> status.
-                </p>
-              </div>
-
               {/* Data Privacy and Consent Agreement */}
               <div className="pt-2">
-                <div className="p-4 bg-white/50 border border-[rgba(77,42,0,0.1)] rounded-2xl">
+                <div className="p-3.5 bg-[var(--bg-input)] border border-[var(--border-subtle)] rounded-xl">
                   <label className="flex items-start space-x-2.5 cursor-pointer">
                     <input
                       type="checkbox"
@@ -961,38 +999,38 @@ export const RegisterPage: React.FC<RegisterPageProps> = ({ onLoginSuccess }) =>
                       required
                       checked={formData.consentAgreed}
                       onChange={handleChange}
-                      className="mt-0.5 rounded border-[#CC6F00]/30 text-[#CC6F00] focus:ring-[#CC6F00]"
+                      className="mt-0.5 rounded border-[var(--border-subtle)] text-[#FF6D1F] focus:ring-[#FF6D1F]"
                     />
-                    <span className="text-xs text-[#4D2A00]/80 leading-relaxed">
+                    <span className="text-xs text-[var(--text-secondary)] leading-relaxed font-mono">
                       I declare that the information provided is accurate and authentic. I consent to official campus verification, institutional guidelines, and data processing. *
                     </span>
                   </label>
                 </div>
               </div>
 
-              <div className="flex justify-between pt-4">
+              <div className="flex justify-between pt-3">
                 <button
                   type="button"
                   onClick={() => setCurrentStep(2)}
-                  className="btn-secondary px-4 py-2 text-xs font-medium"
+                  className="btn-secondary px-4 py-2 text-xs font-mono rounded-xl"
                 >
                   ← Back
                 </button>
                 <button
                   type="submit"
                   disabled={loading}
-                  className="btn-primary px-6 py-2.5 text-xs font-bold shadow-sm disabled:opacity-40"
+                  className="btn-primary px-6 py-2 text-xs font-bold font-mono rounded-xl disabled:opacity-40"
                 >
-                  {loading ? "Submitting Registration..." : "Submit Registration for Verification"}
+                  {loading ? "Registering..." : "Submit Registration for Verification"}
                 </button>
               </div>
             </div>
           )}
         </form>
 
-        <div className="relative mt-6 pt-4 border-t border-[rgba(77,42,0,0.1)] text-center text-xs text-[#4D2A00]/70">
+        <div className="mt-6 pt-4 border-t border-[var(--border-subtle)] text-center text-xs font-mono text-[var(--text-muted)]">
           Already registered?{" "}
-          <Link to="/login" className="font-bold text-[#CC6F00] hover:underline">
+          <Link to="/login" className="font-bold text-[#FF6D1F] hover:underline">
             Sign in to CampusDesk
           </Link>
         </div>

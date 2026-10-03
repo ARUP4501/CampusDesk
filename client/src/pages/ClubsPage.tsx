@@ -80,16 +80,15 @@ export const ClubsPage: React.FC<{ user: UserProfile | null }> = ({ user }) => {
   // Modals
   const [showCreateClubModal, setShowCreateClubModal] = useState<boolean>(false);
   const [showCreateEventModal, setShowCreateEventModal] = useState<boolean>(false);
-  const [selectedClubId, setSelectedClubId] = useState<string>("");
+  const [statusMessage, setStatusMessage] = useState<{ text: string; type: "success" | "error" } | null>(null);
 
-  // Form states
+  // Forms
   const [clubForm, setClubForm] = useState({
     name: "",
-    category: "Coding / Technology",
+    category: "TECHNICAL",
     description: "",
     coordinatorName: user?.fullName || "",
-    coordinatorEmail: user?.email || "",
-    meetingSchedule: "Every Wednesday at 5:00 PM"
+    meetingSchedule: "Weekly Fridays 4:00 PM"
   });
 
   const [eventForm, setEventForm] = useState({
@@ -97,26 +96,11 @@ export const ClubsPage: React.FC<{ user: UserProfile | null }> = ({ user }) => {
     title: "",
     description: "",
     eventDate: "",
-    location: "Main Auditorium",
+    location: "",
     capacity: 100
   });
 
-  const [statusMessage, setStatusMessage] = useState<{ text: string; type: "success" | "error" } | null>(null);
-
-  const categories = [
-    "ALL",
-    "Coding / Technology",
-    "Music / Singing",
-    "Dance",
-    "Drama & Theatre",
-    "Sports & Fitness",
-    "Literature & Debate",
-    "Art & Creativity",
-    "Photography",
-    "Yoga & Wellness",
-    "Public Speaking",
-    "Environment / Social Service"
-  ];
+  const categories = ["ALL", "TECHNICAL", "CULTURAL", "SPORTS", "SOCIAL", "LITERARY", "INNOVATION"];
 
   const fetchClubData = async () => {
     try {
@@ -129,10 +113,10 @@ export const ClubsPage: React.FC<{ user: UserProfile | null }> = ({ user }) => {
       setClubs(clubsRes.clubs || []);
       setEvents(eventsRes.events || []);
       setAnnouncements(announcementsRes.announcements || []);
-      if (clubsRes.clubs?.length > 0 && !eventForm.clubId) {
+      if (clubsRes.clubs?.length && !eventForm.clubId) {
         setEventForm((prev) => ({ ...prev, clubId: clubsRes.clubs[0].id }));
       }
-    } catch (err: any) {
+    } catch (err) {
       console.error("Failed to load clubs:", err);
     } finally {
       setLoading(false);
@@ -215,42 +199,44 @@ export const ClubsPage: React.FC<{ user: UserProfile | null }> = ({ user }) => {
 
   const filteredClubs = clubs.filter((c) => {
     const matchesCat = selectedCategory === "ALL" || c.category.toLowerCase().includes(selectedCategory.toLowerCase());
-    const matchesSearch = c.name.toLowerCase().includes(searchQuery.toLowerCase()) || c.description.toLowerCase().includes(searchQuery.toLowerCase());
+    const matchesSearch =
+      c.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      c.description.toLowerCase().includes(searchQuery.toLowerCase());
     const matchesTab = activeTab === "my_clubs" ? c.isMember : true;
     return matchesCat && matchesSearch && matchesTab;
   });
 
   const getCategoryIcon = (category: string) => {
     const cat = category.toLowerCase();
-    if (cat.includes("code") || cat.includes("tech")) return <Code2 className="w-5 h-5 text-campus-accent" />;
-    if (cat.includes("music") || cat.includes("sing")) return <Music className="w-5 h-5 text-campus-accent" />;
-    if (cat.includes("sport") || cat.includes("fitness")) return <Dumbbell className="w-5 h-5 text-campus-accent" />;
-    if (cat.includes("social") || cat.includes("environment")) return <HeartHandshake className="w-5 h-5 text-campus-accent" />;
-    if (cat.includes("literature") || cat.includes("debate")) return <BookOpen className="w-5 h-5 text-campus-accent" />;
-    return <Sparkles className="w-5 h-5 text-campus-accent" />;
+    if (cat.includes("code") || cat.includes("tech")) return <Code2 className="w-5 h-5 text-[#FF6D1F]" />;
+    if (cat.includes("music") || cat.includes("sing") || cat.includes("cultur")) return <Music className="w-5 h-5 text-[#FF6D1F]" />;
+    if (cat.includes("sport") || cat.includes("fitness")) return <Dumbbell className="w-5 h-5 text-[#FF6D1F]" />;
+    if (cat.includes("social") || cat.includes("environment")) return <HeartHandshake className="w-5 h-5 text-[#FF6D1F]" />;
+    if (cat.includes("literature") || cat.includes("debate")) return <BookOpen className="w-5 h-5 text-[#FF6D1F]" />;
+    return <Sparkles className="w-5 h-5 text-[#FF6D1F]" />;
   };
 
   return (
-    <div className="max-w-6xl mx-auto space-y-6 pb-12">
+    <div className="max-w-6xl mx-auto space-y-6 pb-16">
       {/* Header Banner */}
-      <div className="glass-card rounded-3xl p-6 sm:p-8 relative overflow-hidden border border-campus-border">
+      <div className="campus-block p-6 sm:p-8 relative overflow-hidden border border-[var(--border-subtle)]">
         <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
           <div className="space-y-2">
             <div className="flex items-center space-x-2">
-              <span className="px-3 py-1 rounded-full text-xs font-mono font-bold bg-white/80 text-campus-accent border border-campus-border">
+              <span className="px-2.5 py-0.5 rounded-full text-[10px] font-mono font-bold bg-[#FF6D1F]/15 text-[#FF6D1F] border border-[#FF6D1F]/30 uppercase tracking-wider">
                 Student Engagement & Activities
               </span>
-              <span className="text-xs font-mono text-campus-secondary">2026 Season</span>
+              <span className="text-xs font-mono text-[var(--text-muted)]">2026 Academic Season</span>
             </div>
-            <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-campus-text">
+            <h1 className="editorial-title text-2xl sm:text-3xl text-[var(--text-primary)]">
               Campus Clubs & Societies
             </h1>
-            <p className="text-xs sm:text-sm text-campus-secondary max-w-xl leading-relaxed">
-              Explore technical, cultural, sports, and social clubs. Connect with peers, participate in hackathons, workshops, concerts, and expand your campus life.
+            <p className="text-xs sm:text-sm text-[var(--text-secondary)] max-w-xl leading-relaxed">
+              Explore technical, cultural, sports, and social clubs. Connect with peers, participate in hackathons, workshops, and concerts, and expand your campus life.
             </p>
           </div>
 
-          {(user?.role === "ADMIN" || user?.role === "WARDEN") && (
+          {(user?.role === "ADMIN" || user?.role === "WARDEN" || user?.role === "FACULTY") && (
             <div className="flex flex-wrap gap-2 shrink-0">
               <button
                 onClick={() => setShowCreateClubModal(true)}
@@ -263,7 +249,7 @@ export const ClubsPage: React.FC<{ user: UserProfile | null }> = ({ user }) => {
                 onClick={() => setShowCreateEventModal(true)}
                 className="btn-secondary px-4 py-2.5 rounded-xl text-xs font-semibold flex items-center space-x-2 shadow-sm"
               >
-                <Calendar className="w-4 h-4 text-campus-accent" />
+                <Calendar className="w-4 h-4 text-[#FF6D1F]" />
                 <span>Host Event</span>
               </button>
             </div>
@@ -273,8 +259,10 @@ export const ClubsPage: React.FC<{ user: UserProfile | null }> = ({ user }) => {
 
       {statusMessage && (
         <div
-          className={`p-4 rounded-2xl text-xs font-semibold flex items-center space-x-2 animate-fadeIn ${
-            statusMessage.type === "success" ? "status-badge-success" : "status-badge-error"
+          className={`p-4 rounded-2xl text-xs font-mono font-semibold flex items-center space-x-2 animate-fadeIn ${
+            statusMessage.type === "success"
+              ? "bg-emerald-500/15 border border-emerald-500/30 text-emerald-300"
+              : "bg-rose-500/15 border border-rose-500/30 text-rose-300"
           }`}
         >
           {statusMessage.type === "success" ? <CheckCircle2 className="w-4 h-4" /> : <XCircle className="w-4 h-4" />}
@@ -283,33 +271,33 @@ export const ClubsPage: React.FC<{ user: UserProfile | null }> = ({ user }) => {
       )}
 
       {/* Tabs */}
-      <div className="flex items-center space-x-2 border-b border-campus-border pb-3 overflow-x-auto">
+      <div className="flex items-center space-x-2 border-b border-[var(--border-subtle)] pb-3 overflow-x-auto scrollbar-none">
         <button
           onClick={() => setActiveTab("all")}
-          className={`px-4 py-2 rounded-xl text-xs font-bold transition-all whitespace-nowrap ${
+          className={`px-4 py-2 rounded-xl text-xs font-mono font-bold transition-all whitespace-nowrap ${
             activeTab === "all"
-              ? "bg-campus-btnPrimary text-campus-text shadow-sm"
-              : "text-campus-secondary hover:bg-white/40"
+              ? "bg-[#FF6D1F] text-black shadow-sm"
+              : "bg-[var(--bg-elevated)] text-[var(--text-secondary)] border border-[var(--border-subtle)] hover:bg-[var(--bg-hover)] hover:text-[var(--text-primary)]"
           }`}
         >
           All Clubs ({clubs.length})
         </button>
         <button
           onClick={() => setActiveTab("my_clubs")}
-          className={`px-4 py-2 rounded-xl text-xs font-bold transition-all whitespace-nowrap ${
+          className={`px-4 py-2 rounded-xl text-xs font-mono font-bold transition-all whitespace-nowrap ${
             activeTab === "my_clubs"
-              ? "bg-campus-btnPrimary text-campus-text shadow-sm"
-              : "text-campus-secondary hover:bg-white/40"
+              ? "bg-[#FF6D1F] text-black shadow-sm"
+              : "bg-[var(--bg-elevated)] text-[var(--text-secondary)] border border-[var(--border-subtle)] hover:bg-[var(--bg-hover)] hover:text-[var(--text-primary)]"
           }`}
         >
           My Joined Clubs ({clubs.filter((c) => c.isMember).length})
         </button>
         <button
           onClick={() => setActiveTab("events")}
-          className={`px-4 py-2 rounded-xl text-xs font-bold transition-all whitespace-nowrap flex items-center space-x-1.5 ${
+          className={`px-4 py-2 rounded-xl text-xs font-mono font-bold transition-all whitespace-nowrap flex items-center space-x-1.5 ${
             activeTab === "events"
-              ? "bg-campus-btnPrimary text-campus-text shadow-sm"
-              : "text-campus-secondary hover:bg-white/40"
+              ? "bg-[#FF6D1F] text-black shadow-sm"
+              : "bg-[var(--bg-elevated)] text-[var(--text-secondary)] border border-[var(--border-subtle)] hover:bg-[var(--bg-hover)] hover:text-[var(--text-primary)]"
           }`}
         >
           <Calendar className="w-3.5 h-3.5" />
@@ -317,10 +305,10 @@ export const ClubsPage: React.FC<{ user: UserProfile | null }> = ({ user }) => {
         </button>
         <button
           onClick={() => setActiveTab("announcements")}
-          className={`px-4 py-2 rounded-xl text-xs font-bold transition-all whitespace-nowrap flex items-center space-x-1.5 ${
+          className={`px-4 py-2 rounded-xl text-xs font-mono font-bold transition-all whitespace-nowrap flex items-center space-x-1.5 ${
             activeTab === "announcements"
-              ? "bg-campus-btnPrimary text-campus-text shadow-sm"
-              : "text-campus-secondary hover:bg-white/40"
+              ? "bg-[#FF6D1F] text-black shadow-sm"
+              : "bg-[var(--bg-elevated)] text-[var(--text-secondary)] border border-[var(--border-subtle)] hover:bg-[var(--bg-hover)] hover:text-[var(--text-primary)]"
           }`}
         >
           <Megaphone className="w-3.5 h-3.5" />
@@ -333,19 +321,20 @@ export const ClubsPage: React.FC<{ user: UserProfile | null }> = ({ user }) => {
         <div className="space-y-3">
           <div className="flex flex-col sm:flex-row gap-3">
             <div className="relative flex-1">
-              <Search className="w-4 h-4 text-campus-muted absolute left-3.5 top-1/2 -translate-y-1/2" />
+              <Search className="w-4 h-4 text-[var(--text-muted)] absolute left-3.5 top-1/2 -translate-y-1/2" />
               <input
                 type="text"
                 placeholder="Search clubs by name or keywords (e.g. Coding, Robotics, Dance)..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full pl-10 pr-4 py-2.5 border border-campus-border rounded-xl bg-white/70 text-xs text-campus-text placeholder:text-campus-muted focus:outline-none focus:border-campus-accent"
+                style={{ paddingLeft: "2.75rem" }}
+                className="w-full !pl-11 pr-4 py-2.5 border border-[var(--border-subtle)] rounded-2xl bg-[var(--bg-input)] text-xs text-[var(--text-primary)] placeholder:text-[var(--text-muted)] focus:outline-none focus:border-[#FF6D1F] transition-colors"
               />
             </div>
             <select
               value={selectedCategory}
               onChange={(e) => setSelectedCategory(e.target.value)}
-              className="px-3.5 py-2.5 border border-campus-border rounded-xl bg-white/70 text-xs font-semibold text-campus-text focus:outline-none focus:border-campus-accent"
+              className="px-3.5 py-2.5 border border-[var(--border-subtle)] rounded-2xl bg-[var(--bg-input)] text-xs font-mono font-semibold text-[var(--text-primary)] focus:outline-none focus:border-[#FF6D1F]"
             >
               {categories.map((c) => (
                 <option key={c} value={c}>
@@ -359,42 +348,45 @@ export const ClubsPage: React.FC<{ user: UserProfile | null }> = ({ user }) => {
 
       {/* Content Rendering */}
       {loading ? (
-        <div className="p-12 text-center text-xs text-campus-muted">Loading campus clubs & events...</div>
+        <div className="campus-block p-16 text-center space-y-3">
+          <div className="w-8 h-8 border-2 border-[#FF6D1F]/30 border-t-[#FF6D1F] rounded-full animate-spin mx-auto"></div>
+          <p className="text-xs font-mono text-[var(--text-muted)]">Loading campus clubs & events...</p>
+        </div>
       ) : activeTab === "events" ? (
         /* Events View */
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {events.length === 0 ? (
-            <div className="col-span-2 p-12 text-center text-xs text-campus-muted glass-card rounded-2xl">
+            <div className="col-span-2 campus-block p-12 text-center text-xs text-[var(--text-muted)] font-mono">
               No upcoming events scheduled right now.
             </div>
           ) : (
             events.map((ev) => (
               <div
                 key={ev.id}
-                className="p-5 rounded-2xl glass-card flex flex-col justify-between space-y-4 border border-campus-border hover:border-campus-accent/30 transition-all"
+                className="campus-block p-5 flex flex-col justify-between space-y-4 border border-[var(--border-subtle)] hover:border-[#FF6D1F]/30 transition-all"
               >
                 <div className="space-y-2">
                   <div className="flex items-center justify-between">
-                    <span className="px-2.5 py-0.5 rounded-full text-[10px] font-mono font-bold bg-white/80 text-campus-accent border border-campus-border">
+                    <span className="px-2.5 py-0.5 rounded text-[10px] font-mono font-bold bg-[#FF6D1F]/15 text-[#FF6D1F] border border-[#FF6D1F]/30">
                       {ev.club?.name || "Campus Club"}
                     </span>
                     {ev.capacity && (
-                      <span className="text-[11px] text-campus-secondary font-mono">
+                      <span className="text-[11px] text-[var(--text-muted)] font-mono">
                         {ev.registrationCount || 0} / {ev.capacity} Registered
                       </span>
                     )}
                   </div>
-                  <h3 className="text-base font-bold text-campus-text">{ev.title}</h3>
-                  <p className="text-xs text-campus-secondary leading-relaxed">{ev.description}</p>
+                  <h3 className="text-base font-bold text-[var(--text-primary)]">{ev.title}</h3>
+                  <p className="text-xs text-[var(--text-secondary)] leading-relaxed">{ev.description}</p>
                 </div>
 
-                <div className="space-y-3 pt-3 border-t border-campus-border text-xs text-campus-secondary">
+                <div className="space-y-3 pt-3 border-t border-[var(--border-subtle)] text-xs text-[var(--text-secondary)] font-mono">
                   <div className="flex items-center space-x-2">
-                    <Clock className="w-3.5 h-3.5 text-campus-accent shrink-0" />
+                    <Clock className="w-3.5 h-3.5 text-[#FF6D1F] shrink-0" />
                     <span>{new Date(ev.eventDate).toLocaleString("en-US", { dateStyle: "medium", timeStyle: "short" })}</span>
                   </div>
                   <div className="flex items-center space-x-2">
-                    <MapPin className="w-3.5 h-3.5 text-campus-accent shrink-0" />
+                    <MapPin className="w-3.5 h-3.5 text-[#FF6D1F] shrink-0" />
                     <span>{ev.location}</span>
                   </div>
 
@@ -403,7 +395,7 @@ export const ClubsPage: React.FC<{ user: UserProfile | null }> = ({ user }) => {
                       onClick={() => handleEventRegistration(ev.id, !!ev.isRegistered)}
                       className={`w-full py-2.5 rounded-xl text-xs font-bold transition-all shadow-sm ${
                         ev.isRegistered
-                          ? "bg-emerald-100 text-emerald-800 border border-emerald-300 hover:bg-rose-100 hover:text-rose-800"
+                          ? "bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 hover:bg-rose-500/20 hover:text-rose-300 hover:border-rose-500/40"
                           : "btn-primary"
                       }`}
                     >
@@ -419,22 +411,22 @@ export const ClubsPage: React.FC<{ user: UserProfile | null }> = ({ user }) => {
         /* Announcements View */
         <div className="space-y-3">
           {announcements.length === 0 ? (
-            <div className="p-12 text-center text-xs text-campus-muted glass-card rounded-2xl">
+            <div className="campus-block p-12 text-center text-xs text-[var(--text-muted)] font-mono">
               No club announcements posted yet.
             </div>
           ) : (
             announcements.map((an) => (
-              <div key={an.id} className="p-5 rounded-2xl glass-card space-y-2 border border-campus-border">
+              <div key={an.id} className="campus-block p-5 space-y-2 border border-[var(--border-subtle)]">
                 <div className="flex items-center justify-between">
-                  <span className="px-2.5 py-0.5 rounded-full text-[10px] font-mono font-bold bg-white/80 text-campus-accent border border-campus-border">
+                  <span className="px-2.5 py-0.5 rounded text-[10px] font-mono font-bold bg-[#FF6D1F]/15 text-[#FF6D1F] border border-[#FF6D1F]/30">
                     {an.club?.name || "Official Club Circular"}
                   </span>
-                  <span className="text-[11px] font-mono text-campus-muted">
+                  <span className="text-[11px] font-mono text-[var(--text-muted)]">
                     {new Date(an.createdAt).toLocaleDateString()}
                   </span>
                 </div>
-                <h3 className="font-bold text-sm text-campus-text">{an.title}</h3>
-                <p className="text-xs text-campus-secondary leading-relaxed">{an.content}</p>
+                <h3 className="font-bold text-sm text-[var(--text-primary)]">{an.title}</h3>
+                <p className="text-xs text-[var(--text-secondary)] leading-relaxed">{an.content}</p>
               </div>
             ))
           )}
@@ -443,47 +435,47 @@ export const ClubsPage: React.FC<{ user: UserProfile | null }> = ({ user }) => {
         /* Clubs Grid View */
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {filteredClubs.length === 0 ? (
-            <div className="col-span-3 p-12 text-center text-xs text-campus-muted glass-card rounded-2xl">
+            <div className="col-span-3 campus-block p-12 text-center text-xs text-[var(--text-muted)] font-mono">
               No clubs found matching your criteria.
             </div>
           ) : (
             filteredClubs.map((club) => (
               <div
                 key={club.id}
-                className="p-5 rounded-3xl glass-card flex flex-col justify-between space-y-4 border border-campus-border hover:border-campus-accent/30 transition-all"
+                className="campus-block p-5 flex flex-col justify-between space-y-4 border border-[var(--border-subtle)] hover:border-[#FF6D1F]/30 transition-all"
               >
                 <div className="space-y-3">
                   <div className="flex items-center justify-between">
-                    <div className="p-2 rounded-xl bg-white/80 border border-campus-border shadow-xs">
+                    <div className="p-2 rounded-xl bg-[var(--bg-elevated)] border border-[var(--border-subtle)]">
                       {getCategoryIcon(club.category)}
                     </div>
-                    <span className="px-2.5 py-0.5 rounded-full text-[10px] font-mono font-bold bg-white/70 text-campus-accent border border-campus-border">
+                    <span className="px-2.5 py-0.5 rounded text-[10px] font-mono font-bold bg-[var(--bg-surface)] text-[#FF6D1F] border border-[var(--border-subtle)] uppercase">
                       {club.category}
                     </span>
                   </div>
 
                   <div>
-                    <h3 className="text-base font-bold text-campus-text">{club.name}</h3>
-                    <p className="text-xs text-campus-secondary mt-1.5 line-clamp-3 leading-relaxed">
+                    <h3 className="text-base font-bold text-[var(--text-primary)]">{club.name}</h3>
+                    <p className="text-xs text-[var(--text-secondary)] mt-1.5 line-clamp-3 leading-relaxed">
                       {club.description}
                     </p>
                   </div>
                 </div>
 
-                <div className="space-y-3 pt-3 border-t border-campus-border text-xs text-campus-muted font-mono">
+                <div className="space-y-3 pt-3 border-t border-[var(--border-subtle)] text-xs text-[var(--text-muted)] font-mono">
                   <div className="flex items-center justify-between">
                     <span>Coordinator:</span>
-                    <span className="font-bold text-campus-text">{club.coordinatorName}</span>
+                    <span className="font-bold text-[var(--text-primary)]">{club.coordinatorName}</span>
                   </div>
                   {club.meetingSchedule && (
                     <div className="flex items-center justify-between">
                       <span>Schedule:</span>
-                      <span className="text-campus-secondary">{club.meetingSchedule}</span>
+                      <span className="text-[var(--text-secondary)]">{club.meetingSchedule}</span>
                     </div>
                   )}
                   <div className="flex items-center justify-between">
                     <span>Members:</span>
-                    <span className="font-bold text-campus-accent">{club._count?.members || 0} Students</span>
+                    <span className="font-bold text-[#FF6D1F]">{club._count?.members || 0} Students</span>
                   </div>
 
                   {user && (
@@ -491,7 +483,7 @@ export const ClubsPage: React.FC<{ user: UserProfile | null }> = ({ user }) => {
                       onClick={() => handleJoinLeave(club.id, !!club.isMember)}
                       className={`w-full py-2.5 rounded-xl text-xs font-bold transition-all shadow-sm ${
                         club.isMember
-                          ? "bg-white/80 border border-campus-border text-campus-accent hover:bg-rose-50 hover:text-rose-700"
+                          ? "bg-[var(--bg-elevated)] border border-[var(--border-subtle)] text-[#FF6D1F] hover:bg-rose-500/20 hover:text-rose-300 hover:border-rose-500/40"
                           : "btn-primary"
                       }`}
                     >
@@ -507,34 +499,34 @@ export const ClubsPage: React.FC<{ user: UserProfile | null }> = ({ user }) => {
 
       {/* Create Club Modal */}
       {showCreateClubModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-md p-4 animate-fadeIn">
-          <div className="glass-modal rounded-3xl max-w-lg w-full p-6 space-y-4 shadow-elevated">
-            <div className="flex items-center justify-between border-b border-campus-border pb-3">
-              <h3 className="text-base font-bold text-campus-text">Register New Campus Club</h3>
-              <button onClick={() => setShowCreateClubModal(false)} className="text-campus-muted hover:text-campus-text p-1">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-md p-4 animate-fadeIn">
+          <div className="campus-panel rounded-3xl max-w-lg w-full p-6 space-y-4 shadow-elevated border border-[var(--border-subtle)]">
+            <div className="flex items-center justify-between border-b border-[var(--border-subtle)] pb-3">
+              <h3 className="text-base font-bold text-[var(--text-primary)]">Register New Campus Club</h3>
+              <button onClick={() => setShowCreateClubModal(false)} className="text-[var(--text-muted)] hover:text-[var(--text-primary)] p-1">
                 <X className="w-5 h-5" />
               </button>
             </div>
 
-            <form onSubmit={handleCreateClub} className="space-y-4 text-xs">
+            <form onSubmit={handleCreateClub} className="space-y-4 text-xs font-mono">
               <div>
-                <label className="block text-campus-text mb-1 font-semibold">Club Name *</label>
+                <label className="block text-[var(--text-secondary)] mb-1 font-semibold">Club Name *</label>
                 <input
                   required
                   type="text"
                   placeholder="e.g. ByteCraft Coding Society"
                   value={clubForm.name}
                   onChange={(e) => setClubForm({ ...clubForm, name: e.target.value })}
-                  className="w-full px-3.5 py-2.5 border border-campus-border rounded-xl bg-white/70 text-campus-text focus:outline-none focus:border-campus-accent"
+                  className="w-full px-3.5 py-2.5 border border-[var(--border-subtle)] rounded-xl bg-[var(--bg-input)] text-[var(--text-primary)] focus:outline-none focus:border-[#FF6D1F]"
                 />
               </div>
 
               <div>
-                <label className="block text-campus-text mb-1 font-semibold">Category *</label>
+                <label className="block text-[var(--text-secondary)] mb-1 font-semibold">Category *</label>
                 <select
                   value={clubForm.category}
                   onChange={(e) => setClubForm({ ...clubForm, category: e.target.value })}
-                  className="w-full px-3.5 py-2.5 border border-campus-border rounded-xl bg-white/70 text-campus-text focus:outline-none focus:border-campus-accent"
+                  className="w-full px-3.5 py-2.5 border border-[var(--border-subtle)] rounded-xl bg-[var(--bg-input)] text-[var(--text-primary)] focus:outline-none focus:border-[#FF6D1F]"
                 >
                   {categories.filter((c) => c !== "ALL").map((c) => (
                     <option key={c} value={c}>
@@ -545,41 +537,41 @@ export const ClubsPage: React.FC<{ user: UserProfile | null }> = ({ user }) => {
               </div>
 
               <div>
-                <label className="block text-campus-text mb-1 font-semibold">Description *</label>
+                <label className="block text-[var(--text-secondary)] mb-1 font-semibold">Description *</label>
                 <textarea
                   required
                   rows={3}
                   placeholder="Describe the club purpose, activities, and expectations..."
                   value={clubForm.description}
                   onChange={(e) => setClubForm({ ...clubForm, description: e.target.value })}
-                  className="w-full px-3.5 py-2.5 border border-campus-border rounded-xl bg-white/70 text-campus-text focus:outline-none focus:border-campus-accent resize-none"
+                  className="w-full px-3.5 py-2.5 border border-[var(--border-subtle)] rounded-xl bg-[var(--bg-input)] text-[var(--text-primary)] focus:outline-none focus:border-[#FF6D1F] resize-none"
                 />
               </div>
 
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-campus-text mb-1 font-semibold">Lead Coordinator *</label>
+                  <label className="block text-[var(--text-secondary)] mb-1 font-semibold">Lead Coordinator *</label>
                   <input
                     required
                     type="text"
                     value={clubForm.coordinatorName}
                     onChange={(e) => setClubForm({ ...clubForm, coordinatorName: e.target.value })}
-                    className="w-full px-3.5 py-2.5 border border-campus-border rounded-xl bg-white/70 text-campus-text focus:outline-none focus:border-campus-accent"
+                    className="w-full px-3.5 py-2.5 border border-[var(--border-subtle)] rounded-xl bg-[var(--bg-input)] text-[var(--text-primary)] focus:outline-none focus:border-[#FF6D1F]"
                   />
                 </div>
                 <div>
-                  <label className="block text-campus-text mb-1 font-semibold">Meeting Schedule</label>
+                  <label className="block text-[var(--text-secondary)] mb-1 font-semibold">Meeting Schedule</label>
                   <input
                     type="text"
                     placeholder="e.g. Every Friday 4 PM"
                     value={clubForm.meetingSchedule}
                     onChange={(e) => setClubForm({ ...clubForm, meetingSchedule: e.target.value })}
-                    className="w-full px-3.5 py-2.5 border border-campus-border rounded-xl bg-white/70 text-campus-text focus:outline-none focus:border-campus-accent"
+                    className="w-full px-3.5 py-2.5 border border-[var(--border-subtle)] rounded-xl bg-[var(--bg-input)] text-[var(--text-primary)] focus:outline-none focus:border-[#FF6D1F]"
                   />
                 </div>
               </div>
 
-              <div className="flex justify-end space-x-2.5 pt-3 border-t border-campus-border">
+              <div className="flex justify-end space-x-2.5 pt-3 border-t border-[var(--border-subtle)]">
                 <button
                   type="button"
                   onClick={() => setShowCreateClubModal(false)}
@@ -598,23 +590,23 @@ export const ClubsPage: React.FC<{ user: UserProfile | null }> = ({ user }) => {
 
       {/* Create Event Modal */}
       {showCreateEventModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-md p-4 animate-fadeIn">
-          <div className="glass-modal rounded-3xl max-w-lg w-full p-6 space-y-4 shadow-elevated">
-            <div className="flex items-center justify-between border-b border-campus-border pb-3">
-              <h3 className="text-base font-bold text-campus-text">Host Club Event</h3>
-              <button onClick={() => setShowCreateEventModal(false)} className="text-campus-muted hover:text-campus-text p-1">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-md p-4 animate-fadeIn">
+          <div className="campus-panel rounded-3xl max-w-lg w-full p-6 space-y-4 shadow-elevated border border-[var(--border-subtle)]">
+            <div className="flex items-center justify-between border-b border-[var(--border-subtle)] pb-3">
+              <h3 className="text-base font-bold text-[var(--text-primary)]">Host Club Event</h3>
+              <button onClick={() => setShowCreateEventModal(false)} className="text-[var(--text-muted)] hover:text-[var(--text-primary)] p-1">
                 <X className="w-5 h-5" />
               </button>
             </div>
 
-            <form onSubmit={handleCreateEvent} className="space-y-4 text-xs">
+            <form onSubmit={handleCreateEvent} className="space-y-4 text-xs font-mono">
               <div>
-                <label className="block text-campus-text mb-1 font-semibold">Host Club *</label>
+                <label className="block text-[var(--text-secondary)] mb-1 font-semibold">Host Club *</label>
                 <select
                   required
                   value={eventForm.clubId}
                   onChange={(e) => setEventForm({ ...eventForm, clubId: e.target.value })}
-                  className="w-full px-3.5 py-2.5 border border-campus-border rounded-xl bg-white/70 text-campus-text focus:outline-none focus:border-campus-accent"
+                  className="w-full px-3.5 py-2.5 border border-[var(--border-subtle)] rounded-xl bg-[var(--bg-input)] text-[var(--text-primary)] focus:outline-none focus:border-[#FF6D1F]"
                 >
                   {clubs.map((c) => (
                     <option key={c.id} value={c.id}>
@@ -625,62 +617,62 @@ export const ClubsPage: React.FC<{ user: UserProfile | null }> = ({ user }) => {
               </div>
 
               <div>
-                <label className="block text-campus-text mb-1 font-semibold">Event Title *</label>
+                <label className="block text-[var(--text-secondary)] mb-1 font-semibold">Event Title *</label>
                 <input
                   required
                   type="text"
                   placeholder="e.g. Web3 Hackathon 2026 / Classical Night"
                   value={eventForm.title}
                   onChange={(e) => setEventForm({ ...eventForm, title: e.target.value })}
-                  className="w-full px-3.5 py-2.5 border border-campus-border rounded-xl bg-white/70 text-campus-text focus:outline-none focus:border-campus-accent"
+                  className="w-full px-3.5 py-2.5 border border-[var(--border-subtle)] rounded-xl bg-[var(--bg-input)] text-[var(--text-primary)] focus:outline-none focus:border-[#FF6D1F]"
                 />
               </div>
 
               <div>
-                <label className="block text-campus-text mb-1 font-semibold">Description *</label>
+                <label className="block text-[var(--text-secondary)] mb-1 font-semibold">Description *</label>
                 <textarea
                   required
                   rows={3}
                   placeholder="Event details, agenda, speakers, rules, and benefits..."
                   value={eventForm.description}
                   onChange={(e) => setEventForm({ ...eventForm, description: e.target.value })}
-                  className="w-full px-3.5 py-2.5 border border-campus-border rounded-xl bg-white/70 text-campus-text focus:outline-none focus:border-campus-accent resize-none"
+                  className="w-full px-3.5 py-2.5 border border-[var(--border-subtle)] rounded-xl bg-[var(--bg-input)] text-[var(--text-primary)] focus:outline-none focus:border-[#FF6D1F] resize-none"
                 />
               </div>
 
               <div className="grid grid-cols-3 gap-3">
                 <div>
-                  <label className="block text-campus-text mb-1 font-semibold">Date & Time *</label>
+                  <label className="block text-[var(--text-secondary)] mb-1 font-semibold">Date & Time *</label>
                   <input
                     required
                     type="datetime-local"
                     value={eventForm.eventDate}
                     onChange={(e) => setEventForm({ ...eventForm, eventDate: e.target.value })}
-                    className="w-full px-3.5 py-2.5 border border-campus-border rounded-xl bg-white/70 text-campus-text focus:outline-none focus:border-campus-accent"
+                    className="w-full px-3.5 py-2.5 border border-[var(--border-subtle)] rounded-xl bg-[var(--bg-input)] text-[var(--text-primary)] focus:outline-none focus:border-[#FF6D1F]"
                   />
                 </div>
                 <div>
-                  <label className="block text-campus-text mb-1 font-semibold">Location *</label>
+                  <label className="block text-[var(--text-secondary)] mb-1 font-semibold">Location *</label>
                   <input
                     required
                     type="text"
                     value={eventForm.location}
                     onChange={(e) => setEventForm({ ...eventForm, location: e.target.value })}
-                    className="w-full px-3.5 py-2.5 border border-campus-border rounded-xl bg-white/70 text-campus-text focus:outline-none focus:border-campus-accent"
+                    className="w-full px-3.5 py-2.5 border border-[var(--border-subtle)] rounded-xl bg-[var(--bg-input)] text-[var(--text-primary)] focus:outline-none focus:border-[#FF6D1F]"
                   />
                 </div>
                 <div>
-                  <label className="block text-campus-text mb-1 font-semibold">Capacity</label>
+                  <label className="block text-[var(--text-secondary)] mb-1 font-semibold">Capacity</label>
                   <input
                     type="number"
                     value={eventForm.capacity}
                     onChange={(e) => setEventForm({ ...eventForm, capacity: Number(e.target.value) })}
-                    className="w-full px-3.5 py-2.5 border border-campus-border rounded-xl bg-white/70 text-campus-text focus:outline-none focus:border-campus-accent"
+                    className="w-full px-3.5 py-2.5 border border-[var(--border-subtle)] rounded-xl bg-[var(--bg-input)] text-[var(--text-primary)] focus:outline-none focus:border-[#FF6D1F]"
                   />
                 </div>
               </div>
 
-              <div className="flex justify-end space-x-2.5 pt-3 border-t border-campus-border">
+              <div className="flex justify-end space-x-2.5 pt-3 border-t border-[var(--border-subtle)]">
                 <button
                   type="button"
                   onClick={() => setShowCreateEventModal(false)}

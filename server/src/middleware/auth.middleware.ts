@@ -11,6 +11,8 @@ export interface AuthenticatedUser {
   rollNumber?: string | null;
   hostelBlock?: string | null;
   roomNumber?: string | null;
+  bedNumber?: string | null;
+  livingType?: string | null;
   department?: string | null;
   course?: string | null;
   branch?: string | null;
@@ -59,6 +61,8 @@ export async function requireAuth(req: Request, res: Response, next: NextFunctio
       rollNumber: user.rollNumber,
       hostelBlock: user.hostelBlock,
       roomNumber: user.roomNumber,
+      bedNumber: user.bedNumber,
+      livingType: user.livingType,
       department: user.department,
       course: user.course,
       branch: user.branch,

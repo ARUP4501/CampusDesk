@@ -88,27 +88,27 @@ export const DocumentRequestsPage: React.FC<{ user: UserProfile | null }> = ({ u
     switch (status) {
       case "APPROVED":
         return (
-          <span className="inline-flex items-center space-x-1 px-2.5 py-1 text-[10px] font-mono font-bold bg-emerald-500/20 text-emerald-950 border border-emerald-500/30 rounded-md">
-            <CheckCircle2 className="w-3.5 h-3.5 text-emerald-700" />
-            <span>Approved</span>
+          <span className="inline-flex items-center space-x-1 px-2 py-0.5 text-[10px] font-mono font-bold bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 rounded">
+            <CheckCircle2 className="w-3 h-3 text-emerald-400" />
+            <span>APPROVED</span>
           </span>
         );
       case "SUBMITTED":
         return (
-          <span className="inline-flex items-center space-x-1 px-2.5 py-1 text-[10px] font-mono font-bold bg-[#FDB773]/30 text-[#4D2A00] border border-[#CC6F00]/25 rounded-md">
-            <Clock className="w-3.5 h-3.5 text-[#CC6F00]" />
-            <span>Submitted</span>
+          <span className="inline-flex items-center space-x-1 px-2 py-0.5 text-[10px] font-mono font-bold bg-amber-500/15 text-amber-300 border border-amber-500/30 rounded">
+            <Clock className="w-3 h-3 text-amber-400" />
+            <span>SUBMITTED</span>
           </span>
         );
       case "REJECTED":
         return (
-          <span className="inline-flex items-center space-x-1 px-2.5 py-1 text-[10px] font-mono font-bold bg-rose-500/20 text-rose-900 border border-rose-500/30 rounded-md">
-            <XCircle className="w-3.5 h-3.5 text-rose-600" />
-            <span>Rejected</span>
+          <span className="inline-flex items-center space-x-1 px-2 py-0.5 text-[10px] font-mono font-bold bg-rose-500/15 text-rose-400 border border-rose-500/30 rounded">
+            <XCircle className="w-3 h-3 text-rose-400" />
+            <span>REJECTED</span>
           </span>
         );
       default:
-        return <span className="px-2.5 py-1 text-[10px] font-mono bg-white/60 text-[#4D2A00] border border-[rgba(77,42,0,0.1)] rounded-md">{status}</span>;
+        return <span className="px-2 py-0.5 text-[10px] font-mono bg-[var(--bg-elevated)] text-[var(--text-secondary)] border border-[var(--border-subtle)] rounded">{status}</span>;
     }
   };
 
@@ -128,72 +128,78 @@ export const DocumentRequestsPage: React.FC<{ user: UserProfile | null }> = ({ u
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 pb-16">
       {/* Top Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 glass-panel p-6 rounded-3xl border border-[rgba(77,42,0,0.1)] shadow-glass">
-        <div>
-          <div className="flex items-center space-x-2 text-[#CC6F00] text-[11px] font-bold uppercase mb-1">
-            <Files className="w-3.5 h-3.5" />
-            <span>Digital Certificates & Endorsements</span>
+      <div className="campus-panel rounded-2xl p-6 sm:p-8 border border-[var(--border-subtle)]">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+          <div className="space-y-2">
+            <div className="flex items-center space-x-2">
+              <span className="editorial-eyebrow">10 // CERTIFICATES & ENDORSEMENTS</span>
+              <span className="px-2.5 py-0.5 rounded-full text-[10px] font-mono bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30 font-semibold flex items-center gap-1">
+                <ShieldCheck className="w-3 h-3 text-emerald-600 dark:text-emerald-400" />
+                OFFICIAL VERIFICATION
+              </span>
+            </div>
+            <h1 className="editorial-title text-2xl sm:text-3xl text-[var(--text-primary)]">Institutional Document Issuance</h1>
+            <p className="text-xs sm:text-sm text-[var(--text-secondary)] max-w-2xl leading-relaxed">
+              Request official Bonafide certificates, Fee Structures, and NOCs with cryptographic authorization and PDF download.
+            </p>
           </div>
-          <h1 className="text-2xl font-bold text-[#4D2A00]">Official Document Requests</h1>
-          <p className="text-xs text-[#4D2A00]/70 mt-1">
-            Request official Bonafide certificates, Fee Structures, and NOCs with cryptographic validation and PDF download
-          </p>
-        </div>
 
-        {user?.role === "STUDENT" && (
-          <button
-            onClick={() => setShowModal(true)}
-            className="btn-primary inline-flex items-center space-x-2 text-xs font-bold px-5 py-2.5 shadow-sm"
-          >
-            <Plus className="w-4 h-4" />
-            <span>Request Certificate</span>
-          </button>
-        )}
+          {user?.role === "STUDENT" && (
+            <button
+              onClick={() => setShowModal(true)}
+              className="btn-primary inline-flex items-center space-x-2 text-xs font-bold px-5 py-2.5 rounded-xl shrink-0 font-mono"
+            >
+              <Plus className="w-4 h-4" />
+              <span>Request Certificate</span>
+            </button>
+          )}
+        </div>
       </div>
 
       {/* Requests Table */}
-      <div className="glass-panel rounded-3xl overflow-hidden border border-[rgba(77,42,0,0.1)] shadow-glass">
+      <div className="campus-panel rounded-2xl overflow-hidden border border-[var(--border-subtle)]">
         {loading ? (
-          <div className="p-14 text-center text-xs text-[#4D2A00]/60">
+          <div className="p-16 text-center text-xs text-[var(--text-muted)] font-mono">
             Loading document requests...
           </div>
         ) : requests.length === 0 ? (
-          <div className="p-14 text-center text-xs text-[#4D2A00]/60">
-            No official document requests on file.
+          <div className="p-16 text-center text-xs text-[var(--text-muted)] font-mono space-y-2">
+            <Files className="w-8 h-8 text-[var(--text-muted)]/40 mx-auto" />
+            <p>No official document requests on file.</p>
           </div>
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full text-left text-xs border-collapse">
               <thead>
-                <tr className="bg-[#FDB773]/30 border-b border-[rgba(77,42,0,0.1)] text-[#4D2A00] font-bold uppercase tracking-wider text-[10px]">
-                  <th className="py-3.5 px-4 font-bold">Request #</th>
-                  <th className="py-3.5 px-4 font-bold">Student</th>
-                  <th className="py-3.5 px-4 font-bold">Document Type</th>
-                  <th className="py-3.5 px-4 font-bold">Stated Purpose</th>
-                  <th className="py-3.5 px-4 font-bold">Submitted</th>
-                  <th className="py-3.5 px-4 font-bold">Status</th>
-                  <th className="py-3.5 px-4 font-bold text-right">Actions</th>
+                <tr className="bg-[var(--bg-elevated)] border-b border-[var(--border-subtle)] text-[var(--text-secondary)] font-mono uppercase text-[10px] tracking-wider">
+                  <th className="py-3 px-4">Request #</th>
+                  <th className="py-3 px-4">Student</th>
+                  <th className="py-3 px-4">Document Type</th>
+                  <th className="py-3 px-4">Stated Purpose</th>
+                  <th className="py-3 px-4">Submitted</th>
+                  <th className="py-3 px-4">Status</th>
+                  <th className="py-3 px-4 text-right">Actions</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-[rgba(77,42,0,0.06)]">
+              <tbody className="divide-y divide-[var(--border-subtle)] font-mono text-xs">
                 {requests.map((r) => (
-                  <tr key={r.id} className="hover:bg-white/40 transition-colors">
-                    <td className="py-3.5 px-4 font-mono font-bold text-[#CC6F00]">
+                  <tr key={r.id} className="hover:bg-[var(--bg-hover)]/40 transition-colors">
+                    <td className="py-3.5 px-4 font-bold text-[#FF6D1F]">
                       #{r.requestNumber}
                     </td>
-                    <td className="py-3.5 px-4 font-semibold text-[#4D2A00]">
+                    <td className="py-3.5 px-4 font-sans font-medium text-[var(--text-primary)]">
                       {r.student?.fullName}
-                      <span className="text-[11px] font-mono text-[#4D2A00]/60 block">
+                      <span className="text-[11px] font-mono text-[var(--text-muted)] block">
                         {r.student?.rollNumber}
                       </span>
                     </td>
-                    <td className="py-3.5 px-4 font-bold text-[#4D2A00]">
+                    <td className="py-3.5 px-4 font-bold text-[var(--text-primary)]">
                       {getDocTypeName(r.docType)}
                     </td>
-                    <td className="py-3.5 px-4 text-[#4D2A00]/80 truncate max-w-xs">{r.purpose}</td>
-                    <td className="py-3.5 px-4 text-[#4D2A00]/70 font-mono">
+                    <td className="py-3.5 px-4 text-[var(--text-secondary)] truncate max-w-xs">{r.purpose}</td>
+                    <td className="py-3.5 px-4 text-[var(--text-muted)]">
                       {new Date(r.createdAt).toLocaleDateString()}
                     </td>
                     <td className="py-3.5 px-4">{getStatusBadge(r.status)}</td>
@@ -204,7 +210,7 @@ export const DocumentRequestsPage: React.FC<{ user: UserProfile | null }> = ({ u
                             href={`/api/documents/${r.id}/download`}
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="btn-primary inline-flex items-center space-x-1.5 px-3 py-1.5 font-bold shadow-sm text-xs"
+                            className="btn-primary inline-flex items-center space-x-1.5 px-3 py-1.5 font-bold text-xs rounded-lg"
                           >
                             <Download className="w-3.5 h-3.5" />
                             <span>Download PDF</span>
@@ -215,13 +221,13 @@ export const DocumentRequestsPage: React.FC<{ user: UserProfile | null }> = ({ u
                           <div className="flex items-center space-x-1.5">
                             <button
                               onClick={() => handleUpdateStatus(r.id, "APPROVED")}
-                              className="btn-primary px-3 py-1 text-xs font-bold"
+                              className="btn-primary px-3 py-1 text-xs font-bold rounded-lg"
                             >
                               Approve
                             </button>
                             <button
                               onClick={() => handleUpdateStatus(r.id, "REJECTED")}
-                              className="px-3 py-1 bg-rose-500/20 hover:bg-rose-500/30 text-rose-900 border border-rose-500/30 font-bold rounded-xl text-xs"
+                              className="px-3 py-1 bg-rose-500/15 text-rose-600 dark:text-rose-400 border border-rose-500/30 rounded-lg text-xs font-bold hover:bg-rose-500/25"
                             >
                               Reject
                             </button>
@@ -239,62 +245,65 @@ export const DocumentRequestsPage: React.FC<{ user: UserProfile | null }> = ({ u
 
       {/* Request Modal */}
       {showModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-md p-4 animate-fadeIn">
-          <div className="glass-modal max-w-md w-full p-6 space-y-4 text-xs rounded-3xl border border-[rgba(77,42,0,0.15)] shadow-glass">
-            <div className="flex items-center justify-between border-b border-[rgba(77,42,0,0.1)] pb-3">
-              <h2 className="text-base font-bold text-[#4D2A00]">Request Official Certificate</h2>
-              <button onClick={() => setShowModal(false)} className="text-[#4D2A00]/60 hover:text-[#4D2A00]">
-                <X className="w-5 h-5" />
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-fadeIn">
+          <div className="campus-block max-w-md w-full p-6 space-y-4 rounded-2xl border border-[var(--border-subtle)] shadow-2xl">
+            <div className="flex items-center justify-between border-b border-[var(--border-subtle)] pb-3">
+              <div>
+                <h3 className="text-sm font-bold text-[var(--text-primary)] font-mono uppercase tracking-wider">Request Institutional Certificate</h3>
+                <p className="text-xs text-[var(--text-secondary)]">Generate signed PDF endorsed by registrar.</p>
+              </div>
+              <button onClick={() => setShowModal(false)} className="text-[var(--text-muted)] hover:text-[var(--text-primary)]">
+                <X className="w-4 h-4" />
               </button>
             </div>
 
             {error && (
-              <div className="p-3 bg-rose-500/20 border border-rose-500/30 rounded-xl text-rose-900 font-medium">
+              <div className="p-3 bg-rose-500/15 border border-rose-500/30 rounded-xl text-xs text-rose-600 dark:text-rose-400 font-mono">
                 {error}
               </div>
             )}
 
-            <form onSubmit={handleSubmit} className="space-y-4">
+            <form onSubmit={handleSubmit} className="space-y-3.5 text-xs">
               <div>
-                <label className="block font-semibold text-[#4D2A00] mb-1">Document Type *</label>
+                <label className="block text-[var(--text-secondary)] mb-1 font-mono uppercase text-[10px]">Certificate Category *</label>
                 <select
                   value={docType}
                   onChange={(e) => setDocType(e.target.value)}
-                  className="w-full px-3.5 py-2.5 bg-white/60 border border-[rgba(77,42,0,0.12)] rounded-xl text-[#4D2A00] focus:outline-none focus:border-[#CC6F00]"
+                  className="w-full px-3 py-2 bg-[var(--bg-input)] border border-[var(--border-subtle)] rounded-xl text-[var(--text-primary)] focus:outline-none focus:border-[#FF6D1F] font-mono"
                 >
                   <option value="BONAFIDE_CERTIFICATE">Bonafide Student Certificate</option>
-                  <option value="FEE_STRUCTURE">Official Fee Structure Estimate</option>
+                  <option value="FEE_STRUCTURE">Fee Structure Estimate (Bank Loan / Scholarship)</option>
                   <option value="HOSTEL_RESIDENCE">Hostel Residence Proof Letter</option>
-                  <option value="NOC_INTERNSHIP">No Objection Certificate (Internship / Project)</option>
+                  <option value="NOC_INTERNSHIP">No Objection Certificate (Internship / Training)</option>
                 </select>
               </div>
 
               <div>
-                <label className="block font-semibold text-[#4D2A00] mb-1">Purpose / Submission Authority *</label>
+                <label className="block text-[var(--text-secondary)] mb-1 font-mono uppercase text-[10px]">Purpose / Reason for Issuance *</label>
                 <textarea
                   required
                   rows={3}
                   value={purpose}
                   onChange={(e) => setPurpose(e.target.value)}
-                  placeholder="e.g. Bank education loan verification or state scholarship application..."
-                  className="w-full px-3.5 py-2.5 bg-white/60 border border-[rgba(77,42,0,0.12)] rounded-xl text-[#4D2A00] placeholder-[#4D2A00]/40 focus:outline-none focus:border-[#CC6F00] resize-none"
+                  placeholder="e.g. Required for government scholarship application / passport verification / summer internship..."
+                  className="w-full px-3 py-2 bg-[var(--bg-input)] border border-[var(--border-subtle)] rounded-xl text-[var(--text-primary)] placeholder:text-[var(--text-muted)] focus:outline-none focus:border-[#FF6D1F] resize-none"
                 />
               </div>
 
-              <div className="flex items-center justify-end space-x-2.5 pt-3 border-t border-[rgba(77,42,0,0.1)]">
+              <div className="flex items-center justify-end space-x-2 pt-2 border-t border-[var(--border-subtle)]">
                 <button
                   type="button"
                   onClick={() => setShowModal(false)}
-                  className="btn-secondary px-4 py-2"
+                  className="btn-secondary px-4 py-2 rounded-xl"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
                   disabled={submitting}
-                  className="btn-primary px-6 py-2 text-xs font-bold disabled:opacity-50 shadow-sm"
+                  className="btn-primary px-5 py-2 font-bold rounded-xl disabled:opacity-50"
                 >
-                  {submitting ? "Submitting..." : "Submit Request"}
+                  {submitting ? "Submitting..." : "Submit Application"}
                 </button>
               </div>
             </form>

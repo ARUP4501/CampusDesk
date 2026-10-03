@@ -23,7 +23,7 @@ parkingRouter.get("/", requireAuth, async (_req: Request, res: Response): Promis
       };
     });
 
-    res.json({ parkingZones: parsedZones });
+    res.json({ parkingZones: parsedZones, parkingLots: parsedZones });
   } catch (err: any) {
     res.status(500).json({ error: "Failed to fetch parking zones." });
   }

@@ -262,21 +262,21 @@ export const AdminAcademicManagement: React.FC = () => {
     <div className="space-y-6 animate-fadeIn">
       {/* Toast Notification */}
       {toastMessage && (
-        <div className="fixed bottom-6 right-6 z-50 bg-[#4D2A00] text-[#FFF6ED] px-4 py-3 rounded-2xl shadow-xl flex items-center space-x-2 text-xs font-semibold animate-slideUp">
-          <CheckCircle2 className="w-4 h-4 text-[#FDB773]" />
+        <div className="fixed bottom-6 right-6 z-50 bg-[var(--bg-elevated)] text-[var(--text-primary)] border border-[var(--border-subtle)] px-4 py-3 rounded-2xl shadow-xl flex items-center space-x-2 text-xs font-semibold animate-slideUp">
+          <CheckCircle2 className="w-4 h-4 text-[#FF6D1F]" />
           <span>{toastMessage}</span>
         </div>
       )}
 
       {/* Header and Controls */}
-      <div className="glass-panel p-6 rounded-3xl border border-[rgba(77,42,0,0.1)] flex flex-col md:flex-row md:items-center justify-between gap-4">
+      <div className="glass-panel p-6 rounded-3xl border border-[var(--border-subtle)] flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <div className="flex items-center space-x-2 text-[#CC6F00] text-xs font-bold uppercase mb-1">
+          <div className="flex items-center space-x-2 text-[#FF6D1F] text-xs font-bold uppercase mb-1">
             <GraduationCap className="w-4 h-4" />
             <span>Academic Management Center</span>
           </div>
-          <h2 className="text-xl font-extrabold text-[#4D2A00]">Faculty, Subjects, Assignments & Timetables</h2>
-          <p className="text-xs text-[#4D2A00]/70 mt-0.5">
+          <h2 className="text-xl font-extrabold text-[var(--text-primary)]">Faculty, Subjects, Assignments & Timetables</h2>
+          <p className="text-xs text-[var(--text-secondary)] mt-0.5">
             Configure subjects, link professors to sections, and manage lecture timetables.
           </p>
         </div>
@@ -334,13 +334,13 @@ export const AdminAcademicManagement: React.FC = () => {
       </div>
 
       {/* Sub-Tab Navigation Bar */}
-      <div className="flex border-b border-[rgba(77,42,0,0.1)] gap-2 overflow-x-auto pb-1 text-xs">
+      <div className="flex border-b border-[var(--border-subtle)] gap-2 overflow-x-auto pb-1 text-xs">
         <button
           onClick={() => setActiveSubTab("faculty")}
           className={`py-2 px-4 rounded-xl font-bold flex items-center space-x-2 transition-all whitespace-nowrap ${
             activeSubTab === "faculty"
-              ? "bg-[#CC6F00] text-white shadow-sm"
-              : "bg-white/40 text-[#4D2A00]/70 hover:bg-white/70 hover:text-[#4D2A00]"
+              ? "bg-[#FF6D1F] text-[#141414] font-bold shadow-sm"
+              : "bg-[var(--bg-surface)] text-[var(--text-secondary)] hover:bg-[var(--bg-hover)]/70 hover:text-[var(--text-primary)]"
           }`}
         >
           <Users className="w-3.5 h-3.5" />
@@ -351,8 +351,8 @@ export const AdminAcademicManagement: React.FC = () => {
           onClick={() => setActiveSubTab("subjects")}
           className={`py-2 px-4 rounded-xl font-bold flex items-center space-x-2 transition-all whitespace-nowrap ${
             activeSubTab === "subjects"
-              ? "bg-[#CC6F00] text-white shadow-sm"
-              : "bg-white/40 text-[#4D2A00]/70 hover:bg-white/70 hover:text-[#4D2A00]"
+              ? "bg-[#FF6D1F] text-[#141414] font-bold shadow-sm"
+              : "bg-[var(--bg-surface)] text-[var(--text-secondary)] hover:bg-[var(--bg-hover)]/70 hover:text-[var(--text-primary)]"
           }`}
         >
           <BookOpen className="w-3.5 h-3.5" />
@@ -363,8 +363,8 @@ export const AdminAcademicManagement: React.FC = () => {
           onClick={() => setActiveSubTab("assignments")}
           className={`py-2 px-4 rounded-xl font-bold flex items-center space-x-2 transition-all whitespace-nowrap ${
             activeSubTab === "assignments"
-              ? "bg-[#CC6F00] text-white shadow-sm"
-              : "bg-white/40 text-[#4D2A00]/70 hover:bg-white/70 hover:text-[#4D2A00]"
+              ? "bg-[#FF6D1F] text-[#141414] font-bold shadow-sm"
+              : "bg-[var(--bg-surface)] text-[var(--text-secondary)] hover:bg-[var(--bg-hover)]/70 hover:text-[var(--text-primary)]"
           }`}
         >
           <UserCheck className="w-3.5 h-3.5" />
@@ -375,8 +375,8 @@ export const AdminAcademicManagement: React.FC = () => {
           onClick={() => setActiveSubTab("timetable")}
           className={`py-2 px-4 rounded-xl font-bold flex items-center space-x-2 transition-all whitespace-nowrap ${
             activeSubTab === "timetable"
-              ? "bg-[#CC6F00] text-white shadow-sm"
-              : "bg-white/40 text-[#4D2A00]/70 hover:bg-white/70 hover:text-[#4D2A00]"
+              ? "bg-[#FF6D1F] text-[#141414] font-bold shadow-sm"
+              : "bg-[var(--bg-surface)] text-[var(--text-secondary)] hover:bg-[var(--bg-hover)]/70 hover:text-[var(--text-primary)]"
           }`}
         >
           <Calendar className="w-3.5 h-3.5" />
@@ -386,19 +386,19 @@ export const AdminAcademicManagement: React.FC = () => {
 
       {/* 1. FACULTY DIRECTORY TAB */}
       {activeSubTab === "faculty" && (
-        <div className="glass-card rounded-3xl p-5 border border-[rgba(77,42,0,0.1)] space-y-4">
+        <div className="glass-card rounded-3xl p-5 border border-[var(--border-subtle)] space-y-4">
           <div className="flex flex-col sm:flex-row items-center justify-between gap-3">
             <div className="relative w-full sm:w-72">
-              <Search className="w-4 h-4 text-[#4D2A00]/40 absolute left-3 top-3" />
+              <Search className="w-4 h-4 text-[var(--text-subtle)] absolute left-3 top-3" />
               <input
                 type="text"
                 placeholder="Search faculty by name, email..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full pl-9 pr-3.5 py-2 bg-white/70 border border-[rgba(77,42,0,0.12)] rounded-xl text-xs text-[#4D2A00] placeholder-[#4D2A00]/40 focus:outline-none focus:border-[#CC6F00]"
+                className="w-full pl-9 pr-3.5 py-2 bg-[var(--bg-surface)] border border-[var(--border-subtle)] rounded-xl text-xs text-[var(--text-primary)] placeholder-[var(--text-subtle)] focus:outline-none focus:border-[#FF6D1F]"
               />
             </div>
-            <span className="text-xs text-[#4D2A00]/60">
+            <span className="text-xs text-[var(--text-muted)]">
               Showing {facultyList.filter((f) => f.fullName.toLowerCase().includes(searchQuery.toLowerCase()) || f.email.toLowerCase().includes(searchQuery.toLowerCase())).length} of {facultyList.length} faculty members
             </span>
           </div>
@@ -406,7 +406,7 @@ export const AdminAcademicManagement: React.FC = () => {
           <div className="overflow-x-auto">
             <table className="w-full text-left text-xs border-collapse">
               <thead>
-                <tr className="border-b border-[rgba(77,42,0,0.1)] text-[#4D2A00]/60 font-mono text-[11px] uppercase">
+                <tr className="border-b border-[var(--border-subtle)] text-[var(--text-muted)] font-mono text-[11px] uppercase">
                   <th className="py-3 px-3">Faculty Member</th>
                   <th className="py-3 px-3">Department</th>
                   <th className="py-3 px-3">Employee ID</th>
@@ -416,20 +416,20 @@ export const AdminAcademicManagement: React.FC = () => {
                   <th className="py-3 px-3 text-right">Actions</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-[rgba(77,42,0,0.06)] text-[#4D2A00]">
+              <tbody className="divide-y divide-[var(--border-subtle)] text-[var(--text-primary)]">
                 {facultyList
                   .filter((f) => f.fullName.toLowerCase().includes(searchQuery.toLowerCase()) || f.email.toLowerCase().includes(searchQuery.toLowerCase()))
                   .map((fac) => (
-                    <tr key={fac.id} className="hover:bg-white/40 transition-colors">
+                    <tr key={fac.id} className="hover:bg-[var(--bg-hover)]/40 transition-colors">
                       <td className="py-3.5 px-3">
-                        <div className="font-bold text-[#4D2A00]">{fac.fullName}</div>
-                        <div className="text-[11px] text-[#4D2A00]/60 font-mono">{fac.email}</div>
+                        <div className="font-bold text-[var(--text-primary)]">{fac.fullName}</div>
+                        <div className="text-[11px] text-[var(--text-muted)] font-mono">{fac.email}</div>
                       </td>
                       <td className="py-3.5 px-3">{fac.department}</td>
                       <td className="py-3.5 px-3 font-mono">{fac.employeeId || "—"}</td>
                       <td className="py-3.5 px-3">{fac.phone || "—"}</td>
                       <td className="py-3.5 px-3">
-                        <span className="px-2.5 py-1 rounded-full text-[10px] font-bold bg-[#FDB773]/20 text-[#4D2A00] border border-[#CC6F00]/20">
+                        <span className="px-2.5 py-1 rounded-full text-[10px] font-bold bg-[#FF6D1F]/15 text-[#FF6D1F] border border-[#FF6D1F]/20">
                           {fac.facultyAssignments?.length || 0} Subjects
                         </span>
                       </td>
@@ -466,19 +466,19 @@ export const AdminAcademicManagement: React.FC = () => {
 
       {/* 2. SUBJECTS TAB */}
       {activeSubTab === "subjects" && (
-        <div className="glass-card rounded-3xl p-5 border border-[rgba(77,42,0,0.1)] space-y-4">
+        <div className="glass-card rounded-3xl p-5 border border-[var(--border-subtle)] space-y-4">
           <div className="flex flex-col sm:flex-row items-center justify-between gap-3">
             <div className="relative w-full sm:w-72">
-              <Search className="w-4 h-4 text-[#4D2A00]/40 absolute left-3 top-3" />
+              <Search className="w-4 h-4 text-[var(--text-subtle)] absolute left-3 top-3" />
               <input
                 type="text"
                 placeholder="Search subject code, name..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full pl-9 pr-3.5 py-2 bg-white/70 border border-[rgba(77,42,0,0.12)] rounded-xl text-xs text-[#4D2A00] placeholder-[#4D2A00]/40 focus:outline-none focus:border-[#CC6F00]"
+                className="w-full pl-9 pr-3.5 py-2 bg-[var(--bg-surface)] border border-[var(--border-subtle)] rounded-xl text-xs text-[var(--text-primary)] placeholder-[var(--text-subtle)] focus:outline-none focus:border-[#FF6D1F]"
               />
             </div>
-            <span className="text-xs text-[#4D2A00]/60">
+            <span className="text-xs text-[var(--text-muted)]">
               Total Subjects: {subjectList.length}
             </span>
           </div>
@@ -486,7 +486,7 @@ export const AdminAcademicManagement: React.FC = () => {
           <div className="overflow-x-auto">
             <table className="w-full text-left text-xs border-collapse">
               <thead>
-                <tr className="border-b border-[rgba(77,42,0,0.1)] text-[#4D2A00]/60 font-mono text-[11px] uppercase">
+                <tr className="border-b border-[var(--border-subtle)] text-[var(--text-muted)] font-mono text-[11px] uppercase">
                   <th className="py-3 px-3">Code</th>
                   <th className="py-3 px-3">Subject Name</th>
                   <th className="py-3 px-3">Program / Branch</th>
@@ -498,17 +498,17 @@ export const AdminAcademicManagement: React.FC = () => {
                   <th className="py-3 px-3 text-right">Actions</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-[rgba(77,42,0,0.06)] text-[#4D2A00]">
+              <tbody className="divide-y divide-[var(--border-subtle)] text-[var(--text-primary)]">
                 {subjectList
                   .filter((s) => s.code.toLowerCase().includes(searchQuery.toLowerCase()) || s.name.toLowerCase().includes(searchQuery.toLowerCase()))
                   .map((sub) => (
-                    <tr key={sub.id} className="hover:bg-white/40 transition-colors">
-                      <td className="py-3.5 px-3 font-mono font-bold text-[#CC6F00]">{sub.code}</td>
-                      <td className="py-3.5 px-3 font-bold text-[#4D2A00]">{sub.name}</td>
+                    <tr key={sub.id} className="hover:bg-[var(--bg-hover)]/40 transition-colors">
+                      <td className="py-3.5 px-3 font-mono font-bold text-[#FF6D1F]">{sub.code}</td>
+                      <td className="py-3.5 px-3 font-bold text-[var(--text-primary)]">{sub.name}</td>
                       <td className="py-3.5 px-3">{sub.course} - {sub.branch}</td>
                       <td className="py-3.5 px-3 font-mono">Sem {sub.semester}</td>
                       <td className="py-3.5 px-3">
-                        <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-[#FDB773]/20 border border-[#CC6F00]/20">
+                        <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-[#FF6D1F]/20 border border-[#FF6D1F]/20">
                           {sub.type}
                         </span>
                       </td>
@@ -519,7 +519,7 @@ export const AdminAcademicManagement: React.FC = () => {
                             {sub.facultyAssignments.map((a: any) => a.faculty.fullName).join(", ")}
                           </div>
                         ) : (
-                          <span className="text-[11px] text-[#4D2A00]/40 italic">Not Assigned</span>
+                          <span className="text-[11px] text-[var(--text-subtle)] italic">Not Assigned</span>
                         )}
                       </td>
                       <td className="py-3.5 px-3">
@@ -555,12 +555,12 @@ export const AdminAcademicManagement: React.FC = () => {
 
       {/* 3. FACULTY ASSIGNMENTS TAB */}
       {activeSubTab === "assignments" && (
-        <div className="glass-card rounded-3xl p-5 border border-[rgba(77,42,0,0.1)] space-y-4">
+        <div className="glass-card rounded-3xl p-5 border border-[var(--border-subtle)] space-y-4">
           <div className="flex items-center justify-between">
-            <h3 className="text-sm font-bold text-[#4D2A00]">
+            <h3 className="text-sm font-bold text-[var(--text-primary)]">
               Active Faculty Class & Subject Assignments ({assignmentList.length})
             </h3>
-            <span className="text-xs text-[#4D2A00]/60">
+            <span className="text-xs text-[var(--text-muted)]">
               Determines attendance marking and marks entry authorization
             </span>
           </div>
@@ -568,7 +568,7 @@ export const AdminAcademicManagement: React.FC = () => {
           <div className="overflow-x-auto">
             <table className="w-full text-left text-xs border-collapse">
               <thead>
-                <tr className="border-b border-[rgba(77,42,0,0.1)] text-[#4D2A00]/60 font-mono text-[11px] uppercase">
+                <tr className="border-b border-[var(--border-subtle)] text-[var(--text-muted)] font-mono text-[11px] uppercase">
                   <th className="py-3 px-3">Faculty Member</th>
                   <th className="py-3 px-3">Subject</th>
                   <th className="py-3 px-3">Program & Branch</th>
@@ -578,21 +578,21 @@ export const AdminAcademicManagement: React.FC = () => {
                   <th className="py-3 px-3 text-right">Actions</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-[rgba(77,42,0,0.06)] text-[#4D2A00]">
+              <tbody className="divide-y divide-[var(--border-subtle)] text-[var(--text-primary)]">
                 {assignmentList.map((a) => (
-                  <tr key={a.id} className="hover:bg-white/40 transition-colors">
+                  <tr key={a.id} className="hover:bg-[var(--bg-hover)]/40 transition-colors">
                     <td className="py-3.5 px-3">
-                      <div className="font-bold text-[#4D2A00]">{a.faculty?.fullName}</div>
-                      <div className="text-[11px] text-[#4D2A00]/60">{a.faculty?.department}</div>
+                      <div className="font-bold text-[var(--text-primary)]">{a.faculty?.fullName}</div>
+                      <div className="text-[11px] text-[var(--text-muted)]">{a.faculty?.department}</div>
                     </td>
                     <td className="py-3.5 px-3">
-                      <div className="font-bold text-[#4D2A00]">{a.subject?.name}</div>
-                      <div className="text-[11px] text-[#CC6F00] font-mono">{a.subject?.code}</div>
+                      <div className="font-bold text-[var(--text-primary)]">{a.subject?.name}</div>
+                      <div className="text-[11px] text-[#FF6D1F] font-mono">{a.subject?.code}</div>
                     </td>
                     <td className="py-3.5 px-3">{a.course} - {a.branch}</td>
                     <td className="py-3.5 px-3">Year {a.year} • Sem {a.semester}</td>
                     <td className="py-3.5 px-3">
-                      <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-[#CC6F00] text-white">
+                      <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-[#FF6D1F] text-[#141414] font-bold">
                         Section {a.section}
                       </span>
                     </td>
@@ -616,12 +616,12 @@ export const AdminAcademicManagement: React.FC = () => {
 
       {/* 4. TIMETABLE SCHEDULES TAB */}
       {activeSubTab === "timetable" && (
-        <div className="glass-card rounded-3xl p-5 border border-[rgba(77,42,0,0.1)] space-y-4">
+        <div className="glass-card rounded-3xl p-5 border border-[var(--border-subtle)] space-y-4">
           <div className="flex items-center justify-between">
-            <h3 className="text-sm font-bold text-[#4D2A00]">
+            <h3 className="text-sm font-bold text-[var(--text-primary)]">
               Institutional Timetable Master ({timetableList.length} Class Slots)
             </h3>
-            <span className="text-xs text-[#4D2A00]/60">
+            <span className="text-xs text-[var(--text-muted)]">
               Synchronized with Student and Faculty portal calendars
             </span>
           </div>
@@ -629,7 +629,7 @@ export const AdminAcademicManagement: React.FC = () => {
           <div className="overflow-x-auto">
             <table className="w-full text-left text-xs border-collapse">
               <thead>
-                <tr className="border-b border-[rgba(77,42,0,0.1)] text-[#4D2A00]/60 font-mono text-[11px] uppercase">
+                <tr className="border-b border-[var(--border-subtle)] text-[var(--text-muted)] font-mono text-[11px] uppercase">
                   <th className="py-3 px-3">Day & Time</th>
                   <th className="py-3 px-3">Subject</th>
                   <th className="py-3 px-3">Faculty</th>
@@ -638,24 +638,24 @@ export const AdminAcademicManagement: React.FC = () => {
                   <th className="py-3 px-3 text-right">Actions</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-[rgba(77,42,0,0.06)] text-[#4D2A00]">
+              <tbody className="divide-y divide-[var(--border-subtle)] text-[var(--text-primary)]">
                 {timetableList.map((slot) => (
-                  <tr key={slot.id} className="hover:bg-white/40 transition-colors">
+                  <tr key={slot.id} className="hover:bg-[var(--bg-hover)]/40 transition-colors">
                     <td className="py-3.5 px-3">
-                      <div className="font-bold text-[#4D2A00]">{dayNames[slot.dayOfWeek] || `Day ${slot.dayOfWeek}`}</div>
-                      <div className="text-[11px] text-[#4D2A00]/60 font-mono">{slot.startTime} – {slot.endTime}</div>
+                      <div className="font-bold text-[var(--text-primary)]">{dayNames[slot.dayOfWeek] || `Day ${slot.dayOfWeek}`}</div>
+                      <div className="text-[11px] text-[var(--text-muted)] font-mono">{slot.startTime} – {slot.endTime}</div>
                     </td>
                     <td className="py-3.5 px-3">
-                      <div className="font-bold text-[#4D2A00]">{slot.subjectName}</div>
-                      <div className="text-[11px] text-[#CC6F00] font-mono">{slot.subjectCode}</div>
+                      <div className="font-bold text-[var(--text-primary)]">{slot.subjectName}</div>
+                      <div className="text-[11px] text-[#FF6D1F] font-mono">{slot.subjectCode}</div>
                     </td>
-                    <td className="py-3.5 px-3 font-medium text-[#4D2A00]">{slot.facultyName}</td>
+                    <td className="py-3.5 px-3 font-medium text-[var(--text-primary)]">{slot.facultyName}</td>
                     <td className="py-3.5 px-3">
                       <div>{slot.course} • {slot.branch}</div>
-                      <div className="text-[11px] text-[#4D2A00]/60">Year {slot.year} • Sem {slot.semester} • Sec {slot.section}</div>
+                      <div className="text-[11px] text-[var(--text-muted)]">Year {slot.year} • Sem {slot.semester} • Sec {slot.section}</div>
                     </td>
                     <td className="py-3.5 px-3">
-                      <span className="px-2 py-0.5 rounded-lg bg-stone-100 border border-stone-200 font-mono font-bold text-[#4D2A00]">
+                      <span className="px-2 py-0.5 rounded-lg bg-stone-100 border border-stone-200 font-mono font-bold text-[var(--text-primary)]">
                         {slot.room}
                       </span>
                     </td>
@@ -679,88 +679,88 @@ export const AdminAcademicManagement: React.FC = () => {
       {/* MODAL 1: ADD FACULTY */}
       {showFacultyModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-md p-4 animate-fadeIn">
-          <div className="glass-modal max-w-lg w-full p-6 space-y-4 rounded-3xl border border-[rgba(77,42,0,0.15)] shadow-glass">
-            <div className="flex items-center justify-between border-b border-[rgba(77,42,0,0.1)] pb-3">
-              <h3 className="text-base font-bold text-[#4D2A00]">Create New Faculty Account</h3>
-              <button onClick={() => setShowFacultyModal(false)} className="text-[#4D2A00]/60 hover:text-[#4D2A00]">
+          <div className="glass-modal max-w-lg w-full p-6 space-y-4 rounded-3xl border border-[var(--border-subtle)] shadow-glass">
+            <div className="flex items-center justify-between border-b border-[var(--border-subtle)] pb-3">
+              <h3 className="text-base font-bold text-[var(--text-primary)]">Create New Faculty Account</h3>
+              <button onClick={() => setShowFacultyModal(false)} className="text-[var(--text-muted)] hover:text-[var(--text-primary)]">
                 <X className="w-5 h-5" />
               </button>
             </div>
 
             <form onSubmit={handleCreateFaculty} className="space-y-3.5 text-xs">
               <div>
-                <label className="block font-semibold text-[#4D2A00] mb-1">Full Name & Title *</label>
+                <label className="block font-semibold text-[var(--text-primary)] mb-1">Full Name & Title *</label>
                 <input
                   type="text"
                   required
                   placeholder="e.g. Prof. Rajesh Sharma"
                   value={facultyForm.fullName}
                   onChange={(e) => setFacultyForm({ ...facultyForm, fullName: e.target.value })}
-                  className="w-full px-3.5 py-2.5 bg-white/70 border border-[rgba(77,42,0,0.12)] rounded-xl text-[#4D2A00] focus:outline-none focus:border-[#CC6F00]"
+                  className="w-full px-3.5 py-2.5 bg-[var(--bg-surface)] border border-[var(--border-subtle)] rounded-xl text-[var(--text-primary)] focus:outline-none focus:border-[#FF6D1F]"
                 />
               </div>
 
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block font-semibold text-[#4D2A00] mb-1">Email Address *</label>
+                  <label className="block font-semibold text-[var(--text-primary)] mb-1">Email Address *</label>
                   <input
                     type="email"
                     required
                     placeholder="prof.sharma@campusdesk.edu"
                     value={facultyForm.email}
                     onChange={(e) => setFacultyForm({ ...facultyForm, email: e.target.value })}
-                    className="w-full px-3.5 py-2.5 bg-white/70 border border-[rgba(77,42,0,0.12)] rounded-xl text-[#4D2A00] focus:outline-none focus:border-[#CC6F00]"
+                    className="w-full px-3.5 py-2.5 bg-[var(--bg-surface)] border border-[var(--border-subtle)] rounded-xl text-[var(--text-primary)] focus:outline-none focus:border-[#FF6D1F]"
                   />
                 </div>
                 <div>
-                  <label className="block font-semibold text-[#4D2A00] mb-1">Password *</label>
+                  <label className="block font-semibold text-[var(--text-primary)] mb-1">Password *</label>
                   <input
                     type="password"
                     required
                     value={facultyForm.password}
                     onChange={(e) => setFacultyForm({ ...facultyForm, password: e.target.value })}
-                    className="w-full px-3.5 py-2.5 bg-white/70 border border-[rgba(77,42,0,0.12)] rounded-xl text-[#4D2A00] focus:outline-none focus:border-[#CC6F00]"
+                    className="w-full px-3.5 py-2.5 bg-[var(--bg-surface)] border border-[var(--border-subtle)] rounded-xl text-[var(--text-primary)] focus:outline-none focus:border-[#FF6D1F]"
                   />
                 </div>
               </div>
 
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block font-semibold text-[#4D2A00] mb-1">Department *</label>
+                  <label className="block font-semibold text-[var(--text-primary)] mb-1">Department *</label>
                   <input
                     type="text"
                     required
                     placeholder="Computer Science & Eng"
                     value={facultyForm.department}
                     onChange={(e) => setFacultyForm({ ...facultyForm, department: e.target.value })}
-                    className="w-full px-3.5 py-2.5 bg-white/70 border border-[rgba(77,42,0,0.12)] rounded-xl text-[#4D2A00] focus:outline-none focus:border-[#CC6F00]"
+                    className="w-full px-3.5 py-2.5 bg-[var(--bg-surface)] border border-[var(--border-subtle)] rounded-xl text-[var(--text-primary)] focus:outline-none focus:border-[#FF6D1F]"
                   />
                 </div>
                 <div>
-                  <label className="block font-semibold text-[#4D2A00] mb-1">Employee ID</label>
+                  <label className="block font-semibold text-[var(--text-primary)] mb-1">Employee ID</label>
                   <input
                     type="text"
                     placeholder="e.g. FAC-CSE-001"
                     value={facultyForm.employeeId}
                     onChange={(e) => setFacultyForm({ ...facultyForm, employeeId: e.target.value })}
-                    className="w-full px-3.5 py-2.5 bg-white/70 border border-[rgba(77,42,0,0.12)] rounded-xl text-[#4D2A00] focus:outline-none focus:border-[#CC6F00]"
+                    className="w-full px-3.5 py-2.5 bg-[var(--bg-surface)] border border-[var(--border-subtle)] rounded-xl text-[var(--text-primary)] focus:outline-none focus:border-[#FF6D1F]"
                   />
                 </div>
               </div>
 
               <div>
-                <label className="block font-semibold text-[#4D2A00] mb-1">Phone Number *</label>
+                <label className="block font-semibold text-[var(--text-primary)] mb-1">Phone Number *</label>
                 <input
                   type="text"
                   required
                   placeholder="9876543200"
                   value={facultyForm.phone}
                   onChange={(e) => setFacultyForm({ ...facultyForm, phone: e.target.value })}
-                  className="w-full px-3.5 py-2.5 bg-white/70 border border-[rgba(77,42,0,0.12)] rounded-xl text-[#4D2A00] focus:outline-none focus:border-[#CC6F00]"
+                  className="w-full px-3.5 py-2.5 bg-[var(--bg-surface)] border border-[var(--border-subtle)] rounded-xl text-[var(--text-primary)] focus:outline-none focus:border-[#FF6D1F]"
                 />
               </div>
 
-              <div className="flex items-center justify-end space-x-2 pt-3 border-t border-[rgba(77,42,0,0.1)]">
+              <div className="flex items-center justify-end space-x-2 pt-3 border-t border-[var(--border-subtle)]">
                 <button
                   type="button"
                   onClick={() => setShowFacultyModal(false)}
@@ -780,10 +780,10 @@ export const AdminAcademicManagement: React.FC = () => {
       {/* MODAL 2: ADD SUBJECT */}
       {showSubjectModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-md p-4 animate-fadeIn">
-          <div className="glass-modal max-w-lg w-full p-6 space-y-4 rounded-3xl border border-[rgba(77,42,0,0.15)] shadow-glass">
-            <div className="flex items-center justify-between border-b border-[rgba(77,42,0,0.1)] pb-3">
-              <h3 className="text-base font-bold text-[#4D2A00]">Add Academic Subject</h3>
-              <button onClick={() => setShowSubjectModal(false)} className="text-[#4D2A00]/60 hover:text-[#4D2A00]">
+          <div className="glass-modal max-w-lg w-full p-6 space-y-4 rounded-3xl border border-[var(--border-subtle)] shadow-glass">
+            <div className="flex items-center justify-between border-b border-[var(--border-subtle)] pb-3">
+              <h3 className="text-base font-bold text-[var(--text-primary)]">Add Academic Subject</h3>
+              <button onClick={() => setShowSubjectModal(false)} className="text-[var(--text-muted)] hover:text-[var(--text-primary)]">
                 <X className="w-5 h-5" />
               </button>
             </div>
@@ -791,22 +791,22 @@ export const AdminAcademicManagement: React.FC = () => {
             <form onSubmit={handleCreateSubject} className="space-y-3.5 text-xs">
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block font-semibold text-[#4D2A00] mb-1">Subject Code *</label>
+                  <label className="block font-semibold text-[var(--text-primary)] mb-1">Subject Code *</label>
                   <input
                     type="text"
                     required
                     placeholder="e.g. CS403"
                     value={subjectForm.code}
                     onChange={(e) => setSubjectForm({ ...subjectForm, code: e.target.value.toUpperCase() })}
-                    className="w-full px-3.5 py-2.5 bg-white/70 border border-[rgba(77,42,0,0.12)] rounded-xl text-[#4D2A00] font-mono focus:outline-none focus:border-[#CC6F00]"
+                    className="w-full px-3.5 py-2.5 bg-[var(--bg-surface)] border border-[var(--border-subtle)] rounded-xl text-[var(--text-primary)] font-mono focus:outline-none focus:border-[#FF6D1F]"
                   />
                 </div>
                 <div>
-                  <label className="block font-semibold text-[#4D2A00] mb-1">Subject Type</label>
+                  <label className="block font-semibold text-[var(--text-primary)] mb-1">Subject Type</label>
                   <select
                     value={subjectForm.type}
                     onChange={(e: any) => setSubjectForm({ ...subjectForm, type: e.target.value })}
-                    className="w-full px-3.5 py-2.5 bg-white/70 border border-[rgba(77,42,0,0.12)] rounded-xl text-[#4D2A00] focus:outline-none focus:border-[#CC6F00]"
+                    className="w-full px-3.5 py-2.5 bg-[var(--bg-surface)] border border-[var(--border-subtle)] rounded-xl text-[var(--text-primary)] focus:outline-none focus:border-[#FF6D1F]"
                   >
                     <option value="THEORY">THEORY</option>
                     <option value="PRACTICAL">PRACTICAL</option>
@@ -816,45 +816,45 @@ export const AdminAcademicManagement: React.FC = () => {
               </div>
 
               <div>
-                <label className="block font-semibold text-[#4D2A00] mb-1">Subject Name *</label>
+                <label className="block font-semibold text-[var(--text-primary)] mb-1">Subject Name *</label>
                 <input
                   type="text"
                   required
                   placeholder="e.g. Database Management Systems"
                   value={subjectForm.name}
                   onChange={(e) => setSubjectForm({ ...subjectForm, name: e.target.value })}
-                  className="w-full px-3.5 py-2.5 bg-white/70 border border-[rgba(77,42,0,0.12)] rounded-xl text-[#4D2A00] focus:outline-none focus:border-[#CC6F00]"
+                  className="w-full px-3.5 py-2.5 bg-[var(--bg-surface)] border border-[var(--border-subtle)] rounded-xl text-[var(--text-primary)] focus:outline-none focus:border-[#FF6D1F]"
                 />
               </div>
 
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block font-semibold text-[#4D2A00] mb-1">Course *</label>
+                  <label className="block font-semibold text-[var(--text-primary)] mb-1">Course *</label>
                   <input
                     type="text"
                     required
                     placeholder="e.g. B.Tech or MCA"
                     value={subjectForm.course}
                     onChange={(e) => setSubjectForm({ ...subjectForm, course: e.target.value })}
-                    className="w-full px-3.5 py-2.5 bg-white/70 border border-[rgba(77,42,0,0.12)] rounded-xl text-[#4D2A00] focus:outline-none focus:border-[#CC6F00]"
+                    className="w-full px-3.5 py-2.5 bg-[var(--bg-surface)] border border-[var(--border-subtle)] rounded-xl text-[var(--text-primary)] focus:outline-none focus:border-[#FF6D1F]"
                   />
                 </div>
                 <div>
-                  <label className="block font-semibold text-[#4D2A00] mb-1">Branch *</label>
+                  <label className="block font-semibold text-[var(--text-primary)] mb-1">Branch *</label>
                   <input
                     type="text"
                     required
                     placeholder="e.g. CSE or CA"
                     value={subjectForm.branch}
                     onChange={(e) => setSubjectForm({ ...subjectForm, branch: e.target.value })}
-                    className="w-full px-3.5 py-2.5 bg-white/70 border border-[rgba(77,42,0,0.12)] rounded-xl text-[#4D2A00] focus:outline-none focus:border-[#CC6F00]"
+                    className="w-full px-3.5 py-2.5 bg-[var(--bg-surface)] border border-[var(--border-subtle)] rounded-xl text-[var(--text-primary)] focus:outline-none focus:border-[#FF6D1F]"
                   />
                 </div>
               </div>
 
               <div className="grid grid-cols-3 gap-3">
                 <div>
-                  <label className="block font-semibold text-[#4D2A00] mb-1">Year *</label>
+                  <label className="block font-semibold text-[var(--text-primary)] mb-1">Year *</label>
                   <input
                     type="number"
                     min={1}
@@ -862,11 +862,11 @@ export const AdminAcademicManagement: React.FC = () => {
                     required
                     value={subjectForm.year}
                     onChange={(e) => setSubjectForm({ ...subjectForm, year: parseInt(e.target.value) || 1 })}
-                    className="w-full px-3.5 py-2.5 bg-white/70 border border-[rgba(77,42,0,0.12)] rounded-xl text-[#4D2A00] focus:outline-none focus:border-[#CC6F00]"
+                    className="w-full px-3.5 py-2.5 bg-[var(--bg-surface)] border border-[var(--border-subtle)] rounded-xl text-[var(--text-primary)] focus:outline-none focus:border-[#FF6D1F]"
                   />
                 </div>
                 <div>
-                  <label className="block font-semibold text-[#4D2A00] mb-1">Semester *</label>
+                  <label className="block font-semibold text-[var(--text-primary)] mb-1">Semester *</label>
                   <input
                     type="number"
                     min={1}
@@ -874,11 +874,11 @@ export const AdminAcademicManagement: React.FC = () => {
                     required
                     value={subjectForm.semester}
                     onChange={(e) => setSubjectForm({ ...subjectForm, semester: parseInt(e.target.value) || 1 })}
-                    className="w-full px-3.5 py-2.5 bg-white/70 border border-[rgba(77,42,0,0.12)] rounded-xl text-[#4D2A00] focus:outline-none focus:border-[#CC6F00]"
+                    className="w-full px-3.5 py-2.5 bg-[var(--bg-surface)] border border-[var(--border-subtle)] rounded-xl text-[var(--text-primary)] focus:outline-none focus:border-[#FF6D1F]"
                   />
                 </div>
                 <div>
-                  <label className="block font-semibold text-[#4D2A00] mb-1">Credits *</label>
+                  <label className="block font-semibold text-[var(--text-primary)] mb-1">Credits *</label>
                   <input
                     type="number"
                     min={1}
@@ -886,12 +886,12 @@ export const AdminAcademicManagement: React.FC = () => {
                     required
                     value={subjectForm.credits}
                     onChange={(e) => setSubjectForm({ ...subjectForm, credits: parseInt(e.target.value) || 3 })}
-                    className="w-full px-3.5 py-2.5 bg-white/70 border border-[rgba(77,42,0,0.12)] rounded-xl text-[#4D2A00] focus:outline-none focus:border-[#CC6F00]"
+                    className="w-full px-3.5 py-2.5 bg-[var(--bg-surface)] border border-[var(--border-subtle)] rounded-xl text-[var(--text-primary)] focus:outline-none focus:border-[#FF6D1F]"
                   />
                 </div>
               </div>
 
-              <div className="flex items-center justify-end space-x-2 pt-3 border-t border-[rgba(77,42,0,0.1)]">
+              <div className="flex items-center justify-end space-x-2 pt-3 border-t border-[var(--border-subtle)]">
                 <button
                   type="button"
                   onClick={() => setShowSubjectModal(false)}
@@ -911,22 +911,22 @@ export const AdminAcademicManagement: React.FC = () => {
       {/* MODAL 3: ASSIGN FACULTY */}
       {showAssignmentModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-md p-4 animate-fadeIn">
-          <div className="glass-modal max-w-lg w-full p-6 space-y-4 rounded-3xl border border-[rgba(77,42,0,0.15)] shadow-glass">
-            <div className="flex items-center justify-between border-b border-[rgba(77,42,0,0.1)] pb-3">
-              <h3 className="text-base font-bold text-[#4D2A00]">Assign Faculty to Subject & Class</h3>
-              <button onClick={() => setShowAssignmentModal(false)} className="text-[#4D2A00]/60 hover:text-[#4D2A00]">
+          <div className="glass-modal max-w-lg w-full p-6 space-y-4 rounded-3xl border border-[var(--border-subtle)] shadow-glass">
+            <div className="flex items-center justify-between border-b border-[var(--border-subtle)] pb-3">
+              <h3 className="text-base font-bold text-[var(--text-primary)]">Assign Faculty to Subject & Class</h3>
+              <button onClick={() => setShowAssignmentModal(false)} className="text-[var(--text-muted)] hover:text-[var(--text-primary)]">
                 <X className="w-5 h-5" />
               </button>
             </div>
 
             <form onSubmit={handleCreateAssignment} className="space-y-3.5 text-xs">
               <div>
-                <label className="block font-semibold text-[#4D2A00] mb-1">Select Faculty Member *</label>
+                <label className="block font-semibold text-[var(--text-primary)] mb-1">Select Faculty Member *</label>
                 <select
                   required
                   value={assignmentForm.facultyId}
                   onChange={(e) => setAssignmentForm({ ...assignmentForm, facultyId: e.target.value })}
-                  className="w-full px-3.5 py-2.5 bg-white/70 border border-[rgba(77,42,0,0.12)] rounded-xl text-[#4D2A00] focus:outline-none focus:border-[#CC6F00]"
+                  className="w-full px-3.5 py-2.5 bg-[var(--bg-surface)] border border-[var(--border-subtle)] rounded-xl text-[var(--text-primary)] focus:outline-none focus:border-[#FF6D1F]"
                 >
                   {facultyList.map((f) => (
                     <option key={f.id} value={f.id}>
@@ -937,7 +937,7 @@ export const AdminAcademicManagement: React.FC = () => {
               </div>
 
               <div>
-                <label className="block font-semibold text-[#4D2A00] mb-1">Select Subject *</label>
+                <label className="block font-semibold text-[var(--text-primary)] mb-1">Select Subject *</label>
                 <select
                   required
                   value={assignmentForm.subjectId}
@@ -952,7 +952,7 @@ export const AdminAcademicManagement: React.FC = () => {
                       semester: sub ? sub.semester : assignmentForm.semester
                     });
                   }}
-                  className="w-full px-3.5 py-2.5 bg-white/70 border border-[rgba(77,42,0,0.12)] rounded-xl text-[#4D2A00] focus:outline-none focus:border-[#CC6F00]"
+                  className="w-full px-3.5 py-2.5 bg-[var(--bg-surface)] border border-[var(--border-subtle)] rounded-xl text-[var(--text-primary)] focus:outline-none focus:border-[#FF6D1F]"
                 >
                   {subjectList.map((s) => (
                     <option key={s.id} value={s.id}>
@@ -964,57 +964,57 @@ export const AdminAcademicManagement: React.FC = () => {
 
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block font-semibold text-[#4D2A00] mb-1">Course</label>
+                  <label className="block font-semibold text-[var(--text-primary)] mb-1">Course</label>
                   <input
                     type="text"
                     value={assignmentForm.course}
                     onChange={(e) => setAssignmentForm({ ...assignmentForm, course: e.target.value })}
-                    className="w-full px-3.5 py-2.5 bg-white/70 border border-[rgba(77,42,0,0.12)] rounded-xl text-[#4D2A00]"
+                    className="w-full px-3.5 py-2.5 bg-[var(--bg-surface)] border border-[var(--border-subtle)] rounded-xl text-[var(--text-primary)]"
                   />
                 </div>
                 <div>
-                  <label className="block font-semibold text-[#4D2A00] mb-1">Branch</label>
+                  <label className="block font-semibold text-[var(--text-primary)] mb-1">Branch</label>
                   <input
                     type="text"
                     value={assignmentForm.branch}
                     onChange={(e) => setAssignmentForm({ ...assignmentForm, branch: e.target.value })}
-                    className="w-full px-3.5 py-2.5 bg-white/70 border border-[rgba(77,42,0,0.12)] rounded-xl text-[#4D2A00]"
+                    className="w-full px-3.5 py-2.5 bg-[var(--bg-surface)] border border-[var(--border-subtle)] rounded-xl text-[var(--text-primary)]"
                   />
                 </div>
               </div>
 
               <div className="grid grid-cols-3 gap-3">
                 <div>
-                  <label className="block font-semibold text-[#4D2A00] mb-1">Year</label>
+                  <label className="block font-semibold text-[var(--text-primary)] mb-1">Year</label>
                   <input
                     type="number"
                     value={assignmentForm.year}
                     onChange={(e) => setAssignmentForm({ ...assignmentForm, year: parseInt(e.target.value) || 1 })}
-                    className="w-full px-3.5 py-2.5 bg-white/70 border border-[rgba(77,42,0,0.12)] rounded-xl text-[#4D2A00]"
+                    className="w-full px-3.5 py-2.5 bg-[var(--bg-surface)] border border-[var(--border-subtle)] rounded-xl text-[var(--text-primary)]"
                   />
                 </div>
                 <div>
-                  <label className="block font-semibold text-[#4D2A00] mb-1">Semester</label>
+                  <label className="block font-semibold text-[var(--text-primary)] mb-1">Semester</label>
                   <input
                     type="number"
                     value={assignmentForm.semester}
                     onChange={(e) => setAssignmentForm({ ...assignmentForm, semester: parseInt(e.target.value) || 1 })}
-                    className="w-full px-3.5 py-2.5 bg-white/70 border border-[rgba(77,42,0,0.12)] rounded-xl text-[#4D2A00]"
+                    className="w-full px-3.5 py-2.5 bg-[var(--bg-surface)] border border-[var(--border-subtle)] rounded-xl text-[var(--text-primary)]"
                   />
                 </div>
                 <div>
-                  <label className="block font-semibold text-[#4D2A00] mb-1">Section *</label>
+                  <label className="block font-semibold text-[var(--text-primary)] mb-1">Section *</label>
                   <input
                     type="text"
                     required
                     value={assignmentForm.section}
                     onChange={(e) => setAssignmentForm({ ...assignmentForm, section: e.target.value.toUpperCase() })}
-                    className="w-full px-3.5 py-2.5 bg-white/70 border border-[rgba(77,42,0,0.12)] rounded-xl text-[#4D2A00] font-bold"
+                    className="w-full px-3.5 py-2.5 bg-[var(--bg-surface)] border border-[var(--border-subtle)] rounded-xl text-[var(--text-primary)] font-bold"
                   />
                 </div>
               </div>
 
-              <div className="flex items-center justify-end space-x-2 pt-3 border-t border-[rgba(77,42,0,0.1)]">
+              <div className="flex items-center justify-end space-x-2 pt-3 border-t border-[var(--border-subtle)]">
                 <button
                   type="button"
                   onClick={() => setShowAssignmentModal(false)}
@@ -1034,10 +1034,10 @@ export const AdminAcademicManagement: React.FC = () => {
       {/* MODAL 4: ADD TIMETABLE ENTRY */}
       {showTimetableModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-md p-4 animate-fadeIn">
-          <div className="glass-modal max-w-lg w-full p-6 space-y-4 rounded-3xl border border-[rgba(77,42,0,0.15)] shadow-glass">
-            <div className="flex items-center justify-between border-b border-[rgba(77,42,0,0.1)] pb-3">
-              <h3 className="text-base font-bold text-[#4D2A00]">Add Timetable Schedule Slot</h3>
-              <button onClick={() => setShowTimetableModal(false)} className="text-[#4D2A00]/60 hover:text-[#4D2A00]">
+          <div className="glass-modal max-w-lg w-full p-6 space-y-4 rounded-3xl border border-[var(--border-subtle)] shadow-glass">
+            <div className="flex items-center justify-between border-b border-[var(--border-subtle)] pb-3">
+              <h3 className="text-base font-bold text-[var(--text-primary)]">Add Timetable Schedule Slot</h3>
+              <button onClick={() => setShowTimetableModal(false)} className="text-[var(--text-muted)] hover:text-[var(--text-primary)]">
                 <X className="w-5 h-5" />
               </button>
             </div>
@@ -1045,11 +1045,11 @@ export const AdminAcademicManagement: React.FC = () => {
             <form onSubmit={handleCreateTimetable} className="space-y-3.5 text-xs">
               <div className="grid grid-cols-3 gap-3">
                 <div>
-                  <label className="block font-semibold text-[#4D2A00] mb-1">Day of Week *</label>
+                  <label className="block font-semibold text-[var(--text-primary)] mb-1">Day of Week *</label>
                   <select
                     value={timetableForm.dayOfWeek}
                     onChange={(e) => setTimetableForm({ ...timetableForm, dayOfWeek: parseInt(e.target.value) || 1 })}
-                    className="w-full px-3.5 py-2.5 bg-white/70 border border-[rgba(77,42,0,0.12)] rounded-xl text-[#4D2A00] font-bold"
+                    className="w-full px-3.5 py-2.5 bg-[var(--bg-surface)] border border-[var(--border-subtle)] rounded-xl text-[var(--text-primary)] font-bold"
                   >
                     <option value={1}>Monday</option>
                     <option value={2}>Tuesday</option>
@@ -1060,29 +1060,29 @@ export const AdminAcademicManagement: React.FC = () => {
                   </select>
                 </div>
                 <div>
-                  <label className="block font-semibold text-[#4D2A00] mb-1">Start Time *</label>
+                  <label className="block font-semibold text-[var(--text-primary)] mb-1">Start Time *</label>
                   <input
                     type="time"
                     required
                     value={timetableForm.startTime}
                     onChange={(e) => setTimetableForm({ ...timetableForm, startTime: e.target.value })}
-                    className="w-full px-3.5 py-2.5 bg-white/70 border border-[rgba(77,42,0,0.12)] rounded-xl text-[#4D2A00]"
+                    className="w-full px-3.5 py-2.5 bg-[var(--bg-surface)] border border-[var(--border-subtle)] rounded-xl text-[var(--text-primary)]"
                   />
                 </div>
                 <div>
-                  <label className="block font-semibold text-[#4D2A00] mb-1">End Time *</label>
+                  <label className="block font-semibold text-[var(--text-primary)] mb-1">End Time *</label>
                   <input
                     type="time"
                     required
                     value={timetableForm.endTime}
                     onChange={(e) => setTimetableForm({ ...timetableForm, endTime: e.target.value })}
-                    className="w-full px-3.5 py-2.5 bg-white/70 border border-[rgba(77,42,0,0.12)] rounded-xl text-[#4D2A00]"
+                    className="w-full px-3.5 py-2.5 bg-[var(--bg-surface)] border border-[var(--border-subtle)] rounded-xl text-[var(--text-primary)]"
                   />
                 </div>
               </div>
 
               <div>
-                <label className="block font-semibold text-[#4D2A00] mb-1">Subject *</label>
+                <label className="block font-semibold text-[var(--text-primary)] mb-1">Subject *</label>
                 <select
                   required
                   value={timetableForm.subjectId}
@@ -1097,7 +1097,7 @@ export const AdminAcademicManagement: React.FC = () => {
                       semester: sub ? sub.semester : timetableForm.semester
                     });
                   }}
-                  className="w-full px-3.5 py-2.5 bg-white/70 border border-[rgba(77,42,0,0.12)] rounded-xl text-[#4D2A00]"
+                  className="w-full px-3.5 py-2.5 bg-[var(--bg-surface)] border border-[var(--border-subtle)] rounded-xl text-[var(--text-primary)]"
                 >
                   {subjectList.map((s) => (
                     <option key={s.id} value={s.id}>
@@ -1108,12 +1108,12 @@ export const AdminAcademicManagement: React.FC = () => {
               </div>
 
               <div>
-                <label className="block font-semibold text-[#4D2A00] mb-1">Faculty *</label>
+                <label className="block font-semibold text-[var(--text-primary)] mb-1">Faculty *</label>
                 <select
                   required
                   value={timetableForm.facultyId}
                   onChange={(e) => setTimetableForm({ ...timetableForm, facultyId: e.target.value })}
-                  className="w-full px-3.5 py-2.5 bg-white/70 border border-[rgba(77,42,0,0.12)] rounded-xl text-[#4D2A00]"
+                  className="w-full px-3.5 py-2.5 bg-[var(--bg-surface)] border border-[var(--border-subtle)] rounded-xl text-[var(--text-primary)]"
                 >
                   {facultyList.map((f) => (
                     <option key={f.id} value={f.id}>
@@ -1125,29 +1125,29 @@ export const AdminAcademicManagement: React.FC = () => {
 
               <div className="grid grid-cols-3 gap-3">
                 <div>
-                  <label className="block font-semibold text-[#4D2A00] mb-1">Section *</label>
+                  <label className="block font-semibold text-[var(--text-primary)] mb-1">Section *</label>
                   <input
                     type="text"
                     required
                     value={timetableForm.section}
                     onChange={(e) => setTimetableForm({ ...timetableForm, section: e.target.value.toUpperCase() })}
-                    className="w-full px-3.5 py-2.5 bg-white/70 border border-[rgba(77,42,0,0.12)] rounded-xl text-[#4D2A00]"
+                    className="w-full px-3.5 py-2.5 bg-[var(--bg-surface)] border border-[var(--border-subtle)] rounded-xl text-[var(--text-primary)]"
                   />
                 </div>
                 <div className="col-span-2">
-                  <label className="block font-semibold text-[#4D2A00] mb-1">Room / Lab *</label>
+                  <label className="block font-semibold text-[var(--text-primary)] mb-1">Room / Lab *</label>
                   <input
                     type="text"
                     required
                     placeholder="e.g. LH-301 or Lab 2"
                     value={timetableForm.room}
                     onChange={(e) => setTimetableForm({ ...timetableForm, room: e.target.value })}
-                    className="w-full px-3.5 py-2.5 bg-white/70 border border-[rgba(77,42,0,0.12)] rounded-xl text-[#4D2A00]"
+                    className="w-full px-3.5 py-2.5 bg-[var(--bg-surface)] border border-[var(--border-subtle)] rounded-xl text-[var(--text-primary)]"
                   />
                 </div>
               </div>
 
-              <div className="flex items-center justify-end space-x-2 pt-3 border-t border-[rgba(77,42,0,0.1)]">
+              <div className="flex items-center justify-end space-x-2 pt-3 border-t border-[var(--border-subtle)]">
                 <button
                   type="button"
                   onClick={() => setShowTimetableModal(false)}

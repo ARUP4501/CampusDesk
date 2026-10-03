@@ -205,19 +205,19 @@ export const TicketDetailPage: React.FC<{ user: UserProfile | null }> = ({ user 
 
   if (loading) {
     return (
-      <div className="p-16 text-center text-xs text-[#4D2A00]/70 flex flex-col items-center justify-center space-y-2">
-        <div className="w-7 h-7 border-2 border-[#CC6F00] border-t-transparent rounded-full animate-spin"></div>
-        <span className="font-medium text-[#4D2A00]/70">Loading ticket details...</span>
+      <div className="py-24 text-center text-xs text-[var(--text-muted)] flex flex-col items-center justify-center space-y-2 font-mono">
+        <div className="w-7 h-7 border-2 border-[#FF6D1F] border-t-transparent rounded-full animate-spin"></div>
+        <span>Loading ticket details...</span>
       </div>
     );
   }
 
   if (error || !ticket) {
     return (
-      <div className="max-w-xl mx-auto my-12 p-6 glass-panel rounded-3xl text-center space-y-4 border border-[rgba(77,42,0,0.1)] shadow-glass">
-        <AlertCircle className="w-8 h-8 text-rose-500 mx-auto" />
-        <h2 className="text-lg font-bold text-[#4D2A00]">Error Loading Ticket</h2>
-        <p className="text-xs text-[#4D2A00]/70">{error || "Ticket not found."}</p>
+      <div className="max-w-xl mx-auto my-12 p-8 campus-panel rounded-2xl text-center space-y-4 border border-[var(--border-subtle)]">
+        <AlertCircle className="w-8 h-8 text-rose-400 mx-auto" />
+        <h2 className="text-base font-bold text-[var(--text-primary)]">Error Loading Ticket</h2>
+        <p className="text-xs text-[var(--text-secondary)]">{error || "Ticket not found."}</p>
         <button
           onClick={() => navigate("/tickets")}
           className="btn-secondary px-4 py-2 text-xs font-semibold rounded-xl"
@@ -231,35 +231,35 @@ export const TicketDetailPage: React.FC<{ user: UserProfile | null }> = ({ user 
   const getPriorityBadge = (priority: string) => {
     switch (priority) {
       case "CRITICAL":
-        return <span className="px-2.5 py-1 text-[10px] font-mono font-bold bg-rose-500/20 text-rose-900 border border-rose-500/30 rounded-md">CRITICAL (4h SLA)</span>;
+        return <span className="px-2 py-0.5 text-[10px] font-mono font-bold bg-rose-500/20 text-rose-400 border border-rose-500/30 rounded">CRITICAL (4h SLA)</span>;
       case "HIGH":
-        return <span className="px-2.5 py-1 text-[10px] font-mono font-bold bg-amber-500/20 text-amber-900 border border-amber-500/30 rounded-md">HIGH (12h SLA)</span>;
+        return <span className="px-2 py-0.5 text-[10px] font-mono font-bold bg-[#FF6D1F]/20 text-[#FF6D1F] border border-[#FF6D1F]/30 rounded">HIGH (12h SLA)</span>;
       case "LOW":
-        return <span className="px-2.5 py-1 text-[10px] font-mono font-bold bg-slate-200 text-slate-800 border border-slate-300 rounded-md">LOW (48h SLA)</span>;
+        return <span className="px-2 py-0.5 text-[10px] font-mono font-bold bg-[var(--bg-elevated)] text-[var(--text-secondary)] border border-[var(--border-subtle)] rounded">LOW (48h SLA)</span>;
       default:
-        return <span className="px-2.5 py-1 text-[10px] font-mono font-bold bg-[#FDB773]/30 text-[#4D2A00] border border-[#CC6F00]/25 rounded-md">MEDIUM (24h SLA)</span>;
+        return <span className="px-2 py-0.5 text-[10px] font-mono font-bold bg-amber-500/15 text-amber-500 dark:text-amber-300 border border-amber-500/30 rounded">MEDIUM (24h SLA)</span>;
     }
   };
 
   return (
-    <div className="max-w-5xl mx-auto space-y-6 pb-12">
+    <div className="max-w-5xl mx-auto space-y-6 pb-16">
       {/* Top Header & Navigation */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 glass-panel p-5 rounded-3xl border border-[rgba(77,42,0,0.1)] shadow-glass no-print">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 campus-panel p-5 sm:p-6 rounded-2xl border border-[var(--border-subtle)] no-print">
         <div className="flex items-center space-x-3">
           <button
             onClick={() => navigate("/tickets")}
-            className="p-2.5 bg-white/60 border border-[rgba(77,42,0,0.1)] rounded-xl text-[#4D2A00]/70 hover:text-[#4D2A00] transition-colors"
+            className="p-2 bg-[var(--bg-input)] border border-[var(--border-subtle)] rounded-xl text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors"
             aria-label="Back to tickets list"
           >
             <ArrowLeft className="w-4 h-4" />
           </button>
           <div>
             <div className="flex items-center space-x-2 flex-wrap gap-y-1">
-              <span className="font-bold font-mono text-[#CC6F00] text-base">#{ticket.ticketNumber}</span>
-              <span className="text-xs font-semibold uppercase text-[#4D2A00]/60">• {ticket.category}</span>
+              <span className="font-bold font-mono text-[#FF6D1F] text-base">#{ticket.ticketNumber}</span>
+              <span className="text-xs font-mono uppercase text-[var(--text-muted)]">• {ticket.category}</span>
               {getPriorityBadge(ticket.priority)}
             </div>
-            <h1 className="text-lg font-bold text-[#4D2A00] leading-tight mt-0.5">{ticket.title}</h1>
+            <h1 className="text-base sm:text-lg font-bold text-[var(--text-primary)] leading-tight mt-1">{ticket.title}</h1>
           </div>
         </div>
 
@@ -267,18 +267,18 @@ export const TicketDetailPage: React.FC<{ user: UserProfile | null }> = ({ user 
           {isWardenOrAdmin && (
             <button
               onClick={() => setShowOverrideModal(true)}
-              className="btn-secondary inline-flex items-center space-x-1.5 text-xs font-semibold px-3.5 py-2 rounded-xl"
+              className="btn-secondary inline-flex items-center space-x-1.5 text-xs font-mono font-semibold px-3 py-2 rounded-xl"
             >
-              <Edit3 className="w-3.5 h-3.5 text-[#CC6F00]" />
+              <Edit3 className="w-3.5 h-3.5 text-[#FF6D1F]" />
               <span>Override Priority</span>
             </button>
           )}
 
           <button
             onClick={handlePrintSlip}
-            className="btn-secondary inline-flex items-center space-x-2 text-xs font-semibold px-4 py-2 shrink-0 rounded-xl"
+            className="btn-secondary inline-flex items-center space-x-2 text-xs font-mono font-semibold px-3.5 py-2 shrink-0 rounded-xl"
           >
-            <Printer className="w-4 h-4 text-[#CC6F00]" />
+            <Printer className="w-3.5 h-3.5 text-[var(--text-secondary)]" />
             <span>Print Work Order</span>
           </button>
         </div>
@@ -286,12 +286,12 @@ export const TicketDetailPage: React.FC<{ user: UserProfile | null }> = ({ user 
 
       {/* Recurring Issue Banner */}
       {ticket.isRecurring && (
-        <div className="p-4 rounded-2xl bg-amber-500/15 border border-amber-500/30 text-amber-900 text-xs flex items-center space-x-3 animate-fadeIn">
-          <Repeat className="w-5 h-5 text-amber-700 shrink-0" />
+        <div className="p-4 rounded-xl bg-amber-500/10 border border-amber-500/25 text-amber-300 text-xs flex items-center space-x-3">
+          <Repeat className="w-5 h-5 text-amber-400 shrink-0" />
           <div>
-            <strong className="font-bold">Recurring Campus Issue Detected!</strong>
-            <p className="mt-0.5 text-amber-800 leading-relaxed">
-              This location ({ticket.hostelBlock} Rm {ticket.roomNumber}) has logged {ticket.recurringCount} repeated {ticket.category} tickets in the past 30 days. Consider permanent asset replacement.
+            <strong className="font-bold">Recurring Campus Defect Detected</strong>
+            <p className="mt-0.5 text-amber-200/80 leading-relaxed">
+              This location ({ticket.hostelBlock} Rm {ticket.roomNumber}) has logged {ticket.recurringCount} repeated {ticket.category} tickets in the past 30 days. Recommend hardware replacement.
             </p>
           </div>
         </div>
@@ -299,17 +299,17 @@ export const TicketDetailPage: React.FC<{ user: UserProfile | null }> = ({ user 
 
       {/* SLA Escalation Warning Banner */}
       {(ticket.isOverdue || ticket.escalationLevel > 0) && (
-        <div className={`p-4 rounded-2xl text-xs flex items-start space-x-3 ${
+        <div className={`p-4 rounded-xl text-xs flex items-start space-x-3 ${
           ticket.escalationLevel === 2 || ticket.isOverdue
-            ? "bg-rose-500/20 border border-rose-500/30 text-rose-900"
-            : "bg-[#FDB773]/30 border border-[#CC6F00]/30 text-[#4D2A00]"
+            ? "bg-rose-500/15 border border-rose-500/30 text-rose-600 dark:text-rose-300"
+            : "bg-[#FF6D1F]/15 border border-[#FF6D1F]/30 text-[var(--text-primary)]"
         }`}>
-          <ShieldAlert className="w-5 h-5 shrink-0 mt-0.5 text-[#CC6F00]" />
+          <ShieldAlert className="w-4 h-4 shrink-0 mt-0.5 text-[#FF6D1F]" />
           <div>
-            <span className="font-bold">
+            <span className="font-bold font-mono uppercase tracking-wider">
               {ticket.isOverdue ? "SLA Overdue Target Breached" : ticket.escalationLevel === 2 ? "Central Administration SLA Escalation Alert" : "Warden Escalation Alert"}
             </span>
-            <p className="mt-0.5 text-[#4D2A00]/80 leading-relaxed">
+            <p className="mt-0.5 text-[var(--text-secondary)] leading-relaxed">
               {ticket.slaDeadline && `Target Deadline was: ${new Date(ticket.slaDeadline).toLocaleString()}. `}
               {ticket.escalationLevel === 2
                 ? "This ticket has exceeded standard response window and is under active Dean review."
@@ -324,52 +324,52 @@ export const TicketDetailPage: React.FC<{ user: UserProfile | null }> = ({ user 
         {/* Left Column: Details & Audit Trail */}
         <div className="lg:col-span-2 space-y-6">
           {/* Main Ticket Card */}
-          <div className="glass-panel rounded-3xl p-6 space-y-5 border border-[rgba(77,42,0,0.1)] shadow-glass">
+          <div className="campus-panel rounded-2xl p-6 space-y-5 border border-[var(--border-subtle)]">
             <div>
-              <h2 className="text-xs font-bold uppercase tracking-wider text-[#CC6F00] mb-1">
-                Description & Reported Defect
+              <h2 className="text-[10px] font-mono font-bold uppercase tracking-wider text-[var(--text-muted)] mb-1.5">
+                Reported Description
               </h2>
-              <p className="text-sm text-[#4D2A00] leading-relaxed whitespace-pre-line bg-white/50 p-4 rounded-2xl border border-[rgba(77,42,0,0.08)]">
+              <p className="text-xs text-[var(--text-primary)] leading-relaxed whitespace-pre-line bg-[var(--bg-input)] p-4 rounded-xl border border-[var(--border-subtle)] font-sans">
                 {ticket.description}
               </p>
             </div>
 
             {ticket.hasPhoto && (
               <div>
-                <h2 className="text-xs font-bold uppercase tracking-wider text-[#CC6F00] mb-2 flex items-center space-x-1.5">
-                  <ImageIcon className="w-3.5 h-3.5 text-[#CC6F00]" />
+                <h2 className="text-[10px] font-mono font-bold uppercase tracking-wider text-[var(--text-muted)] mb-2 flex items-center space-x-1.5">
+                  <ImageIcon className="w-3.5 h-3.5 text-[#FF6D1F]" />
                   <span>Attached Photo Evidence</span>
                 </h2>
-                <div className="bg-white/50 border border-[rgba(77,42,0,0.1)] p-2 rounded-2xl inline-block max-w-sm">
+                <div className="bg-[var(--bg-input)] border border-[var(--border-subtle)] p-2 rounded-xl inline-block max-w-sm">
                   <img
                     src={`/api/tickets/${ticket.id}/photo`}
                     alt="Ticket defect"
-                    className="rounded-xl object-contain max-h-64 w-auto"
+                    className="rounded-lg object-contain max-h-64 w-auto"
                   />
                 </div>
               </div>
             )}
 
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs pt-2 border-t border-[rgba(77,42,0,0.08)] font-mono">
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs pt-3 border-t border-[var(--border-subtle)] font-mono">
               <div>
-                <span className="text-[#4D2A00]/60 block text-[11px]">Location</span>
-                <span className="font-bold text-[#4D2A00] mt-0.5 block">
+                <span className="text-[var(--text-muted)] block text-[10px]">LOCATION</span>
+                <span className="font-bold text-[var(--text-primary)] mt-0.5 block">
                   {ticket.hostelBlock ? `${ticket.hostelBlock} - ${ticket.roomNumber}` : (ticket.location || "Campus")}
                 </span>
               </div>
               <div>
-                <span className="text-[#4D2A00]/60 block text-[11px]">Status</span>
-                <span className="font-bold text-[#CC6F00] mt-0.5 block">{ticket.status}</span>
+                <span className="text-[var(--text-muted)] block text-[10px]">STATUS</span>
+                <span className="font-bold text-[#FF6D1F] mt-0.5 block">{ticket.status}</span>
               </div>
               <div>
-                <span className="text-[#4D2A00]/60 block text-[11px]">Reported By</span>
-                <span className="font-medium text-[#4D2A00] mt-0.5 block">
+                <span className="text-[var(--text-muted)] block text-[10px]">REPORTED BY</span>
+                <span className="font-medium text-[var(--text-primary)] mt-0.5 block">
                   {ticket.student?.fullName || "Student"}
                 </span>
               </div>
               <div>
-                <span className="text-[#4D2A00]/60 block text-[11px]">SLA Target</span>
-                <span className="text-[#4D2A00]/80 mt-0.5 block">
+                <span className="text-[var(--text-muted)] block text-[10px]">SLA TARGET</span>
+                <span className="text-[var(--text-secondary)] mt-0.5 block">
                   {ticket.slaDeadline ? new Date(ticket.slaDeadline).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }) : `${ticket.ageHours}h`}
                 </span>
               </div>
@@ -377,27 +377,27 @@ export const TicketDetailPage: React.FC<{ user: UserProfile | null }> = ({ user 
           </div>
 
           {/* Timeline & Audit Logs */}
-          <div className="glass-panel rounded-3xl p-6 space-y-4 border border-[rgba(77,42,0,0.1)] shadow-glass">
-            <h2 className="text-xs font-bold uppercase tracking-wider text-[#CC6F00] flex items-center space-x-1.5">
-              <Clock className="w-3.5 h-3.5" />
-              <span>Immutable Status & Priority Audit Trail</span>
+          <div className="campus-panel rounded-2xl p-6 space-y-4 border border-[var(--border-subtle)]">
+            <h2 className="text-[10px] font-mono font-bold uppercase tracking-wider text-[var(--text-muted)] flex items-center space-x-1.5">
+              <Clock className="w-3.5 h-3.5 text-[#FF6D1F]" />
+              <span>Immutable Status & Audit Trail</span>
             </h2>
 
-            <div className="space-y-3 pt-2">
+            <div className="space-y-2 pt-1 font-mono text-xs">
               {ticket.auditLogs && ticket.auditLogs.map((log, index) => (
-                <div key={log.id || index} className="flex items-start space-x-3 text-xs p-3.5 rounded-2xl bg-white/50 border border-[rgba(77,42,0,0.08)]">
-                  <div className="w-6 h-6 rounded-full bg-[#FDB773]/40 text-[#4D2A00] flex items-center justify-center font-bold text-[10px] shrink-0 mt-0.5 font-mono">
+                <div key={log.id || index} className="flex items-start space-x-3 p-3.5 rounded-xl bg-[var(--bg-input)] border border-[var(--border-subtle)]">
+                  <div className="w-5 h-5 rounded bg-[var(--bg-elevated)] text-[#FF6D1F] flex items-center justify-center font-bold text-[9px] shrink-0 mt-0.5">
                     {index + 1}
                   </div>
                   <div className="flex-1 space-y-1">
                     <div className="flex items-center justify-between">
-                      <span className="font-bold text-[#4D2A00]">{log.action.replace(/_/g, " ")}</span>
-                      <span className="text-[10px] font-mono text-[#4D2A00]/60">
+                      <span className="font-bold text-[var(--text-primary)]">{log.action.replace(/_/g, " ")}</span>
+                      <span className="text-[10px] text-[var(--text-muted)]">
                         {new Date(log.createdAt).toLocaleString()}
                       </span>
                     </div>
-                    <p className="text-[#4D2A00]/80">{log.note}</p>
-                    <div className="text-[10px] font-mono text-[#4D2A00]/60">
+                    <p className="text-[var(--text-secondary)] font-sans text-xs">{log.note}</p>
+                    <div className="text-[10px] text-[var(--text-muted)]">
                       Actor: {log.changedBy?.fullName} ({log.changedBy?.role})
                     </div>
                   </div>
@@ -410,27 +410,27 @@ export const TicketDetailPage: React.FC<{ user: UserProfile | null }> = ({ user 
         {/* Right Column: Staff Controls or Student Summary */}
         <div className="space-y-6">
           {isStaffOrAdmin ? (
-            <div className="glass-panel rounded-3xl p-6 space-y-4 border border-[rgba(77,42,0,0.1)] shadow-glass no-print">
-              <h2 className="text-xs font-bold uppercase tracking-wider text-[#CC6F00] flex items-center space-x-1.5">
-                <Wrench className="w-3.5 h-3.5" />
+            <div className="campus-panel rounded-2xl p-6 space-y-4 border border-[var(--border-subtle)] no-print">
+              <h2 className="text-[10px] font-mono font-bold uppercase tracking-wider text-[var(--text-muted)] flex items-center space-x-1.5">
+                <Wrench className="w-3.5 h-3.5 text-[#FF6D1F]" />
                 <span>Department Staff Controls</span>
               </h2>
 
               {updateSuccess && (
-                <div className="p-3 bg-emerald-500/20 border border-emerald-500/30 rounded-xl text-xs text-emerald-950 font-medium">
+                <div className="p-3 bg-emerald-500/15 border border-emerald-500/30 rounded-xl text-xs text-emerald-400 font-mono">
                   {updateSuccess}
                 </div>
               )}
 
-              <form onSubmit={handleUpdateSubmit} className="space-y-4 text-xs">
+              <form onSubmit={handleUpdateSubmit} className="space-y-3.5 text-xs">
                 <div>
-                  <label className="block font-semibold text-[#4D2A00] mb-1">
+                  <label className="block font-mono uppercase text-[10px] text-[var(--text-secondary)] mb-1">
                     Update Resolution Status
                   </label>
                   <select
                     value={statusInput}
                     onChange={(e) => setStatusInput(e.target.value)}
-                    className="w-full px-3 py-2 bg-white/60 border border-[rgba(77,42,0,0.12)] rounded-xl text-[#4D2A00] focus:outline-none focus:border-[#CC6F00]"
+                    className="w-full px-3 py-2 bg-[var(--bg-input)] border border-[var(--border-subtle)] rounded-xl text-[var(--text-primary)] focus:outline-none focus:border-[#FF6D1F] font-mono"
                   >
                     <option value="SUBMITTED">SUBMITTED</option>
                     <option value="ASSIGNED">ASSIGNED</option>
@@ -441,13 +441,13 @@ export const TicketDetailPage: React.FC<{ user: UserProfile | null }> = ({ user 
                 </div>
 
                 <div>
-                  <label className="block font-semibold text-[#4D2A00] mb-1">
+                  <label className="block font-mono uppercase text-[10px] text-[var(--text-secondary)] mb-1">
                     Assign Technician / Staff
                   </label>
                   <select
                     value={assignedStaffInput}
                     onChange={(e) => setAssignedStaffInput(e.target.value)}
-                    className="w-full px-3 py-2 bg-white/60 border border-[rgba(77,42,0,0.12)] rounded-xl text-[#4D2A00] focus:outline-none focus:border-[#CC6F00]"
+                    className="w-full px-3 py-2 bg-[var(--bg-input)] border border-[var(--border-subtle)] rounded-xl text-[var(--text-primary)] focus:outline-none focus:border-[#FF6D1F] font-mono"
                   >
                     <option value="">Unassigned</option>
                     {staffList.map((s) => (
@@ -459,7 +459,7 @@ export const TicketDetailPage: React.FC<{ user: UserProfile | null }> = ({ user 
                 </div>
 
                 <div>
-                  <label className="block font-semibold text-[#4D2A00] mb-1">
+                  <label className="block font-mono uppercase text-[10px] text-[var(--text-secondary)] mb-1">
                     Resolution Note / Audit Log *
                   </label>
                   <textarea
@@ -468,32 +468,32 @@ export const TicketDetailPage: React.FC<{ user: UserProfile | null }> = ({ user 
                     value={auditNoteInput}
                     onChange={(e) => setAuditNoteInput(e.target.value)}
                     placeholder="Document action taken, parts replaced, or completion notes..."
-                    className="w-full px-3 py-2 bg-white/60 border border-[rgba(77,42,0,0.12)] rounded-xl text-[#4D2A00] placeholder-[#4D2A00]/40 focus:outline-none focus:border-[#CC6F00] resize-none"
+                    className="w-full px-3 py-2 bg-[var(--bg-input)] border border-[var(--border-subtle)] rounded-xl text-[var(--text-primary)] placeholder:text-[var(--text-muted)] focus:outline-none focus:border-[#FF6D1F] resize-none"
                   />
                 </div>
 
                 <button
                   type="submit"
                   disabled={updateLoading}
-                  className="btn-primary w-full py-2.5 px-4 text-xs font-bold disabled:opacity-50 shadow-sm rounded-xl"
+                  className="btn-primary w-full py-2.5 px-4 text-xs font-bold disabled:opacity-50 rounded-xl"
                 >
                   {updateLoading ? "Recording update..." : "Save Status Update"}
                 </button>
               </form>
             </div>
           ) : (
-            <div className="glass-panel rounded-3xl p-6 space-y-4 border border-[rgba(77,42,0,0.1)] shadow-glass">
-              <h2 className="text-xs font-bold uppercase tracking-wider text-[#CC6F00]">
+            <div className="campus-panel rounded-2xl p-6 space-y-4 border border-[var(--border-subtle)]">
+              <h2 className="text-[10px] font-mono font-bold uppercase tracking-wider text-[var(--text-muted)]">
                 Assigned Technician
               </h2>
               {ticket.assignedStaff ? (
-                <div className="p-4 rounded-2xl bg-white/50 border border-[rgba(77,42,0,0.08)] space-y-1 text-xs">
-                  <p className="font-bold text-[#4D2A00]">{ticket.assignedStaff.fullName}</p>
-                  <p className="text-[#CC6F00] font-semibold text-[11px]">{ticket.assignedStaff.department} Department</p>
-                  <p className="text-[#4D2A00]/60">{ticket.assignedStaff.email}</p>
+                <div className="p-4 rounded-xl bg-[var(--bg-input)] border border-[var(--border-subtle)] space-y-1 text-xs">
+                  <p className="font-bold text-[var(--text-primary)] font-sans">{ticket.assignedStaff.fullName}</p>
+                  <p className="text-[#FF6D1F] font-mono text-[11px]">{ticket.assignedStaff.department} Department</p>
+                  <p className="text-[var(--text-muted)] font-mono">{ticket.assignedStaff.email}</p>
                 </div>
               ) : (
-                <div className="p-4 rounded-2xl bg-white/50 border border-[rgba(77,42,0,0.08)] text-xs text-[#4D2A00]/60">
+                <div className="p-4 rounded-xl bg-[var(--bg-input)] border border-[var(--border-subtle)] text-xs text-[var(--text-muted)] font-mono">
                   Awaiting technician assignment from department queue.
                 </div>
               )}
@@ -504,22 +504,22 @@ export const TicketDetailPage: React.FC<{ user: UserProfile | null }> = ({ user 
 
       {/* Priority Override Modal */}
       {showOverrideModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-md p-4 animate-fadeIn">
-          <div className="glass-modal rounded-3xl max-w-md w-full p-6 space-y-4 shadow-elevated">
-            <div className="flex items-center justify-between border-b border-campus-border pb-3">
-              <h3 className="text-base font-bold text-campus-text">Override Complaint Priority & SLA</h3>
-              <button onClick={() => setShowOverrideModal(false)} className="text-campus-muted hover:text-campus-text p-1">
-                <X className="w-5 h-5" />
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-fadeIn">
+          <div className="campus-panel rounded-2xl max-w-md w-full p-6 space-y-4 border border-[var(--border-subtle)] shadow-2xl">
+            <div className="flex items-center justify-between border-b border-[var(--border-subtle)] pb-3">
+              <h3 className="text-sm font-bold text-[var(--text-primary)] font-mono uppercase tracking-wider">Override Complaint Priority & SLA</h3>
+              <button onClick={() => setShowOverrideModal(false)} className="text-[var(--text-muted)] hover:text-[var(--text-primary)] p-1">
+                <X className="w-4 h-4" />
               </button>
             </div>
 
             <form onSubmit={handlePriorityOverride} className="space-y-4 text-xs">
               <div>
-                <label className="block text-campus-text mb-1 font-semibold">Priority Tier *</label>
+                <label className="block text-[var(--text-secondary)] mb-1 font-mono uppercase text-[10px]">Priority Tier *</label>
                 <select
                   value={overridePriority}
                   onChange={(e) => setOverridePriority(e.target.value)}
-                  className="w-full px-3.5 py-2.5 border border-campus-border rounded-xl bg-white/70 text-campus-text focus:outline-none focus:border-campus-accent font-semibold"
+                  className="w-full px-3 py-2.5 border border-[var(--border-subtle)] rounded-xl bg-[var(--bg-input)] text-[var(--text-primary)] focus:outline-none focus:border-[#FF6D1F] font-mono font-semibold"
                 >
                   <option value="CRITICAL">CRITICAL — Immediate Assignment (4h Target SLA)</option>
                   <option value="HIGH">HIGH — High Urgency (12h Target SLA)</option>
@@ -529,22 +529,22 @@ export const TicketDetailPage: React.FC<{ user: UserProfile | null }> = ({ user 
               </div>
 
               <div>
-                <label className="block text-campus-text mb-1 font-semibold">Audit Justification Reason *</label>
+                <label className="block text-[var(--text-secondary)] mb-1 font-mono uppercase text-[10px]">Audit Justification Reason *</label>
                 <textarea
                   required
                   rows={3}
                   placeholder="Explain why priority is being modified (e.g. Electrical hazard / exam period / dean instruction)..."
                   value={overrideReason}
                   onChange={(e) => setOverrideReason(e.target.value)}
-                  className="w-full px-3.5 py-2.5 border border-campus-border rounded-xl bg-white/70 text-campus-text focus:outline-none focus:border-campus-accent resize-none"
+                  className="w-full px-3 py-2.5 border border-[var(--border-subtle)] rounded-xl bg-[var(--bg-input)] text-[var(--text-primary)] placeholder:text-[var(--text-muted)] focus:outline-none focus:border-[#FF6D1F] resize-none"
                 />
               </div>
 
-              <div className="flex justify-end space-x-2.5 pt-3 border-t border-campus-border">
+              <div className="flex justify-end space-x-2 pt-3 border-t border-[var(--border-subtle)]">
                 <button
                   type="button"
                   onClick={() => setShowOverrideModal(false)}
-                  className="btn-secondary px-4 py-2 rounded-xl font-semibold"
+                  className="btn-secondary px-4 py-2 rounded-xl"
                 >
                   Cancel
                 </button>

@@ -9,94 +9,80 @@ export default {
     extend: {
       colors: {
         campus: {
-          // Warm Palette:
-          // BACKGROUND: #F9E6A8
-          // DARK FONT / PRIMARY TEXT: #4D2A00
-          // SECONDARY FONT / ACCENT TEXT: #CC6F00
-          // PRIMARY BUTTON: #FDB773
-          bg: "#F9E6A8",
-          bgLight: "#FDF1C8",
-          bgDark: "#EED78E",
-          surface: "rgba(255, 250, 225, 0.58)",
-          surfaceWarm: "rgba(253, 244, 214, 0.75)",
-          surfaceDark: "rgba(77, 42, 0, 0.05)",
-          card: "rgba(255, 252, 240, 0.52)",
-          cardHover: "rgba(255, 255, 255, 0.85)",
-          elevated: "rgba(255, 255, 255, 0.7)",
-          border: "rgba(77, 42, 0, 0.08)",
-          borderHover: "rgba(204, 111, 0, 0.30)",
-          accent: "#CC6F00",
-          accentLight: "#FDB773",
-          accentDark: "#A65A00",
-          btnPrimary: "#FDB773",
-          btnHover: "#FED3A2",
-          peach: "#FDB773",
-          gold: "#CC6F00",
-          goldLight: "#FDB773",
-          text: "#4D2A00",
-          textLight: "#4D2A00",
-          secondary: "#6C420D",
-          muted: "#8C581E",
-          success: "#2E7D32",
-          warning: "#CC6F00",
-          danger: "#C62828",
-          error: "#C62828",
-          info: "#CC6F00"
+          // Centralized Hierarchy Tokens:
+          // BACKGROUND: #0A0A0A (Dark) / #FAF3E1 (Light)
+          // RAIL: #080808 (Dark) / #F5E7C6 (Light)
+          // SECONDARY: #101010 (Dark) / #F5E7C6 (Light)
+          // ELEVATED: #141414 (Dark) / #EDE1C4 (Light)
+          // ACCENT: #FF6D1F (Electric Tangerine)
+          bg: "var(--bg-main)",
+          black: "var(--bg-main)",
+          rail: "var(--bg-rail)",
+          dark: "var(--bg-secondary)",
+          darker: "var(--bg-rail)",
+          charcoal: "var(--bg-elevated)",
+          charcoalLight: "var(--bg-hover)",
+          surface: "var(--bg-surface)",
+          surfaceWarm: "var(--bg-elevated)",
+          surfaceDark: "var(--bg-secondary)",
+          card: "var(--bg-card)",
+          cardHover: "var(--bg-hover)",
+          elevated: "var(--bg-elevated)",
+          border: "var(--border-subtle)",
+          borderHover: "var(--border-focus)",
+          borderLight: "var(--border-medium)",
+          linen: "#FAF3E1",
+          cotton: "#F5E7C6",
+          orange: "#FF6D1F",
+          accent: "#FF6D1F",
+          accentLight: "#FF8A47",
+          accentDark: "#E05307",
+          btnPrimary: "#FF6D1F",
+          btnHover: "#FF8238",
+          text: "var(--text-primary)",
+          textLight: "var(--text-primary)",
+          secondary: "var(--text-secondary)",
+          muted: "var(--text-muted)",
+          subtle: "var(--text-subtle)",
+          success: "#34D399",
+          warning: "#FBBF24",
+          danger: "#F87171",
+          error: "#F87171",
+          info: "#60A5FA"
         }
       },
       borderRadius: {
-        DEFAULT: "12px",
-        sm: "8px",
-        md: "12px",
-        lg: "16px",
-        xl: "20px",
-        '2xl': "24px",
-        '3xl': "28px",
+        DEFAULT: "10px",
+        sm: "6px",
+        md: "10px",
+        lg: "14px",
+        xl: "18px",
+        '2xl': "22px",
+        '3xl': "26px",
         full: "9999px"
       },
       fontFamily: {
         sans: [
+          '"Plus Jakarta Sans"',
+          "Inter",
           "-apple-system",
           "BlinkMacSystemFont",
-          '"SF Pro Text"',
-          '"SF Pro Display"',
-          "Inter",
-          '"Segoe UI"',
-          "Roboto",
+          "system-ui",
           "sans-serif"
         ],
-        serif: [
-          '"Playfair Display"',
-          '"Newsreader"',
-          "Georgia",
-          "Cambria",
-          '"Times New Roman"',
-          "serif"
-        ],
-        display: [
-          '"Playfair Display"',
-          '"Newsreader"',
-          "Georgia",
-          "serif"
-        ],
         mono: [
-          '"SF Mono"',
           '"JetBrains Mono"',
+          '"SF Mono"',
           "ui-monospace",
-          "Menlo",
-          "Monaco",
-          "Consolas",
           "monospace"
         ]
       },
       boxShadow: {
-        'subtle': '0 2px 10px 0 rgba(77, 42, 0, 0.04)',
-        'elevated': '0 12px 36px -4px rgba(77, 42, 0, 0.08)',
-        'glass': '0 10px 30px rgba(77, 42, 0, 0.06)',
-        'navbar': '0 12px 40px rgba(77, 42, 0, 0.08)',
-        'card': '0 4px 18px rgba(77, 42, 0, 0.05)',
-        'btn': '0 3px 12px rgba(77, 42, 0, 0.08)',
-        'btn-hover': '0 6px 18px rgba(77, 42, 0, 0.12)'
+        'subtle': '0 2px 8px 0 rgba(0, 0, 0, 0.35)',
+        'elevated': '0 12px 32px -4px rgba(0, 0, 0, 0.55)',
+        'panel': '0 4px 20px rgba(0, 0, 0, 0.40)',
+        'orange-glow': '0 0 24px rgba(255, 109, 31, 0.25)',
+        'tangerine': '0 4px 16px rgba(255, 109, 31, 0.30)'
       }
     },
   },
