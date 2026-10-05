@@ -103,15 +103,11 @@ export const App: React.FC = () => {
 
   const appRoutes = (
     <Routes>
-      {/* Home Landing vs Dashboard */}
+      {/* Home Landing Page (Default Public Entry Point) */}
       <Route
         path="/"
         element={
-          user ? (
-            <DashboardPage key={user.id} user={user} />
-          ) : (
-            <LandingPage user={user} onLoginSuccess={(u) => setUser(u)} />
-          )
+          <LandingPage user={user} onLoginSuccess={(u) => setUser(u)} />
         }
       />
 

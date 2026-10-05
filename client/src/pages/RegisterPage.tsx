@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { apiRequest, UserProfile, setAuthToken, broadcastAuthEvent } from "../api/client.js";
-import { UserCheck, Shield, ChevronRight, CheckCircle2, Eye, EyeOff, Lock, KeyRound, MapPin, Bus } from "lucide-react";
+import { UserCheck, Shield, ChevronRight, CheckCircle2, Eye, EyeOff, Lock, KeyRound, MapPin, Bus, CalendarDays } from "lucide-react";
 
 interface RegisterPageProps {
   onLoginSuccess: (user: UserProfile) => void;
@@ -186,6 +186,17 @@ export const RegisterPage: React.FC<RegisterPageProps> = ({ onLoginSuccess }) =>
     }
     if (!formData.dob) {
       setError("Please enter your date of birth.");
+      return false;
+    }
+    const selectedDob = new Date(formData.dob);
+    const today = new Date();
+    if (selectedDob > today) {
+      setError("Date of birth cannot be in the future. Please select a valid past date.");
+      return false;
+    }
+    const ageInYears = (today.getTime() - selectedDob.getTime()) / (1000 * 60 * 60 * 24 * 365.25);
+    if (ageInYears < 14) {
+      setError("Date of birth indicates student is under 14 years old. Please select a valid student DOB.");
       return false;
     }
     if (!formData.password || formData.password.length < 6) {
@@ -427,15 +438,37 @@ export const RegisterPage: React.FC<RegisterPageProps> = ({ onLoginSuccess }) =>
                   <label htmlFor="dob" className="block text-[10px] font-mono uppercase text-[var(--text-secondary)] mb-1">
                     Date of Birth *
                   </label>
-                  <input
-                    id="dob"
-                    name="dob"
-                    type="date"
-                    required
-                    value={formData.dob}
-                    onChange={handleChange}
-                    className="w-full px-3 py-2 bg-[var(--bg-input)] border border-[var(--border-subtle)] rounded-xl text-[var(--text-primary)] text-xs focus:outline-none focus:border-[#FF6D1F] font-mono text-[11px]"
-                  />
+                  <div className="relative flex items-center">
+                    <input
+                      id="dob"
+                      name="dob"
+                      type="date"
+                      required
+                      max={new Date().toISOString().split("T")[0]}
+                      min="1940-01-01"
+                      value={formData.dob}
+                      onChange={handleChange}
+                      onClick={(e) => {
+                        try {
+                          (e.target as HTMLInputElement).showPicker?.();
+                        } catch {}
+                      }}
+                      className="w-full py-2 bg-[var(--bg-input)] border border-[var(--border-subtle)] rounded-xl text-[var(--text-primary)] text-xs focus:outline-none focus:border-[#FF6D1F] font-mono input-with-left-icon"
+                    />
+                    <CalendarDays
+                      className="w-4 h-4 text-[#FF6D1F] absolute left-3 top-1/2 -translate-y-1/2 cursor-pointer z-10"
+                      onClick={() => {
+                        const input = document.getElementById("dob") as HTMLInputElement;
+                        if (input) {
+                          try {
+                            input.showPicker?.();
+                          } catch {
+                            input.focus();
+                          }
+                        }
+                      }}
+                    />
+                  </div>
                 </div>
 
                 <div>
@@ -494,15 +527,16 @@ export const RegisterPage: React.FC<RegisterPageProps> = ({ onLoginSuccess }) =>
                       value={formData.password}
                       onChange={handleChange}
                       placeholder="••••••••"
-                      className="w-full pl-9 pr-9 py-2 bg-[var(--bg-input)] border border-[var(--border-subtle)] rounded-xl text-[var(--text-primary)] text-xs placeholder:text-[var(--text-muted)] focus:outline-none focus:border-[#FF6D1F]"
+                      className="w-full py-2 bg-[var(--bg-input)] border border-[var(--border-subtle)] rounded-xl text-[var(--text-primary)] text-xs placeholder:text-[var(--text-muted)] focus:outline-none focus:border-[#FF6D1F] input-with-both-icons"
                     />
-                    <KeyRound className="w-3.5 h-3.5 text-[var(--text-muted)] absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
+                    <KeyRound className="w-4 h-4 text-[var(--text-muted)] absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
                     <button
                       type="button"
                       onClick={() => setShowPassword(!showPassword)}
-                      className="absolute right-3 top-1/2 -translate-y-1/2 text-[var(--text-muted)] hover:text-[var(--text-primary)]"
+                      className="absolute right-2.5 top-1/2 -translate-y-1/2 text-[var(--text-muted)] hover:text-[var(--text-primary)] transition-colors p-1 rounded-md focus:outline-none focus:ring-1 focus:ring-[#FF6D1F]"
+                      aria-label={showPassword ? "Hide password" : "Show password"}
                     >
-                      {showPassword ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
+                      {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                     </button>
                   </div>
                 </div>
@@ -520,15 +554,16 @@ export const RegisterPage: React.FC<RegisterPageProps> = ({ onLoginSuccess }) =>
                       value={formData.confirmPassword}
                       onChange={handleChange}
                       placeholder="••••••••"
-                      className="w-full pl-9 pr-9 py-2 bg-[var(--bg-input)] border border-[var(--border-subtle)] rounded-xl text-[var(--text-primary)] text-xs placeholder:text-[var(--text-muted)] focus:outline-none focus:border-[#FF6D1F]"
+                      className="w-full py-2 bg-[var(--bg-input)] border border-[var(--border-subtle)] rounded-xl text-[var(--text-primary)] text-xs placeholder:text-[var(--text-muted)] focus:outline-none focus:border-[#FF6D1F] input-with-both-icons"
                     />
-                    <Lock className="w-3.5 h-3.5 text-[var(--text-muted)] absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
+                    <Lock className="w-4 h-4 text-[var(--text-muted)] absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
                     <button
                       type="button"
                       onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                      className="absolute right-3 top-1/2 -translate-y-1/2 text-[var(--text-muted)] hover:text-[var(--text-primary)]"
+                      className="absolute right-2.5 top-1/2 -translate-y-1/2 text-[var(--text-muted)] hover:text-[var(--text-primary)] transition-colors p-1 rounded-md focus:outline-none focus:ring-1 focus:ring-[#FF6D1F]"
+                      aria-label={showConfirmPassword ? "Hide confirm password" : "Show confirm password"}
                     >
-                      {showConfirmPassword ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
+                      {showConfirmPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                     </button>
                   </div>
                 </div>

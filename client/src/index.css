@@ -335,16 +335,78 @@ textarea {
 }
 
 input:focus,
+input:focus-visible,
+input:active,
 select:focus,
-textarea:focus {
+select:focus-visible,
+select:active,
+textarea:focus,
+textarea:focus-visible,
+textarea:active {
+  background-color: var(--bg-input) !important;
+  color: var(--text-primary) !important;
   outline: none !important;
   border-color: var(--accent-orange) !important;
   box-shadow: 0 0 0 2px rgba(255, 109, 31, 0.20) !important;
 }
 
+/* Chrome / Safari / WebKit Browser Autofill Background Override */
+input:-webkit-autofill,
+input:-webkit-autofill:hover,
+input:-webkit-autofill:focus,
+input:-webkit-autofill:active,
+select:-webkit-autofill,
+select:-webkit-autofill:hover,
+select:-webkit-autofill:focus,
+textarea:-webkit-autofill,
+textarea:-webkit-autofill:hover,
+textarea:-webkit-autofill:focus {
+  -webkit-text-fill-color: var(--text-primary) !important;
+  -webkit-box-shadow: 0 0 0px 1000px var(--bg-input) inset !important;
+  box-shadow: 0 0 0px 1000px var(--bg-input) inset !important;
+  transition: background-color 50000s ease-in-out 0s !important;
+  caret-color: var(--text-primary) !important;
+}
+
+/* Firefox Autofill Override */
+input:autofill,
+select:autofill,
+textarea:autofill {
+  background-color: var(--bg-input) !important;
+  color: var(--text-primary) !important;
+}
+
+/* Datepicker calendar icon color for dark mode */
+::-webkit-calendar-picker-indicator {
+  filter: invert(0.85);
+  cursor: pointer;
+}
+
+/* Dropdown select options dark background styling */
+select option {
+  background-color: var(--bg-elevated) !important;
+  color: var(--text-primary) !important;
+}
+
+/* Placeholders contrast & readability */
 input::placeholder,
 textarea::placeholder {
-  color: var(--text-subtle) !important;
+  color: var(--text-muted) !important;
+  opacity: 0.8;
+}
+
+/* Icon-padded input helper classes to ensure proper spacing with absolute icons */
+.input-with-left-icon {
+  padding-left: 2.5rem !important; /* 40px */
+}
+
+.input-with-right-icon {
+  padding-right: 2.5rem !important; /* 40px */
+}
+
+.input-with-both-icons {
+  padding-left: 2.5rem !important;  /* 40px */
+  padding-right: 2.5rem !important; /* 40px */
 }
 
 /* ==========================================================================
